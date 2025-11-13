@@ -14,40 +14,42 @@ val fontProvider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-// --------------------------------------
-// Inter Font Family (All UI Typography)
-// --------------------------------------
+private val RajdhaniLight = Font(
+    googleFont = GoogleFont("Rajdhani"),
+    fontProvider = fontProvider,
+    weight = androidx.compose.ui.text.font.FontWeight.Light
+)
 
-private val InterRegular = Font(
-    googleFont = GoogleFont("Inter"),
+private val RajdhaniRegular = Font(
+    googleFont = GoogleFont("Rajdhani"),
     fontProvider = fontProvider,
     weight = androidx.compose.ui.text.font.FontWeight.Normal
 )
 
-private val InterMedium = Font(
-    googleFont = GoogleFont("Inter"),
+private val RajdhaniMedium = Font(
+    googleFont = GoogleFont("Rajdhani"),
     fontProvider = fontProvider,
     weight = androidx.compose.ui.text.font.FontWeight.Medium
 )
 
-private val InterSemiBold = Font(
-    googleFont = GoogleFont("Inter"),
+private val RajdhaniSemiBold = Font(
+    googleFont = GoogleFont("Rajdhani"),
     fontProvider = fontProvider,
     weight = androidx.compose.ui.text.font.FontWeight.SemiBold
 )
 
-private val InterBold = Font(
-    googleFont = GoogleFont("Inter"),
+private val RajdhaniBold = Font(
+    googleFont = GoogleFont("Rajdhani"),
     fontProvider = fontProvider,
     weight = androidx.compose.ui.text.font.FontWeight.Bold
 )
 
-// Complete Inter Font Family
-val InterFontFamily = FontFamily(
-    InterRegular,
-    InterMedium,
-    InterSemiBold,
-    InterBold
+val RajdhaniFontFamily = FontFamily(
+    RajdhaniLight,
+    RajdhaniRegular,
+    RajdhaniMedium,
+    RajdhaniSemiBold,
+    RajdhaniBold
 )
 
 // --------------------------------------
@@ -61,73 +63,68 @@ private val baseline = Typography()
 
 val BO7Typography = Typography(
 
-    // Display (Large Titles / Main Hero Text)
     displayLarge = baseline.displayLarge.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
     ),
     displayMedium = baseline.displayMedium.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
     ),
     displaySmall = baseline.displaySmall.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
     ),
 
-    // Headlines (Section Titles)
     headlineLarge = baseline.headlineLarge.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
     ),
     headlineMedium = baseline.headlineMedium.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
     headlineSmall = baseline.headlineSmall.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
 
-    // Titles (Toolbars, Settings Titles, Cards)
     titleLarge = baseline.titleLarge.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
     ),
     titleMedium = baseline.titleMedium.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
     titleSmall = baseline.titleSmall.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
 
-    // Body (Content paragraphs)
     bodyLarge = baseline.bodyLarge.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
     ),
     bodyMedium = baseline.bodyMedium.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
     ),
     bodySmall = baseline.bodySmall.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Normal
     ),
 
-    // Labels (Buttons, Chips, Small Controls)
     labelLarge = baseline.labelLarge.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
     labelMedium = baseline.labelMedium.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
     labelSmall = baseline.labelSmall.copy(
-        fontFamily = InterFontFamily,
+        fontFamily = RajdhaniFontFamily,
         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
     ),
 )
