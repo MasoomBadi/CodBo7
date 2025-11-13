@@ -90,7 +90,7 @@ feature/{feature_name}/
 
 - **Dark theme only** - COD-branded color scheme
 - **Primary color**: Orange (#F96800) - Call of Duty signature
-- **Typography**: Inter font family (Google Fonts)
+- **Typography**: Rajdhani font family (Google Fonts)
 - **Material 3** components with custom surface elevation tokens
 - Theme defined in `core/ui/theme/`
 
