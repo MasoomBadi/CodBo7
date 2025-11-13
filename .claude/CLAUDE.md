@@ -35,7 +35,7 @@ Black Ops 7 Companion - An Android companion app for Call of Duty: Black Ops 7. 
 ./gradlew connectedAndroidTest
 
 # Run specific test class
-./gradlew test --tests "com.phoenix.companionforcodblackops7.feature.home.HomeViewModelTest"
+./gradlew test --tests "com.phoenix.companionforcodblackops7.ExampleUnitTest"
 ```
 
 ### Code Quality
@@ -55,18 +55,17 @@ The project uses **feature-wise packaging** with three-layer clean architecture:
 
 ```
 feature/{feature_name}/
-├── data/           # Data layer (repositories, API, database)
-│   ├── remote/     # Retrofit API services & DTOs
-│   ├── local/      # Room entities & DAOs (if needed)
-│   └── repository/ # Repository implementations
-├── domain/         # Business logic layer
-│   ├── model/      # Domain models (pure Kotlin)
-│   ├── repository/ # Repository interfaces
-│   └── usecase/    # Use cases (business logic)
-└── presentation/   # UI layer (Compose + ViewModels)
-    ├── {Feature}Screen.kt       # Composable UI
-    ├── {Feature}ViewModel.kt    # @HiltViewModel
-    └── {Feature}State.kt        # UI state data class
+├── data/
+│   ├── remote/
+│   ├── local/
+│   └── repository/
+├── domain/
+│   ├── model/
+│   ├── repository/
+│   └── usecase/
+└── presentation/
+    ├── {Feature}Screen.kt
+    └── {Feature}ViewModel.kt
 ```
 
 ### Dependency Injection (Hilt)
@@ -79,15 +78,11 @@ feature/{feature_name}/
 ### Navigation
 
 - **Type-safe Navigation Compose** (navigation-compose)
-- All routes defined in `core/navigation/Screen.kt` as sealed class
-- NavGraph setup in `core/navigation/NavGraph.kt`
 - Pass `NavController` to screens for navigation
 
 ### State Management
 
 - **StateFlow** for UI state (single source of truth in ViewModel)
-- **UiEvent** sealed interface for one-time events (navigation, snackbars)
-- **Resource** wrapper for network/repository responses (Success/Error/Loading)
 
 ## Key Technical Details
 
@@ -120,19 +115,15 @@ feature/{feature_name}/
 
 ```
 com.phoenix.companionforcodblackops7/
-├── BlackOps7Application.kt    # Application class
-├── MainActivity.kt             # Single activity
-├── core/                       # Shared across features
-│   ├── common/                 # Resource, UiEvent
-│   ├── di/                     # Hilt modules (create as needed)
-│   ├── navigation/             # NavGraph, Screen routes
+├── BlackOps7Application.kt
+├── MainActivity.kt
+├── core/
+│   ├── di/
 │   ├── ui/
-│   │   ├── components/         # Reusable composables
-│   │   └── theme/              # Colors, Typography, Theme
-│   └── util/                   # Constants, Extensions
-└── feature/                    # Feature modules
-    └── home/                   # Example feature (current)
-        └── presentation/
+│   │   ├── components/
+│   │   └── theme/
+│   └── util/
+└── feature/
 ```
 
 ## Feature Development Workflow
@@ -140,12 +131,10 @@ com.phoenix.companionforcodblackops7/
 When adding a new feature (e.g., "weapons"):
 
 1. **Create package structure**: `feature/weapons/{data, domain, presentation}`
-2. **Define route**: Add to `core/navigation/Screen.kt`
-3. **Domain layer**: Create models, repository interface, use cases
-4. **Data layer**: Implement repository, API service (if network), DTOs
-5. **DI setup**: Create/update Hilt modules for repository/use case bindings
-6. **Presentation**: Create State, ViewModel (@HiltViewModel), Screen composable
-7. **Navigation**: Add composable route to `NavGraph.kt`
+2. **Domain layer**: Create models, repository interface, use cases
+3. **Data layer**: Implement repository, API service (if network), DTOs
+4. **DI setup**: Create/update Hilt modules for repository/use case bindings
+5. **Presentation**: Create State, ViewModel (@HiltViewModel), Screen composable
 
 ## Important Constraints
 
