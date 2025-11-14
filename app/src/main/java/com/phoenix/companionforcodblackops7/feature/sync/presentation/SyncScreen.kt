@@ -140,7 +140,7 @@ private fun SyncErrorContent(
             textAlign = TextAlign.Center
         )
 
-        FilledButton(
+        FilledTonalButton(
             onClick = onRetry
         ) {
             Text("Retry")

@@ -1,6 +1,9 @@
 package com.phoenix.companionforcodblackops7.core.ui.theme
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
@@ -52,11 +55,13 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BlackOps7Theme(
     content: @Composable () -> Unit
 ) {
-    MaterialTheme(
+    MaterialExpressiveTheme(
+        motionScheme = MotionScheme.expressive(),
         colorScheme = DarkColorScheme,
         typography = BO7Typography, // optional, we can generate next
         content = content

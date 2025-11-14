@@ -9,7 +9,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2025.11.00"
-material3Expressive = "1.4.0-alpha11"
+material3Expressive = "1.5.0-alpha08"
 uiTextGoogleFonts = "1.9.4"
 
 # Architecture & DI
