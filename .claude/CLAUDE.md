@@ -91,25 +91,36 @@ feature/{feature_name}/
 - **Dark theme only** - COD-branded color scheme
 - **Primary color**: Orange (#F96800) - Call of Duty signature
 - **Typography**: Rajdhani font family (Google Fonts)
-- **Material 3** components with custom surface elevation tokens
+- **Material 3 Expressive** (version 1.4.0-alpha11) - Use Expressive components (FilledButton, LoadingIndicator, etc.)
 - Theme defined in `core/ui/theme/`
+- Always use `@OptIn(ExperimentalMaterial3ExpressiveApi::class)` when using Expressive components
 
 ### Dependencies Management
 
 - Uses **Version Catalog** (`gradle/libs.versions.toml`)
 - KSP for annotation processing (Hilt)
-- Kotlin 2.2.21 with Compose compiler plugin
+- Kotlin 2.0.21 with Compose compiler plugin (required for Realm 3.0.0 compatibility)
 
 ### Logging
 
 - **Timber** for logging (debug builds only)
 - Use `Timber.d()`, `Timber.e()`, etc. instead of `Log`
 
-### Networking (when implemented)
+### Networking
 
 - **Retrofit** + **OkHttp** for API calls
 - **Kotlinx Serialization** for JSON (not Gson)
+- Jake Wharton's `retrofit2-kotlinx-serialization-converter` for serialization
 - Network interceptors configured in DI modules
+- Base URL: `https://codbo7.masoombadi.top/`
+
+### Database
+
+- **Realm Kotlin** (version 3.0.0) for local storage
+- Dynamic schema using `RealmDictionary<RealmAny?>` for flexible data structures
+- `DynamicEntity` for storing any table data
+- `TableMetadata` for tracking table versions and schema versions
+- **DataStore Preferences** for app-level settings (e.g., sync completion flag)
 
 ## Package Structure
 

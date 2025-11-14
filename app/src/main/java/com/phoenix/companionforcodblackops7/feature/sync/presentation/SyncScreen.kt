@@ -140,11 +140,8 @@ private fun SyncErrorContent(
             textAlign = TextAlign.Center
         )
 
-        Button(
-            onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+        FilledButton(
+            onClick = onRetry
         ) {
             Text("Retry")
         }
