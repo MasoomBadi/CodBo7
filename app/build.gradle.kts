@@ -75,14 +75,16 @@ dependencies {
 
     // Networking
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.serialization.json)
 
     // Image Loading
-    implementation(libs.coil)
-    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.compose)
+
+    //OkHttp
+    implementation(libs.okhttp)
 
     // Database
     implementation(libs.realm.library.base)

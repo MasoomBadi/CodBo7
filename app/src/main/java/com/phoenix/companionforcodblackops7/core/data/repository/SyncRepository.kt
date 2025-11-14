@@ -3,6 +3,7 @@ package com.phoenix.companionforcodblackops7.core.data.repository
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.core.data.local.entity.TableMetadata
 import com.phoenix.companionforcodblackops7.core.data.remote.api.Bo7ApiService
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmAny
@@ -78,7 +79,7 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    private fun Realm.WriteTransaction.saveEntity(tableName: String, jsonObject: JsonObject) {
+    private fun MutableRealm.saveEntity(tableName: String, jsonObject: JsonObject) {
         val primaryKey = jsonObject["id"]?.toString() ?: return
         val entityId = "${tableName}_$primaryKey"
 
@@ -94,7 +95,7 @@ class SyncRepository @Inject constructor(
         copyToRealm(entity)
     }
 
-    private fun Realm.WriteTransaction.saveTableMetadata(
+    private fun MutableRealm.saveTableMetadata(
         tableName: String,
         version: Int,
         schemaVersion: Int
