@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TableVersionDto(
     val version: Int = 0,
-    @SerialName("schema_version")
     val schemaVersion: Int = 0
 )
 
