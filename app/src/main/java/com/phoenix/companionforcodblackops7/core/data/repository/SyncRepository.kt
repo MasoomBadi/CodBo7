@@ -169,13 +169,32 @@ class SyncRepository @Inject constructor(
                 }
             }
 
-            if (tablesToSync.isEmpty()) {
+            // Check for tables that exist locally but not in remote (removed tables)
+            val tablesToRemove = mutableListOf<String>()
+            localVersionMap.keys.forEach { localTableName ->
+                if (!remoteVersions.containsKey(localTableName)) {
+                    tablesToRemove.add(localTableName)
+                }
+            }
+
+            if (tablesToSync.isEmpty() && tablesToRemove.isEmpty()) {
                 onProgress("All data is up to date")
                 return@withContext Result.success(Unit)
             }
 
             preferencesManager.setIsSyncComplete(false)
 
+            // Remove tables that no longer exist in remote
+            tablesToRemove.forEach { tableName ->
+                onProgress("Removing deleted table: $tableName")
+                realm.write {
+                    delete(query<DynamicEntity>("tableName == $0", tableName))
+                    delete(query<TableMetadata>("tableName == $0", tableName))
+                }
+                Timber.d("Removed table: $tableName")
+            }
+
+            // Sync tables that need updates
             tablesToSync.forEach { syncInfo ->
                 when (syncInfo.syncType) {
                     SyncType.NEW_TABLE -> {
