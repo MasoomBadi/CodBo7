@@ -340,6 +340,16 @@ class SyncRepository @Inject constructor(
                     else -> null
                 }
             }
+            is JsonObject -> {
+                // Store nested objects as JSON strings
+                // Can be deserialized later when reading the data
+                RealmAny.create(value.toString())
+            }
+            is JsonArray -> {
+                // Store arrays as JSON strings
+                // Can be deserialized later when reading the data
+                RealmAny.create(value.toString())
+            }
             else -> null
         }
     }
