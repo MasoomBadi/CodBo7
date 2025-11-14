@@ -3,6 +3,12 @@
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
+            <certificates src="user" />
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">codbo7.masoombadi.top</domain>
+        <domain includeSubdomains="true">masoombadi.top</domain>
+        <domain includeSubdomains="true">your-api-domain.com</domain>
+    </domain-config>
 </network-security-config>
