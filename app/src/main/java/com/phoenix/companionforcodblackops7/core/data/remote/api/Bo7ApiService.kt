@@ -2,9 +2,9 @@ package com.phoenix.companionforcodblackops7.core.data.remote.api
 
 import com.phoenix.companionforcodblackops7.core.data.remote.dto.ApiResponse
 import com.phoenix.companionforcodblackops7.core.data.remote.dto.SchemaAllResponseDto
+import com.phoenix.companionforcodblackops7.core.data.remote.dto.TableDataDto
 import com.phoenix.companionforcodblackops7.core.data.remote.dto.TableSchemaDto
 import com.phoenix.companionforcodblackops7.core.data.remote.dto.VersionResponseDto
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -24,5 +24,5 @@ interface Bo7ApiService {
     suspend fun getAllData(): ApiResponse<JsonObject>
 
     @GET("api/data/{table}")
-    suspend fun getTableData(@Path("table") tableName: String): ApiResponse<JsonArray>
+    suspend fun getTableData(@Path("table") tableName: String): ApiResponse<TableDataDto>
 }
