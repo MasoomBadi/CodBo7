@@ -121,6 +121,8 @@ private fun SyncLoadingContent(message: String) {
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier
                         .alpha(pulseAlpha)
                         .scale(scale)
@@ -133,6 +135,8 @@ private fun SyncLoadingContent(message: String) {
                         letterSpacing = 4.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.alpha(0.7f)
                 )
 
