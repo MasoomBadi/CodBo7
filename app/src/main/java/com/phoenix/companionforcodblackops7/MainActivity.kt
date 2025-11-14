@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -85,6 +88,16 @@ fun HomeScreen() {
         label = "pulseAlpha"
     )
 
+    val borderGlow by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "borderGlow"
+    )
+
     val scale = remember { Animatable(0.8f) }
 
     LaunchedEffect(Unit) {
@@ -126,21 +139,52 @@ fun HomeScreen() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(32.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier.size(120.dp),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        tonalElevation = 6.dp
+                    Box(
+                        modifier = Modifier.size(160.dp),
+                        contentAlignment = Alignment.Center
                     ) {
+                        // Outer glow effect
                         Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .size(160.dp)
+                                .background(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f * borderGlow),
+                                            Color.Transparent
+                                        ),
+                                        radius = 200f
+                                    ),
+                                    shape = MaterialTheme.shapes.extraLarge
+                                )
+                        )
+
+                        // Animated border container
+                        Box(
+                            modifier = Modifier
+                                .size(140.dp)
+                                .border(
+                                    width = 3.dp,
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = borderGlow),
+                                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f * borderGlow),
+                                            MaterialTheme.colorScheme.primary.copy(alpha = borderGlow)
+                                        )
+                                    ),
+                                    shape = MaterialTheme.shapes.extraLarge
+                                )
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                    shape = MaterialTheme.shapes.extraLarge
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.logo),
                                 contentDescription = "Black Ops 7 Logo",
                                 modifier = Modifier
-                                    .size(90.dp)
+                                    .size(110.dp)
                                     .alpha(pulseAlpha)
                             )
                         }
