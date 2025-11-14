@@ -29,7 +29,7 @@ class SyncViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = SyncUiState.Loading("Initializing...")
 
-            syncRepository.performInitialSync { progress ->
+            syncRepository.checkAndSync { progress ->
                 _uiState.value = SyncUiState.Loading(progress)
             }.onSuccess {
                 _uiState.value = SyncUiState.Success

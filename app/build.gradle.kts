@@ -89,6 +89,9 @@ dependencies {
     // Database
     implementation(libs.realm.library.base)
 
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
     // Logging
     implementation(libs.timber)
 
