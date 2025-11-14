@@ -34,37 +34,42 @@ class SyncRepository @Inject constructor(
         onProgress: (String) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            // IMPORTANT: Set flag to false at the very beginning
+            preferencesManager.setIsSyncComplete(false)
+
             onProgress("Clearing existing data...")
             realm.write {
                 delete(query<DynamicEntity>())
                 delete(query<TableMetadata>())
             }
 
+            // Step 1: Fetch schema first
             onProgress("Fetching schema...")
             val schemaResponse = apiService.getAllSchemas()
 
             if (!schemaResponse.success) {
-                preferencesManager.setIsSyncComplete(false)
                 return@withContext Result.failure(Exception("Failed to fetch schema"))
             }
 
+            // Step 2: Fetch data
             onProgress("Fetching all data...")
             val dataResponse = apiService.getAllData()
 
             if (!dataResponse.success) {
-                preferencesManager.setIsSyncComplete(false)
                 return@withContext Result.failure(Exception("Failed to fetch data"))
             }
 
-            onProgress("Saving to database...")
+            // Step 3: Fetch versions for metadata
+            onProgress("Fetching versions...")
             val versionResponse = apiService.getVersions()
 
             if (!versionResponse.success) {
-                preferencesManager.setIsSyncComplete(false)
                 return@withContext Result.failure(Exception("Failed to fetch versions"))
             }
 
+            onProgress("Saving to database...")
             realm.write {
+                // Save all data
                 dataResponse.data.forEach { (tableName, tableData) ->
                     when (tableData) {
                         is JsonArray -> {
@@ -79,11 +84,12 @@ class SyncRepository @Inject constructor(
                 }
 
                 // Dynamically save metadata for all tables from version response
-                versionResponse.data.getAllTables().forEach { (tableName, versionInfo) ->
+                versionResponse.data.forEach { (tableName, versionInfo) ->
                     saveTableMetadata(tableName, versionInfo.version, versionInfo.schemaVersion)
                 }
             }
 
+            // Set flag to true only on successful completion
             preferencesManager.setIsSyncComplete(true)
             onProgress("Sync complete!")
             Result.success(Unit)
@@ -112,7 +118,7 @@ class SyncRepository @Inject constructor(
             }
 
             // Dynamically get all tables from the API response
-            val remoteVersions = versionResponse.data.getAllTables()
+            val remoteVersions = versionResponse.data
 
             val localMetadata = realm.query<TableMetadata>().find()
             val localVersionMap = localMetadata.associateBy { it.tableName }

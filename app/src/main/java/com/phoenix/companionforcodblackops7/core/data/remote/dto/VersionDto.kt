@@ -10,17 +10,7 @@ data class TableVersionDto(
 
 /**
  * Dynamic version response that supports any table names from the API.
- * Uses a Map to handle tables dynamically (icons, operators, mods, etc.)
+ * The API returns a map directly: {"icons": {...}, "operators": {...}, "mods": {...}}
+ * This is a typealias for the Map to make the code more readable.
  */
-@Serializable
-data class VersionResponseDto(
-    // This will contain all table versions as a map: tableName -> TableVersionDto
-    // e.g., {"icons": {...}, "operators": {...}, "mods": {...}}
-    private val data: Map<String, TableVersionDto> = emptyMap()
-) {
-    // Provide easy access to all tables
-    fun getAllTables(): Map<String, TableVersionDto> = data
-
-    // Provide convenient accessor for specific tables if needed
-    fun getTableVersion(tableName: String): TableVersionDto? = data[tableName]
-}
+typealias VersionResponseDto = Map<String, TableVersionDto>
