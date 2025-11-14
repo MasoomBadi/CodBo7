@@ -10,5 +10,6 @@
         <domain includeSubdomains="true">codbo7.masoombadi.top</domain>
         <domain includeSubdomains="true">masoombadi.top</domain>
         <domain includeSubdomains="true">your-api-domain.com</domain>
+        <domain includeSubdomains="true">ww25.your-api-domain.com</domain>
     </domain-config>
 </network-security-config>
