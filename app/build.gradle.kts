@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.realm.kotlin)
 }
 
 android {
@@ -82,6 +83,9 @@ dependencies {
     // Image Loading
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
+
+    // Database
+    implementation(libs.realm.library.base)
 
     // Logging
     implementation(libs.timber)
