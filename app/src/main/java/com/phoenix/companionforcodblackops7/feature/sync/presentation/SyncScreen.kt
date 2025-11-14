@@ -58,6 +58,7 @@ fun SyncScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SyncLoadingContent(message: String) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -82,10 +83,10 @@ private fun SyncLoadingContent(message: String) {
             modifier = Modifier.alpha(alpha)
         )
 
-        CircularProgressIndicator(
+        LoadingIndicator(
+            progress = { 0.5f },
             modifier = Modifier.size(64.dp),
-            color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 4.dp
+            color = MaterialTheme.colorScheme.primary
         )
 
         Text(

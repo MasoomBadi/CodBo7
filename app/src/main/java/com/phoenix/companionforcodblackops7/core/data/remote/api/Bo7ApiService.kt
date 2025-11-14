@@ -11,7 +11,7 @@ import retrofit2.http.Path
 
 interface Bo7ApiService {
 
-    @GET("api/versions")
+    @GET("api/version")
     suspend fun getVersions(): ApiResponse<VersionResponseDto>
 
     @GET("api/schema/all")

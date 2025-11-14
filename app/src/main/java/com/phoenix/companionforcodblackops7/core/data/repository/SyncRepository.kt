@@ -2,12 +2,15 @@ package com.phoenix.companionforcodblackops7.core.data.repository
 
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.core.data.local.entity.TableMetadata
+import com.phoenix.companionforcodblackops7.core.data.local.preferences.PreferencesManager
 import com.phoenix.companionforcodblackops7.core.data.remote.api.Bo7ApiService
+import com.phoenix.companionforcodblackops7.core.data.remote.dto.TableVersionInfo
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -23,22 +26,25 @@ import javax.inject.Singleton
 @Singleton
 class SyncRepository @Inject constructor(
     private val apiService: Bo7ApiService,
-    private val realm: Realm
+    private val realm: Realm,
+    private val preferencesManager: PreferencesManager
 ) {
 
-    suspend fun isFirstLaunch(): Boolean = withContext(Dispatchers.IO) {
-        val metadata = realm.query<TableMetadata>().find()
-        metadata.isEmpty()
-    }
-
-    suspend fun performInitialSync(
+    suspend fun performFreshSync(
         onProgress: (String) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            onProgress("Clearing existing data...")
+            realm.write {
+                delete(query<DynamicEntity>())
+                delete(query<TableMetadata>())
+            }
+
             onProgress("Fetching schema...")
             val schemaResponse = apiService.getAllSchemas()
 
             if (!schemaResponse.success) {
+                preferencesManager.setIsSyncComplete(false)
                 return@withContext Result.failure(Exception("Failed to fetch schema"))
             }
 
@@ -46,11 +52,17 @@ class SyncRepository @Inject constructor(
             val dataResponse = apiService.getAllData()
 
             if (!dataResponse.success) {
+                preferencesManager.setIsSyncComplete(false)
                 return@withContext Result.failure(Exception("Failed to fetch data"))
             }
 
             onProgress("Saving to database...")
             val versionResponse = apiService.getVersions()
+
+            if (!versionResponse.success) {
+                preferencesManager.setIsSyncComplete(false)
+                return@withContext Result.failure(Exception("Failed to fetch versions"))
+            }
 
             realm.write {
                 dataResponse.data.forEach { (tableName, tableData) ->
@@ -71,11 +83,194 @@ class SyncRepository @Inject constructor(
                 saveTableMetadata("icons", versionData.icons.version, versionData.icons.schemaVersion)
             }
 
+            preferencesManager.setIsSyncComplete(true)
             onProgress("Sync complete!")
             Result.success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Initial sync failed")
+            Timber.e(e, "Fresh sync failed")
+            preferencesManager.setIsSyncComplete(false)
             Result.failure(e)
+        }
+    }
+
+    suspend fun checkAndSync(
+        onProgress: (String) -> Unit
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val isSyncComplete = preferencesManager.isSyncComplete.first()
+
+            if (!isSyncComplete) {
+                return@withContext performFreshSync(onProgress)
+            }
+
+            onProgress("Checking for updates...")
+            val versionResponse = apiService.getVersions()
+
+            if (!versionResponse.success) {
+                return@withContext Result.failure(Exception("Failed to fetch version info"))
+            }
+
+            val remoteVersions = mapOf(
+                "operators" to versionResponse.data.operators,
+                "icons" to versionResponse.data.icons
+            )
+
+            val localMetadata = realm.query<TableMetadata>().find()
+            val localVersionMap = localMetadata.associateBy { it.tableName }
+
+            val tablesToSync = mutableListOf<TableSyncInfo>()
+
+            remoteVersions.forEach { (tableName, remoteVersion) ->
+                val localVersion = localVersionMap[tableName]
+
+                when {
+                    localVersion == null -> {
+                        tablesToSync.add(
+                            TableSyncInfo(
+                                tableName = tableName,
+                                syncType = SyncType.NEW_TABLE,
+                                remoteVersion = remoteVersion
+                            )
+                        )
+                    }
+                    localVersion.schemaVersion != remoteVersion.schemaVersion &&
+                    localVersion.version != remoteVersion.version -> {
+                        tablesToSync.add(
+                            TableSyncInfo(
+                                tableName = tableName,
+                                syncType = SyncType.BOTH_MISMATCH,
+                                remoteVersion = remoteVersion
+                            )
+                        )
+                    }
+                    localVersion.schemaVersion != remoteVersion.schemaVersion -> {
+                        tablesToSync.add(
+                            TableSyncInfo(
+                                tableName = tableName,
+                                syncType = SyncType.SCHEMA_MISMATCH,
+                                remoteVersion = remoteVersion
+                            )
+                        )
+                    }
+                    localVersion.version != remoteVersion.version -> {
+                        tablesToSync.add(
+                            TableSyncInfo(
+                                tableName = tableName,
+                                syncType = SyncType.VERSION_MISMATCH,
+                                remoteVersion = remoteVersion
+                            )
+                        )
+                    }
+                }
+            }
+
+            if (tablesToSync.isEmpty()) {
+                onProgress("All data is up to date")
+                return@withContext Result.success(Unit)
+            }
+
+            preferencesManager.setIsSyncComplete(false)
+
+            tablesToSync.forEach { syncInfo ->
+                when (syncInfo.syncType) {
+                    SyncType.NEW_TABLE -> {
+                        onProgress("Adding new table: ${syncInfo.tableName}")
+                        syncNewTable(syncInfo.tableName, syncInfo.remoteVersion)
+                    }
+                    SyncType.SCHEMA_MISMATCH -> {
+                        onProgress("Updating schema: ${syncInfo.tableName}")
+                        syncSchemaChange(syncInfo.tableName, syncInfo.remoteVersion)
+                    }
+                    SyncType.VERSION_MISMATCH -> {
+                        onProgress("Updating data: ${syncInfo.tableName}")
+                        syncDataOnly(syncInfo.tableName, syncInfo.remoteVersion)
+                    }
+                    SyncType.BOTH_MISMATCH -> {
+                        onProgress("Updating schema & data: ${syncInfo.tableName}")
+                        syncSchemaChange(syncInfo.tableName, syncInfo.remoteVersion)
+                    }
+                }
+            }
+
+            preferencesManager.setIsSyncComplete(true)
+            onProgress("Sync complete!")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Timber.e(e, "Sync check failed")
+            preferencesManager.setIsSyncComplete(false)
+            Result.failure(e)
+        }
+    }
+
+    private suspend fun syncNewTable(tableName: String, versionInfo: TableVersionInfo) {
+        val schemaResponse = apiService.getTableSchema(tableName)
+        if (!schemaResponse.success) {
+            throw Exception("Failed to fetch schema for $tableName")
+        }
+
+        val dataResponse = apiService.getTableData(tableName)
+        if (!dataResponse.success) {
+            throw Exception("Failed to fetch data for $tableName")
+        }
+
+        realm.write {
+            dataResponse.data.forEach { item ->
+                if (item is JsonObject) {
+                    saveEntity(tableName, item)
+                }
+            }
+            saveTableMetadata(tableName, versionInfo.version, versionInfo.schemaVersion)
+        }
+    }
+
+    private suspend fun syncSchemaChange(tableName: String, versionInfo: TableVersionInfo) {
+        val schemaResponse = apiService.getTableSchema(tableName)
+        if (!schemaResponse.success) {
+            throw Exception("Failed to fetch schema for $tableName")
+        }
+
+        realm.write {
+            delete(query<DynamicEntity>("tableName == $0", tableName))
+            delete(query<TableMetadata>("tableName == $0", tableName))
+        }
+
+        val dataResponse = apiService.getTableData(tableName)
+        if (!dataResponse.success) {
+            throw Exception("Failed to fetch data for $tableName")
+        }
+
+        realm.write {
+            dataResponse.data.forEach { item ->
+                if (item is JsonObject) {
+                    saveEntity(tableName, item)
+                }
+            }
+            saveTableMetadata(tableName, versionInfo.version, versionInfo.schemaVersion)
+        }
+    }
+
+    private suspend fun syncDataOnly(tableName: String, versionInfo: TableVersionInfo) {
+        realm.write {
+            delete(query<DynamicEntity>("tableName == $0", tableName))
+        }
+
+        val dataResponse = apiService.getTableData(tableName)
+        if (!dataResponse.success) {
+            throw Exception("Failed to fetch data for $tableName")
+        }
+
+        realm.write {
+            dataResponse.data.forEach { item ->
+                if (item is JsonObject) {
+                    saveEntity(tableName, item)
+                }
+            }
+
+            val existingMetadata = query<TableMetadata>("tableName == $0", tableName).first().find()
+            existingMetadata?.let {
+                it.version = versionInfo.version
+                it.lastSynced = System.currentTimeMillis()
+            }
         }
     }
 
@@ -123,5 +318,18 @@ class SyncRepository @Inject constructor(
             }
             else -> null
         }
+    }
+
+    private data class TableSyncInfo(
+        val tableName: String,
+        val syncType: SyncType,
+        val remoteVersion: TableVersionInfo
+    )
+
+    private enum class SyncType {
+        NEW_TABLE,
+        SCHEMA_MISMATCH,
+        VERSION_MISMATCH,
+        BOTH_MISMATCH
     }
 }
