@@ -4,7 +4,7 @@ import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.core.data.local.entity.TableMetadata
 import com.phoenix.companionforcodblackops7.core.data.local.preferences.PreferencesManager
 import com.phoenix.companionforcodblackops7.core.data.remote.api.Bo7ApiService
-import com.phoenix.companionforcodblackops7.core.data.remote.dto.TableVersionInfo
+import com.phoenix.companionforcodblackops7.core.data.remote.dto.TableVersionDto
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
@@ -202,7 +202,7 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    private suspend fun syncNewTable(tableName: String, versionInfo: TableVersionInfo) {
+    private suspend fun syncNewTable(tableName: String, versionInfo: TableVersionDto) {
         val schemaResponse = apiService.getTableSchema(tableName)
         if (!schemaResponse.success) {
             throw Exception("Failed to fetch schema for $tableName")
@@ -223,7 +223,7 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    private suspend fun syncSchemaChange(tableName: String, versionInfo: TableVersionInfo) {
+    private suspend fun syncSchemaChange(tableName: String, versionInfo: TableVersionDto) {
         val schemaResponse = apiService.getTableSchema(tableName)
         if (!schemaResponse.success) {
             throw Exception("Failed to fetch schema for $tableName")
@@ -249,7 +249,7 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    private suspend fun syncDataOnly(tableName: String, versionInfo: TableVersionInfo) {
+    private suspend fun syncDataOnly(tableName: String, versionInfo: TableVersionDto) {
         realm.write {
             delete(query<DynamicEntity>("tableName == $0", tableName))
         }
@@ -323,7 +323,7 @@ class SyncRepository @Inject constructor(
     private data class TableSyncInfo(
         val tableName: String,
         val syncType: SyncType,
-        val remoteVersion: TableVersionInfo
+        val remoteVersion: TableVersionDto
     )
 
     private enum class SyncType {
