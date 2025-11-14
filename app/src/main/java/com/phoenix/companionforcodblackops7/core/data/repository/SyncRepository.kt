@@ -238,7 +238,7 @@ class SyncRepository @Inject constructor(
         }
 
         realm.write {
-            dataResponse.data.forEach { item ->
+            dataResponse.data.data.forEach { item ->
                 if (item is JsonObject) {
                     saveEntity(tableName, item)
                 }
@@ -264,7 +264,7 @@ class SyncRepository @Inject constructor(
         }
 
         realm.write {
-            dataResponse.data.forEach { item ->
+            dataResponse.data.data.forEach { item ->
                 if (item is JsonObject) {
                     saveEntity(tableName, item)
                 }
@@ -284,7 +284,7 @@ class SyncRepository @Inject constructor(
         }
 
         realm.write {
-            dataResponse.data.forEach { item ->
+            dataResponse.data.data.forEach { item ->
                 if (item is JsonObject) {
                     saveEntity(tableName, item)
                 }
