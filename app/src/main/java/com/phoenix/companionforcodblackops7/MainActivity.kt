@@ -228,7 +228,7 @@ fun HomeScreen() {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Your tactical companion for Call of Duty",
+                            text = "Your tactical companion for Call of Duty Black OPS 7",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
