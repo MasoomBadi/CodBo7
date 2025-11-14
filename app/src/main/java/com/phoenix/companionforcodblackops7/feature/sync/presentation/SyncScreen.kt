@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
@@ -129,7 +130,7 @@ private fun SyncLoadingContent(message: String) {
                     text = "COMPANION",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Medium,
-                        letterSpacing = 4.dp.value.sp
+                        letterSpacing = 4.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.alpha(0.7f)
@@ -142,8 +143,7 @@ private fun SyncLoadingContent(message: String) {
                     LoadingIndicator(
                         progress = { 0.5f },
                         modifier = Modifier.size(80.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -308,12 +308,12 @@ private fun SyncErrorContent(
                     )
                 }
 
-                FilledButton(
+                Button(
                     onClick = onRetry,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    colors = ButtonDefaults.filledButtonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
                     )
