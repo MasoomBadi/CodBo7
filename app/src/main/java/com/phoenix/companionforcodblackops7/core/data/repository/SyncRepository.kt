@@ -79,7 +79,7 @@ class SyncRepository @Inject constructor(
                 }
 
                 // Dynamically save metadata for all tables from version response
-                versionResponse.data.getAllTables().forEach { (tableName, versionInfo) ->
+                versionResponse.data.forEach { (tableName, versionInfo) ->
                     saveTableMetadata(tableName, versionInfo.version, versionInfo.schemaVersion)
                 }
             }
@@ -112,7 +112,7 @@ class SyncRepository @Inject constructor(
             }
 
             // Dynamically get all tables from the API response
-            val remoteVersions = versionResponse.data.getAllTables()
+            val remoteVersions = versionResponse.data
 
             val localMetadata = realm.query<TableMetadata>().find()
             val localVersionMap = localMetadata.associateBy { it.tableName }
