@@ -112,7 +112,7 @@ feature/{feature_name}/
 - **Kotlinx Serialization** for JSON (not Gson)
 - Jake Wharton's `retrofit2-kotlinx-serialization-converter` for serialization
 - Network interceptors configured in DI modules
-- Base URL: `https://codbo7.masoombadi.top/`
+- Base URL: `http://codbo7.masoombadi.top/` (HTTP only - cleartext traffic allowed via network security config)
 
 ### Database
 
