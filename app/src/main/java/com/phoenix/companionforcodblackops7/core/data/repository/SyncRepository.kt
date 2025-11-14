@@ -78,9 +78,10 @@ class SyncRepository @Inject constructor(
                     }
                 }
 
-                val versionData = versionResponse.data
-                saveTableMetadata("operators", versionData.operators.version, versionData.operators.schemaVersion)
-                saveTableMetadata("icons", versionData.icons.version, versionData.icons.schemaVersion)
+                // Dynamically save metadata for all tables from version response
+                versionResponse.data.getAllTables().forEach { (tableName, versionInfo) ->
+                    saveTableMetadata(tableName, versionInfo.version, versionInfo.schemaVersion)
+                }
             }
 
             preferencesManager.setIsSyncComplete(true)
@@ -110,10 +111,8 @@ class SyncRepository @Inject constructor(
                 return@withContext Result.failure(Exception("Failed to fetch version info"))
             }
 
-            val remoteVersions = mapOf(
-                "operators" to versionResponse.data.operators,
-                "icons" to versionResponse.data.icons
-            )
+            // Dynamically get all tables from the API response
+            val remoteVersions = versionResponse.data.getAllTables()
 
             val localMetadata = realm.query<TableMetadata>().find()
             val localVersionMap = localMetadata.associateBy { it.tableName }
