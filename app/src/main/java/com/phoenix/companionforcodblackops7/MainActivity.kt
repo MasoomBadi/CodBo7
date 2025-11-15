@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.phoenix.companionforcodblackops7.core.ui.theme.BlackOps7Theme
+import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
 import com.phoenix.companionforcodblackops7.feature.sync.presentation.SyncScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -80,7 +81,19 @@ fun AppNavigation() {
         }
 
         composable("dashboard") {
-            DashboardScreen()
+            DashboardScreen(
+                onNavigateToOperators = {
+                    navController.navigate("operators")
+                }
+            )
+        }
+
+        composable("operators") {
+            OperatorsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
@@ -262,7 +275,7 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(onNavigateToOperators: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -279,7 +292,7 @@ fun DashboardScreen() {
         ) {
             // Operators Card
             Card(
-                onClick = { /* TODO */ },
+                onClick = onNavigateToOperators,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
