@@ -62,8 +62,8 @@ class NetworkMonitor @Inject constructor(
 
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .addTransport(NetworkCapabilities.TRANSPORT_WIFI)
-            .addTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
             .build()
 
         connectivityManager.registerNetworkCallback(request, callback)

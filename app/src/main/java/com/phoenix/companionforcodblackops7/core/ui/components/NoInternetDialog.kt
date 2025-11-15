@@ -204,7 +204,9 @@ fun NoInternetDialog(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.error
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                        border = ButtonDefaults.outlinedButtonBorder(
+                            enabled = true,
+                        ).copy(
                             width = 2.dp,
                             brush = Brush.linearGradient(
                                 colors = listOf(
