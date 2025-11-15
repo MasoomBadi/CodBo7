@@ -28,6 +28,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.phoenix.companionforcodblackops7.core.ui.theme.BlackOps7Theme
+import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
+import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
 import com.phoenix.companionforcodblackops7.feature.sync.presentation.SyncScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,6 +57,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+
+    // State to hold selected operator and iconMap for navigation to details
+    var selectedOperator by remember { mutableStateOf<Operator?>(null) }
+    var iconMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     NavHost(
         navController = navController,
@@ -92,8 +98,25 @@ fun AppNavigation() {
             OperatorsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onOperatorClick = { operator, icons ->
+                    selectedOperator = operator
+                    iconMap = icons
+                    navController.navigate("operatorDetails")
                 }
             )
+        }
+
+        composable("operatorDetails") {
+            selectedOperator?.let { operator ->
+                OperatorDetailsScreen(
+                    operator = operator,
+                    iconMap = iconMap,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }
