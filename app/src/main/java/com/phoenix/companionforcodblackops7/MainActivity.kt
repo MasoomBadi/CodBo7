@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                             exitProcess(0)
                         }
                     ) {
-                        AppNavigation()
+                        AppNavigation(networkMonitor = networkMonitor)
                     }
                 }
             }
@@ -100,7 +100,7 @@ fun ConnectivityWrapper(
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(networkMonitor: NetworkMonitor) {
     val navController = rememberNavController()
 
     // State to hold selected operator and iconMap for navigation to details
@@ -113,6 +113,7 @@ fun AppNavigation() {
     ) {
         composable("sync") {
             SyncScreen(
+                networkMonitor = networkMonitor,
                 onSyncComplete = {
                     navController.navigate("home") {
                         popUpTo("sync") { inclusive = true }
