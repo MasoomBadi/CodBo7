@@ -53,117 +53,136 @@ fun NoInternetDialog(
         label = "iconPulse"
     )
 
-    AlertDialog(
-        onDismissRequest = { /* Don't allow dismiss */ },
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "No Internet",
-                modifier = Modifier
-                    .size(48.dp)
-                    .graphicsLayer(alpha = iconPulse),
-                tint = MaterialTheme.colorScheme.error
-            )
-        },
-        title = {
-            Text(
-                text = "NO INTERNET CONNECTION",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.5.sp
-                ),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.error
-            )
-        },
-        text = {
+    BasicAlertDialog(
+        onDismissRequest = { /* Don't allow dismiss */ }
+    ) {
+        Surface(
+            modifier = Modifier
+                .wrapContentWidth()
+                .wrapContentHeight(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 8.dp
+        ) {
             Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .widthIn(min = 280.dp, max = 560.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                HorizontalDivider(
+                // Icon
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "No Internet",
                     modifier = Modifier
-                        .width(100.dp)
-                        .padding(vertical = 8.dp),
+                        .size(48.dp)
+                        .graphicsLayer(alpha = iconPulse),
+                    tint = MaterialTheme.colorScheme.error
+                )
+
+                // Title
+                Text(
+                    text = "NO INTERNET CONNECTION",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp
+                    ),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                // Divider
+                HorizontalDivider(
+                    modifier = Modifier.width(100.dp),
                     thickness = 2.dp,
                     color = MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
                 )
 
-                Text(
-                    text = "This app requires an active internet connection to continue.",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        lineHeight = 24.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
+                // Message
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "This app requires an active internet connection to continue.",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            lineHeight = 24.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
 
-                Text(
-                    text = "Please check your WiFi or mobile data connection and try again.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onRetry,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp,
-                    pressedElevation = 2.dp
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Text(
-                    text = "RETRY",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
+                    Text(
+                        text = "Please check your WiFi or mobile data connection and try again.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
-                )
-            }
-        },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onExit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(
-                    enabled = true,
-                ).copy(
-                    width = 2.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.error,
-                            MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Buttons
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onRetry,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 2.dp
+                        ),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Text(
+                            text = "RETRY",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.2.sp
+                            )
                         )
-                    )
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Text(
-                    text = "EXIT APP",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    )
-                )
+                    }
+
+                    OutlinedButton(
+                        onClick = onExit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder(
+                            enabled = true
+                        ).copy(
+                            width = 2.dp,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.error,
+                                    MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                                )
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Text(
+                            text = "EXIT APP",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.2.sp
+                            )
+                        )
+                    }
+                }
             }
-        },
-        shape = MaterialTheme.shapes.extraLarge,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 8.dp
-    )
+        }
+    }
 }
