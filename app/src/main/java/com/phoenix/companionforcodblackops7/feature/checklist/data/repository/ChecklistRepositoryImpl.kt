@@ -37,11 +37,11 @@ class ChecklistRepositoryImpl @Inject constructor(
                     operators.map { operator ->
                         ChecklistItem(
                             id = operator.id,
-                            name = operator.name,
+                            name = operator.fullName,
                             category = category,
                             isUnlocked = checklistMap[operator.id] ?: false,
                             imageUrl = operator.imageUrl,
-                            description = operator.role
+                            description = null
                         )
                     }.sortedBy { it.name }
                 }
