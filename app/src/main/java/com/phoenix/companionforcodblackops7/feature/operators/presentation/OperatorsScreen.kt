@@ -26,13 +26,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun OperatorDetailsScreen(
     operator: Operator,
@@ -296,8 +298,8 @@ fun OperatorDetailsScreen(
             }
         }
 
-        // Transparent TopAppBar overlaid on content
-        TopAppBar(
+        // Transparent CenterAlignedTopAppBar overlaid on content
+        CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = "OPERATOR",
@@ -322,7 +324,7 @@ fun OperatorDetailsScreen(
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = Color.Transparent,
                 titleContentColor = MaterialTheme.colorScheme.onSurface
             ),
@@ -604,10 +606,10 @@ private fun OperatorsGrid(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(
                 text = "OPERATORS",
