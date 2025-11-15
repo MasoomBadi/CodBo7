@@ -266,64 +266,121 @@ private fun OperatorCard(
     iconMap: Map<String, String>
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer_${operator.id}")
+
+    // Subtle shimmer animation for premium feel
     val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
+        initialValue = 0.0f,
+        targetValue = 0.15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "shimmer"
     )
 
-    // Get division icon URL
+    // Subtle glow pulse for accent border
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    // Get URLs
     val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
     val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
+    val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
+        "$BASE_URL${operator.imageUrl}"
+    } else null
 
     Card(
         onClick = { /* TODO: Navigate to operator details */ },
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp),
+            .height(260.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 2.dp
+        ),
         shape = MaterialTheme.shapes.extraLarge
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Division-based gradient background
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                Color.Transparent
+            // Operator image background
+            if (operatorImageUrl != null) {
+                AsyncImage(
+                    model = operatorImageUrl,
+                    contentDescription = operator.shortName,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                // Sophisticated gradient scrim - darker at edges, lighter in middle
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.85f),
+                                    Color.Black.copy(alpha = 0.4f),
+                                    Color.Black.copy(alpha = 0.3f),
+                                    Color.Black.copy(alpha = 0.9f)
+                                ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY
                             )
                         )
-                    )
-            )
+                )
 
-            // Shimmer effect
+                // Subtle primary color overlay for brand consistency
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                        )
+                )
+            } else {
+                // Fallback: Dynamic gradient using theme colors
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                )
+                            )
+                        )
+                )
+            }
+
+            // Subtle shimmer overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .alpha(shimmerAlpha)
                     .background(
-                        brush = Brush.verticalGradient(
+                        brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.05f),
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                 Color.Transparent
                             )
                         )
                     )
             )
 
-            // Content
+            // Content with proper Material 3 spacing
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -336,128 +393,134 @@ private fun OperatorCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Division badge with icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = MaterialTheme.shapes.small
-                            )
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        // Division icon
-                        if (divisionIconUrl != null) {
-                            AsyncImage(
-                                model = divisionIconUrl,
-                                contentDescription = operator.division,
-                                modifier = Modifier.size(16.dp),
-                                contentScale = ContentScale.Fit
-                            )
+                    // Division badge - Material 3 Surface with elevation
+                    if (divisionIconUrl != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
+                            shape = MaterialTheme.shapes.small,
+                            tonalElevation = 3.dp
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                AsyncImage(
+                                    model = divisionIconUrl,
+                                    contentDescription = operator.division,
+                                    modifier = Modifier.size(18.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Text(
+                                    text = operator.division.uppercase(),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
+                    }
+
+                    // Zombie badge - Bright, prominent with proper elevation
+                    if (operator.zombiePlayable && zombieIconUrl != null) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            tonalElevation = 4.dp,
+                            shadowElevation = 2.dp
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                AsyncImage(
+                                    model = zombieIconUrl,
+                                    contentDescription = "Zombie playable",
+                                    modifier = Modifier.size(28.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Bottom info with enhanced hierarchy
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Operator name - Bold, expressive typography
+                    Text(
+                        text = operator.shortName.uppercase(),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    // Full name - Supporting detail
+                    Text(
+                        text = operator.fullName,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    // Nationality with subtle styling
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = MaterialTheme.shapes.extraSmall
+                                )
+                        )
                         Text(
-                            text = operator.division.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp
+                            text = operator.nationality,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.4.sp
                             ),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-
-                    // Zombie playable badge
-                    if (operator.zombiePlayable && zombieIconUrl != null) {
-                        AsyncImage(
-                            model = zombieIconUrl,
-                            contentDescription = "Zombie playable",
-                            modifier = Modifier
-                                .size(24.dp)
-                                .background(
-                                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
-                                    shape = MaterialTheme.shapes.small
-                                )
-                                .padding(4.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Operator image
-                val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
-                    "$BASE_URL${operator.imageUrl}"
-                } else null
-
-                Surface(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .align(Alignment.CenterHorizontally),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest
-                ) {
-                    if (operatorImageUrl != null) {
-                        AsyncImage(
-                            model = operatorImageUrl,
-                            contentDescription = operator.shortName,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        // Fallback to first letter
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Text(
-                                text = operator.shortName.firstOrNull()?.toString()?.uppercase() ?: "?",
-                                style = MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Black
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Operator info
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Short name
-                    Text(
-                        text = operator.shortName.uppercase(),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Nationality
-                    Text(
-                        text = operator.nationality,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
+
+            // Subtle accent border with glow effect
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(glowAlpha * 0.5f)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                Color.Transparent,
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    )
+            )
         }
     }
 }
