@@ -238,7 +238,7 @@ fun OperatorDetailsScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = operator.description,
+                                    text = operator.description.replace("\\n", "\n"),
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         letterSpacing = 0.3.sp,
                                         lineHeight = 26.sp
@@ -339,17 +339,17 @@ private fun DetailInfoCard(
         DetailCardColorScheme.Default -> Triple(
             MaterialTheme.colorScheme.surfaceContainerHigh,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            32.dp
+            48.dp
         )
         DetailCardColorScheme.Secondary -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            36.dp
+            52.dp
         )
         DetailCardColorScheme.Tertiary -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            40.dp
+            56.dp
         )
     }
 
@@ -365,26 +365,14 @@ private fun DetailInfoCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon (if provided)
+            // Icon (if provided) - no background container
             if (icon != null) {
-                Surface(
-                    modifier = Modifier.size(56.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                    tonalElevation = 1.dp
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        AsyncImage(
-                            model = icon,
-                            contentDescription = title,
-                            modifier = Modifier.size(iconSize),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
+                AsyncImage(
+                    model = icon,
+                    contentDescription = title,
+                    modifier = Modifier.size(iconSize),
+                    contentScale = ContentScale.Fit
+                )
             }
 
             // Text content
