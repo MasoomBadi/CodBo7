@@ -1,7 +1,9 @@
 package com.phoenix.companionforcodblackops7.feature.operators.presentation
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,6 +16,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,10 +28,290 @@ import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Opera
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun OperatorDetailsScreen(
+    operator: Operator,
+    iconMap: Map<String, String>,
+    onNavigateBack: () -> Unit
+) {
+    val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
+        "$BASE_URL${operator.imageUrl}"
+    } else null
+    val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
+    val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = operator.shortName.uppercase(),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp
+                        ),
+                        modifier = Modifier.basicMarquee()
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_revert),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
+        ) {
+            // Scrollable content
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Hero image section
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                ) {
+                    if (operatorImageUrl != null) {
+                        AsyncImage(
+                            model = operatorImageUrl,
+                            contentDescription = operator.shortName,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        // Gradient overlay
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Transparent,
+                                            MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
+                                            MaterialTheme.colorScheme.background
+                                        )
+                                    )
+                                )
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primaryContainer,
+                                            MaterialTheme.colorScheme.background
+                                        )
+                                    )
+                                )
+                        )
+                    }
+
+                    // Badges at top right
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Division badge
+                        if (divisionIconUrl != null) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                shape = MaterialTheme.shapes.medium,
+                                tonalElevation = 6.dp
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                                ) {
+                                    AsyncImage(
+                                        model = divisionIconUrl,
+                                        contentDescription = operator.division,
+                                        modifier = Modifier.size(24.dp),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                    Text(
+                                        text = operator.division.uppercase(),
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 1.2.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
+                        // Zombie badge
+                        if (operator.zombiePlayable && zombieIconUrl != null) {
+                            Surface(
+                                modifier = Modifier.size(48.dp),
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                tonalElevation = 6.dp
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    AsyncImage(
+                                        model = zombieIconUrl,
+                                        contentDescription = "Zombie playable",
+                                        modifier = Modifier.size(32.dp),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Info section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Name section
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = operator.shortName.uppercase(),
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.basicMarquee()
+                        )
+                        Text(
+                            text = operator.fullName,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.basicMarquee()
+                        )
+                    }
+
+                    // Nationality
+                    InfoCard(
+                        title = "NATIONALITY",
+                        content = operator.nationality
+                    )
+
+                    // Description
+                    if (operator.description.isNotEmpty()) {
+                        InfoCard(
+                            title = "ABOUT",
+                            content = operator.description
+                        )
+                    }
+
+                    // Unlock criteria
+                    if (operator.unlockCriteria.isNotEmpty()) {
+                        InfoCard(
+                            title = "UNLOCK REQUIREMENT",
+                            content = operator.unlockCriteria,
+                            accent = true
+                        )
+                    }
+                }
+            }
+
+            // Banner Ad Space
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Banner Ad Space (320x90)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun InfoCard(
+    title: String,
+    content: String,
+    accent: Boolean = false
+) {
+    Surface(
+        color = if (accent) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                ),
+                color = if (accent) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+            Text(
+                text = content,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    letterSpacing = 0.3.sp,
+                    lineHeight = 24.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OperatorsScreen(
     onNavigateBack: () -> Unit,
+    onOperatorClick: (Operator, Map<String, String>) -> Unit,
     viewModel: OperatorsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -62,7 +345,10 @@ fun OperatorsScreen(
                 is OperatorsUiState.Success -> {
                     OperatorsGrid(
                         operators = state.operators,
-                        iconMap = state.iconMap
+                        iconMap = state.iconMap,
+                        onOperatorClick = { operator ->
+                            onOperatorClick(operator, state.iconMap)
+                        }
                     )
                 }
             }
@@ -187,7 +473,8 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 @Composable
 private fun OperatorsGrid(
     operators: List<Operator>,
-    iconMap: Map<String, String>
+    iconMap: Map<String, String>,
+    onOperatorClick: (Operator) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -199,7 +486,8 @@ private fun OperatorsGrid(
         items(operators, key = { it.id }) { operator ->
             OperatorCard(
                 operator = operator,
-                iconMap = iconMap
+                iconMap = iconMap,
+                onClick = { onOperatorClick(operator) }
             )
         }
     }
@@ -208,62 +496,38 @@ private fun OperatorsGrid(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Back button
-            Surface(
-                onClick = onNavigateBack,
-                modifier = Modifier.size(48.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        text = "←",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = "OPERATORS",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
+    TopAppBar(
+        title = {
+            Text(
+                text = "OPERATORS",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.5.sp
                 )
-                Text(
-                    text = "Special Forces Personnel",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_revert),
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
-        }
-    }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun OperatorCard(
     operator: Operator,
-    iconMap: Map<String, String>
+    iconMap: Map<String, String>,
+    onClick: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer_${operator.id}")
 
@@ -297,7 +561,7 @@ private fun OperatorCard(
     } else null
 
     Card(
-        onClick = { /* TODO: Navigate to operator details */ },
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(260.dp),
@@ -453,7 +717,7 @@ private fun OperatorCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Operator name - Bold, expressive typography
+                    // Operator name - Bold, expressive typography with marquee
                     Text(
                         text = operator.shortName.uppercase(),
                         style = MaterialTheme.typography.headlineSmall.copy(
@@ -462,7 +726,7 @@ private fun OperatorCard(
                         ),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        modifier = Modifier.basicMarquee()
                     )
 
                     // Full name - Supporting detail
