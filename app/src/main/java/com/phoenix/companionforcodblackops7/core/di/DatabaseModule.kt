@@ -2,6 +2,7 @@ package com.phoenix.companionforcodblackops7.core.di
 
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.core.data.local.entity.TableMetadata
+import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,11 +21,12 @@ object DatabaseModule {
         return RealmConfiguration.Builder(
             schema = setOf(
                 DynamicEntity::class,
-                TableMetadata::class
+                TableMetadata::class,
+                ChecklistItemEntity::class
             )
         )
             .name("bo7_companion.realm")
-            .schemaVersion(1)
+            .schemaVersion(2)
             .build()
     }
 
