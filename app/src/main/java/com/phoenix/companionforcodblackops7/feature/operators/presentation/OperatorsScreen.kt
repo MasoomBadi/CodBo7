@@ -130,7 +130,7 @@ private fun EmptyContent(onRetry: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            FilledButton(
+            Button(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
@@ -165,7 +165,7 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            FilledButton(
+            Button(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
