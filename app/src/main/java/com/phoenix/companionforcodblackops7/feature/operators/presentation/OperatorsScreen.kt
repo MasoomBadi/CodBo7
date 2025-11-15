@@ -47,27 +47,55 @@ fun OperatorDetailsScreen(
     val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
     val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "OPERATOR DETAILS",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_revert),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
-            // Scrollable content
-            Column(
+            // Hero operator card with image
+            Card(
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp
+                )
             ) {
-                // Dramatic hero image section with operator name overlay
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp)
+                        .height(380.dp)
                 ) {
                     // Operator image
                     if (operatorImageUrl != null) {
@@ -85,188 +113,186 @@ fun OperatorDetailsScreen(
                                     brush = Brush.verticalGradient(
                                         colors = listOf(
                                             MaterialTheme.colorScheme.primaryContainer,
-                                            MaterialTheme.colorScheme.background
+                                            MaterialTheme.colorScheme.secondaryContainer
                                         )
                                     )
                                 )
                         )
                     }
 
-                    // Sophisticated gradient overlay - dramatic lighting effect
+                    // Gradient overlay for text readability
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.Black.copy(alpha = 0.6f),
                                         Color.Transparent,
                                         Color.Transparent,
-                                        Color.Black.copy(alpha = 0.8f),
-                                        MaterialTheme.colorScheme.background
-                                    ),
-                                    startY = 0f,
-                                    endY = Float.POSITIVE_INFINITY
+                                        Color.Black.copy(alpha = 0.3f),
+                                        Color.Black.copy(alpha = 0.85f)
+                                    )
                                 )
                             )
                     )
 
-                    // Primary color accent overlay
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
-                            )
-                    )
-
-                    // Operator name at bottom - Material 3 Expressive bold typography
+                    // Operator name at bottom
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .fillMaxWidth()
                             .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = operator.shortName.uppercase(),
-                            style = MaterialTheme.typography.displayLarge.copy(
+                            style = MaterialTheme.typography.displayMedium.copy(
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 2.sp,
                                 shadow = Shadow(
-                                    color = Color.Black.copy(alpha = 0.8f),
+                                    color = Color.Black.copy(alpha = 0.5f),
                                     offset = Offset(2f, 2f),
-                                    blurRadius = 8f
+                                    blurRadius = 4f
                                 )
                             ),
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color.White,
                             modifier = Modifier.basicMarquee()
                         )
                         Text(
                             text = operator.fullName,
-                            style = MaterialTheme.typography.titleMedium.copy(
+                            style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.8.sp,
                                 shadow = Shadow(
-                                    color = Color.Black.copy(alpha = 0.6f),
+                                    color = Color.Black.copy(alpha = 0.4f),
                                     offset = Offset(1f, 1f),
-                                    blurRadius = 4f
+                                    blurRadius = 3f
                                 )
                             ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.9f),
                             modifier = Modifier.basicMarquee()
                         )
                     }
-                }
 
-                // Info cards section
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Nationality card
-                    DetailInfoCard(
-                        title = "NATIONALITY",
-                        content = operator.nationality,
-                        icon = null,
-                        colorScheme = DetailCardColorScheme.Default
-                    )
-
-                    // Division card with icon
-                    DetailInfoCard(
-                        title = "DIVISION",
-                        content = operator.division.uppercase(),
-                        icon = divisionIconUrl,
-                        colorScheme = DetailCardColorScheme.Secondary
-                    )
-
-                    // Zombie playable card (only if true)
-                    if (operator.zombiePlayable) {
-                        DetailInfoCard(
-                            title = "ZOMBIE MODE",
-                            content = "Playable in Zombie Mode",
-                            icon = zombieIconUrl,
-                            colorScheme = DetailCardColorScheme.Tertiary
-                        )
-                    }
-
-                    // About section - prominent card
-                    if (operator.description.isNotEmpty()) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shape = MaterialTheme.shapes.extraLarge,
-                            tonalElevation = 3.dp,
-                            shadowElevation = 1.dp
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    // Division and Zombie badges at top right
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Division badge
+                        if (divisionIconUrl != null) {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                                tonalElevation = 4.dp,
+                                shadowElevation = 2.dp
                             ) {
-                                Text(
-                                    text = "ABOUT",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Black,
-                                        letterSpacing = 2.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.primary
+                                AsyncImage(
+                                    model = divisionIconUrl,
+                                    contentDescription = operator.division,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .padding(8.dp),
+                                    contentScale = ContentScale.Fit
                                 )
-                                Text(
-                                    text = operator.description.replace("\\n", "\n"),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        letterSpacing = 0.3.sp,
-                                        lineHeight = 26.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
+                            }
+                        }
+
+                        // Zombie badge
+                        if (operator.zombiePlayable && zombieIconUrl != null) {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                tonalElevation = 4.dp,
+                                shadowElevation = 2.dp
+                            ) {
+                                AsyncImage(
+                                    model = zombieIconUrl,
+                                    contentDescription = "Zombie",
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .padding(8.dp),
+                                    contentScale = ContentScale.Fit
                                 )
                             }
                         }
                     }
+                }
+            }
 
-                    // Unlock requirement - accent card
-                    if (operator.unlockCriteria.isNotEmpty()) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialTheme.shapes.extraLarge,
-                            tonalElevation = 4.dp,
-                            shadowElevation = 2.dp
+            // Details section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Quick info cards row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Nationality card
+                    QuickInfoCard(
+                        title = "NATIONALITY",
+                        content = operator.nationality,
+                        modifier = Modifier.weight(1f),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+
+                    // Division card
+                    QuickInfoCard(
+                        title = "DIVISION",
+                        content = operator.division.uppercase(),
+                        modifier = Modifier.weight(1f),
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+
+                // Zombie mode card (if applicable)
+                if (operator.zombiePlayable) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 2.dp
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.primary,
-                                                shape = MaterialTheme.shapes.extraSmall
-                                            )
-                                    )
-                                    Text(
-                                        text = "UNLOCK REQUIREMENT",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Black,
-                                            letterSpacing = 2.sp
-                                        ),
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                            if (zombieIconUrl != null) {
+                                AsyncImage(
+                                    model = zombieIconUrl,
+                                    contentDescription = "Zombie",
+                                    modifier = Modifier.size(40.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = operator.unlockCriteria,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 0.4.sp,
-                                        lineHeight = 26.sp
+                                    text = "ZOMBIE MODE",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.5.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = "Playable in Zombie Mode",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium
                                     ),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -275,7 +301,97 @@ fun OperatorDetailsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // About section
+                if (operator.description.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 3.dp
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp, 32.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = MaterialTheme.shapes.extraSmall
+                                        )
+                                )
+                                Text(
+                                    text = "ABOUT",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Text(
+                                text = operator.description.replace("\\n", "\n"),
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    letterSpacing = 0.3.sp,
+                                    lineHeight = 28.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // Unlock requirement section
+                if (operator.unlockCriteria.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 6.dp
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "🔓 UNLOCK REQUIREMENT",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.8.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Text(
+                                text = operator.unlockCriteria,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    letterSpacing = 0.4.sp,
+                                    lineHeight = 26.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // Banner Ad Space
@@ -297,125 +413,52 @@ fun OperatorDetailsScreen(
                 }
             }
         }
-
-        // Transparent CenterAlignedTopAppBar overlaid on content
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    text = "OPERATOR",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.5.sp,
-                        shadow = Shadow(
-                            color = Color.Black.copy(alpha = 0.8f),
-                            offset = Offset(0f, 2f),
-                            blurRadius = 8f
-                        )
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_revert),
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = Color.Transparent,
-                titleContentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            modifier = Modifier
-                .statusBarsPadding()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.4f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
     }
-}
-
-private enum class DetailCardColorScheme {
-    Default, Secondary, Tertiary
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DetailInfoCard(
+private fun QuickInfoCard(
     title: String,
     content: String,
-    icon: String?,
-    colorScheme: DetailCardColorScheme
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    contentColor: Color
 ) {
-    val (containerColor, contentColor, iconSize) = when (colorScheme) {
-        DetailCardColorScheme.Default -> Triple(
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-            48.dp
-        )
-        DetailCardColorScheme.Secondary -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
-            56.dp
-        )
-        DetailCardColorScheme.Tertiary -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
-            56.dp
-        )
-    }
-
-    Surface(
-        color = containerColor,
+    Card(
+        modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        tonalElevation = 2.dp
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Icon (if provided) - no background container
-            if (icon != null) {
-                AsyncImage(
-                    model = icon,
-                    contentDescription = title,
-                    modifier = Modifier.size(iconSize),
-                    contentScale = ContentScale.Fit
-                )
-            }
-
-            // Text content
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.8.sp
-                    ),
-                    color = contentColor.copy(alpha = 0.8f)
-                )
-                Text(
-                    text = content,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 0.8.sp
-                    ),
-                    color = contentColor
-                )
-            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                ),
+                color = contentColor.copy(alpha = 0.8f)
+            )
+            Text(
+                text = content,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                ),
+                color = contentColor,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
