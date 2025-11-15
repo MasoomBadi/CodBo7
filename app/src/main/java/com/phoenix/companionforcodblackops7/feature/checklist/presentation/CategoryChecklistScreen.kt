@@ -23,6 +23,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistItem
 
+private const val BASE_URL = "http://codbo7.masoombadi.top"
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CategoryChecklistScreen(
@@ -192,7 +194,7 @@ private fun ChecklistItemCard(
                     tonalElevation = 2.dp
                 ) {
                     AsyncImage(
-                        model = url,
+                        model = "$BASE_URL$url",
                         contentDescription = item.name,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -219,9 +221,9 @@ private fun ChecklistItemCard(
                     }
                 )
 
-                item.description?.let { desc ->
+                item.unlockCriteria?.let { criteria ->
                     Text(
-                        text = desc,
+                        text = criteria,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (item.isUnlocked) {
                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)

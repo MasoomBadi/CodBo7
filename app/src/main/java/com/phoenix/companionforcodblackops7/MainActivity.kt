@@ -487,7 +487,7 @@ private fun DashboardCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(160.dp)
             .border(
                 width = 2.dp,
                 brush = Brush.linearGradient(
@@ -513,46 +513,81 @@ private fun DashboardCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.verticalGradient(
+                        brush = Brush.radialGradient(
                             colors = listOf(
-                                Color.Transparent,
-                                gradientColor.copy(alpha = 0.08f)
-                            )
+                                gradientColor.copy(alpha = 0.15f),
+                                Color.Transparent
+                            ),
+                            center = androidx.compose.ui.geometry.Offset(100f, 100f),
+                            radius = 400f
                         )
                     )
             )
 
             // Content
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Surface(
-                    color = buttonColor,
-                    shape = MaterialTheme.shapes.medium
+                // Title with accent line
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = buttonLabel,
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = buttonTextColor
+                    // Accent indicator
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                borderColor,
+                                shape = MaterialTheme.shapes.small
+                            )
                     )
+
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                // Action button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Surface(
+                        color = buttonColor,
+                        shape = MaterialTheme.shapes.medium,
+                        tonalElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = buttonLabel,
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = buttonTextColor
+                            )
+                            Text(
+                                text = "→",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = buttonTextColor
+                            )
+                        }
+                    }
                 }
             }
         }
