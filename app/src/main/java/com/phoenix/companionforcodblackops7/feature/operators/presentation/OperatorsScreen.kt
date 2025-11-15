@@ -344,7 +344,7 @@ private fun DetailInfoCard(
         DetailCardColorScheme.Secondary -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            52.dp
+            56.dp
         )
         DetailCardColorScheme.Tertiary -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
