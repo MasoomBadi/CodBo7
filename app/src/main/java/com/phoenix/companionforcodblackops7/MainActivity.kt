@@ -69,14 +69,26 @@ fun AppNavigation() {
         }
 
         composable("home") {
-            HomeScreen()
+            HomeScreen(
+                onNavigateToDashboard = {
+                    navController.navigate("dashboard") {
+                        popUpTo(0) { inclusive = true }  // Clear entire backstack
+                    }
+                }
+            )
+        }
+
+        composable("dashboard") {
+            DashboardScreen()
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigateToDashboard: () -> Unit) {
+    var timeRemaining by remember { mutableStateOf(3) }
+
     val infiniteTransition = rememberInfiniteTransition(label = "homePulse")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.6f,
@@ -108,6 +120,15 @@ fun HomeScreen() {
                 stiffness = Spring.StiffnessMediumLow
             )
         )
+    }
+
+    // 3-second countdown timer
+    LaunchedEffect(Unit) {
+        while (timeRemaining > 0) {
+            kotlinx.coroutines.delay(1000)
+            timeRemaining--
+        }
+        onNavigateToDashboard()
     }
 
     Box(
@@ -228,7 +249,7 @@ fun HomeScreen() {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Your tactical companion for Call of Duty Black OPS 7",
+                            text = "Your tactical companion for Call of Duty Black OPS 7 is getting ready..",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -236,22 +257,27 @@ fun HomeScreen() {
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                    FilledTonalButton(
-                        onClick = { /* TODO: Navigate to features */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = MaterialTheme.shapes.large
+                    // Countdown timer display
+                    Surface(
+                        modifier = Modifier.size(64.dp),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        tonalElevation = 3.dp
                     ) {
-                        Text(
-                            text = "Explore Features",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = "$timeRemaining",
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -262,6 +288,189 @@ fun HomeScreen() {
                 text = "Version 1.0.0",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun DashboardScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Top App Bar
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 3.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Black Ops 7 Logo",
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "BLACK OPS 7",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Companion",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // Banner Ad Space (reserved)
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Banner Ad Space",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
+        }
+
+        // Main Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Features",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            // Feature Grid
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Row 1
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FeatureCard(
+                        title = "Operators",
+                        icon = "👤",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                    FeatureCard(
+                        title = "Weapons",
+                        icon = "🔫",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                }
+
+                // Row 2
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FeatureCard(
+                        title = "Maps",
+                        icon = "🗺️",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                    FeatureCard(
+                        title = "Loadouts",
+                        icon = "⚙️",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                }
+
+                // Row 3
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FeatureCard(
+                        title = "Stats",
+                        icon = "📊",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                    FeatureCard(
+                        title = "More",
+                        icon = "⋯",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* TODO */ }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun FeatureCard(
+    title: String,
+    icon: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.height(120.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.displaySmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
         }
     }
