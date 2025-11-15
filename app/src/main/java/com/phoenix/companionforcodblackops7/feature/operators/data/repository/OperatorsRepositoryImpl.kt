@@ -45,7 +45,6 @@ class OperatorsRepositoryImpl @Inject constructor(
                 value == null -> default
                 value.type == RealmAny.Type.STRING -> value.asString()
                 value.type == RealmAny.Type.INT -> value.asInt().toString()
-                value.type == RealmAny.Type.LONG -> value.asLong().toString()
                 value.type == RealmAny.Type.DOUBLE -> value.asDouble().toString()
                 value.type == RealmAny.Type.FLOAT -> value.asFloat().toString()
                 value.type == RealmAny.Type.BOOL -> value.asBoolean().toString()
@@ -60,7 +59,6 @@ class OperatorsRepositoryImpl @Inject constructor(
                 value == null -> default
                 value.type == RealmAny.Type.BOOL -> value.asBoolean()
                 value.type == RealmAny.Type.INT -> value.asInt() != 0
-                value.type == RealmAny.Type.LONG -> value.asLong() != 0L
                 value.type == RealmAny.Type.STRING -> {
                     val str = value.asString().lowercase()
                     str == "true" || str == "1"
