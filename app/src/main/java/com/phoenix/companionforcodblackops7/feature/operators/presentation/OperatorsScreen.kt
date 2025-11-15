@@ -173,52 +173,6 @@ fun OperatorDetailsScreen(
                             modifier = Modifier.basicMarquee()
                         )
                     }
-
-                    // Division and Zombie badges at top right
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Division badge
-                        if (divisionIconUrl != null) {
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                                tonalElevation = 4.dp,
-                                shadowElevation = 2.dp
-                            ) {
-                                AsyncImage(
-                                    model = divisionIconUrl,
-                                    contentDescription = operator.division,
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .padding(8.dp),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                        }
-
-                        // Zombie badge
-                        if (operator.zombiePlayable && zombieIconUrl != null) {
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                tonalElevation = 4.dp,
-                                shadowElevation = 2.dp
-                            ) {
-                                AsyncImage(
-                                    model = zombieIconUrl,
-                                    contentDescription = "Zombie",
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .padding(8.dp),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
@@ -229,28 +183,90 @@ fun OperatorDetailsScreen(
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Quick info cards row
-                Row(
+                // Nationality card
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
                 ) {
-                    // Nationality card
-                    QuickInfoCard(
-                        title = "NATIONALITY",
-                        content = operator.nationality,
-                        modifier = Modifier.weight(1f),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "NATIONALITY",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = operator.nationality,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
 
-                    // Division card
-                    QuickInfoCard(
-                        title = "DIVISION",
-                        content = operator.division.uppercase(),
-                        modifier = Modifier.weight(1f),
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                // Division card with icon
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
                     )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (divisionIconUrl != null) {
+                            AsyncImage(
+                                model = divisionIconUrl,
+                                contentDescription = operator.division,
+                                modifier = Modifier.size(56.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "DIVISION",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = operator.division.uppercase(),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
                 }
 
                 // Zombie mode card (if applicable)
@@ -268,15 +284,15 @@ fun OperatorDetailsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                .padding(20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (zombieIconUrl != null) {
                                 AsyncImage(
                                     model = zombieIconUrl,
                                     contentDescription = "Zombie",
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(56.dp),
                                     contentScale = ContentScale.Fit
                                 )
                             }
@@ -291,8 +307,9 @@ fun OperatorDetailsScreen(
                                 )
                                 Text(
                                     text = "Playable in Zombie Mode",
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp
                                     ),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -358,34 +375,47 @@ fun OperatorDetailsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.extraLarge,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                         ),
                         elevation = CardDefaults.cardElevation(
-                            defaultElevation = 6.dp
+                            defaultElevation = 4.dp
                         )
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(24.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = "🔓 UNLOCK REQUIREMENT",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.8.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = MaterialTheme.shapes.extraSmall
+                                        )
+                                )
+                                Text(
+                                    text = "UNLOCK REQUIREMENT",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             Text(
                                 text = operator.unlockCriteria,
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.Medium,
                                     letterSpacing = 0.4.sp,
-                                    lineHeight = 26.sp
+                                    lineHeight = 28.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -412,53 +442,6 @@ fun OperatorDetailsScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun QuickInfoCard(
-    title: String,
-    content: String,
-    modifier: Modifier = Modifier,
-    containerColor: Color,
-    contentColor: Color
-) {
-    Card(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp
-                ),
-                color = contentColor.copy(alpha = 0.8f)
-            )
-            Text(
-                text = content,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 0.5.sp
-                ),
-                color = contentColor,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
