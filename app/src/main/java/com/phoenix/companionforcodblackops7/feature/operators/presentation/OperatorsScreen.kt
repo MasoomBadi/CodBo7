@@ -2,7 +2,6 @@ package com.phoenix.companionforcodblackops7.feature.operators.presentation
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,23 +18,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OperatorsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: OperatorsViewModel = hiltViewModel()
 ) {
-    // TODO: Replace with actual data from ViewModel
-    val operators = remember {
-        listOf(
-            OperatorItem(1, "Phantom", "JSOC", "Elite"),
-            OperatorItem(2, "Reaper", "Guild", "Legendary"),
-            OperatorItem(3, "Ghost", "JSOC", "Epic"),
-            OperatorItem(4, "Shadow", "Guild", "Elite"),
-            OperatorItem(5, "Viper", "Zombie", "Legendary"),
-            OperatorItem(6, "Atlas", "JSOC", "Epic"),
-        )
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -46,16 +38,26 @@ fun OperatorsScreen(
         // Top App Bar
         OperatorsTopBar(onNavigateBack = onNavigateBack)
 
-        // Content
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // Content based on UI state
+        Box(
+            modifier = Modifier.weight(1f)
         ) {
-            items(operators) { operator ->
-                OperatorCard(operator = operator)
+            when (val state = uiState) {
+                is OperatorsUiState.Loading -> {
+                    LoadingContent()
+                }
+                is OperatorsUiState.Empty -> {
+                    EmptyContent(onRetry = { viewModel.retry() })
+                }
+                is OperatorsUiState.Error -> {
+                    ErrorContent(
+                        message = state.message,
+                        onRetry = { viewModel.retry() }
+                    )
+                }
+                is OperatorsUiState.Success -> {
+                    OperatorsGrid(operators = state.operators)
+                }
             }
         }
 
@@ -76,6 +78,114 @@ fun OperatorsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LoadingContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            LoadingIndicator(
+                modifier = Modifier.size(48.dp)
+            )
+            Text(
+                text = "Loading operators...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun EmptyContent(onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Text(
+                text = "No Operators Found",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "The operators data hasn't been synced yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            FilledButton(
+                onClick = onRetry,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ErrorContent(message: String, onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Text(
+                text = "Error Loading Operators",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            FilledButton(
+                onClick = onRetry,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+@Composable
+private fun OperatorsGrid(operators: List<Operator>) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(operators, key = { it.id }) { operator ->
+            OperatorCard(operator = operator)
         }
     }
 }
@@ -136,7 +246,7 @@ private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OperatorCard(operator: OperatorItem) {
+private fun OperatorCard(operator: Operator) {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer_${operator.id}")
     val shimmerAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -152,7 +262,7 @@ private fun OperatorCard(operator: OperatorItem) {
         onClick = { /* TODO: Navigate to operator details */ },
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp),
+            .height(280.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
@@ -162,31 +272,17 @@ private fun OperatorCard(operator: OperatorItem) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Gradient background based on rarity
+            // Division-based gradient background
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = when (operator.rarity) {
-                            "Legendary" -> Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFFFFD700).copy(alpha = 0.15f),
-                                    Color.Transparent
-                                )
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                Color.Transparent
                             )
-                            "Epic" -> Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF9C27B0).copy(alpha = 0.15f),
-                                    Color.Transparent
-                                )
-                            )
-                            else -> Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    Color.Transparent
-                                )
-                            )
-                        }
+                        )
                     )
             )
 
@@ -209,36 +305,54 @@ private fun OperatorCard(operator: OperatorItem) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Rarity badge
-                Surface(
-                    color = when (operator.rarity) {
-                        "Legendary" -> Color(0xFFFFD700).copy(alpha = 0.2f)
-                        "Epic" -> Color(0xFF9C27B0).copy(alpha = 0.2f)
-                        else -> MaterialTheme.colorScheme.primaryContainer
-                    },
-                    shape = MaterialTheme.shapes.small
+                // Top badges row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = operator.rarity.uppercase(),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = when (operator.rarity) {
-                            "Legendary" -> Color(0xFFFFD700)
-                            "Epic" -> Color(0xFF9C27B0)
-                            else -> MaterialTheme.colorScheme.primary
+                    // Division badge
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = operator.division.uppercase(),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Zombie playable badge
+                    if (operator.zombiePlayable) {
+                        Surface(
+                            color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = "ZOMBIE",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                color = Color(0xFF4CAF50)
+                            )
                         }
-                    )
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Icon placeholder (Replace with actual image)
+                // Icon placeholder (Replace with actual image when Coil is integrated)
                 Surface(
                     modifier = Modifier
                         .size(80.dp)
@@ -251,7 +365,7 @@ private fun OperatorCard(operator: OperatorItem) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Text(
-                            text = operator.name.first().toString(),
+                            text = operator.shortName.firstOrNull()?.toString()?.uppercase() ?: "?",
                             style = MaterialTheme.typography.displaySmall.copy(
                                 fontWeight = FontWeight.Black
                             ),
@@ -260,15 +374,17 @@ private fun OperatorCard(operator: OperatorItem) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Operator info
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Short name
                     Text(
-                        text = operator.name.uppercase(),
-                        style = MaterialTheme.typography.titleLarge.copy(
+                        text = operator.shortName.uppercase(),
+                        style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
                         ),
@@ -280,8 +396,9 @@ private fun OperatorCard(operator: OperatorItem) {
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    // Nationality
                     Text(
-                        text = operator.faction,
+                        text = operator.nationality,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Medium
                         ),
@@ -295,11 +412,3 @@ private fun OperatorCard(operator: OperatorItem) {
         }
     }
 }
-
-// Temporary data class - Replace with actual data model
-data class OperatorItem(
-    val id: Int,
-    val name: String,
-    val faction: String,
-    val rarity: String
-)
