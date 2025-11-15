@@ -93,8 +93,10 @@ private fun LoadingContent() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LoadingIndicator(
-                modifier = Modifier.size(48.dp)
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Text(
                 text = "Loading operators...",
@@ -130,7 +132,7 @@ private fun EmptyContent(onRetry: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            FilledButton(
+            Button(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
@@ -165,7 +167,7 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            FilledButton(
+            Button(
                 onClick = onRetry,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
