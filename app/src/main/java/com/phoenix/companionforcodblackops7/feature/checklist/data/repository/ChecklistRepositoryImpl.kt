@@ -41,7 +41,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                             category = category,
                             isUnlocked = checklistMap[operator.id] ?: false,
                             imageUrl = operator.imageUrl,
-                            description = null
+                            unlockCriteria = operator.unlockCriteria
                         )
                     }.sortedBy { it.name }
                 }

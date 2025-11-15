@@ -6,5 +6,5 @@ data class ChecklistItem(
     val category: ChecklistCategory,
     val isUnlocked: Boolean = false,
     val imageUrl: String? = null,
-    val description: String? = null
+    val unlockCriteria: String? = null
 )
