@@ -299,6 +299,17 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DashboardScreen(onNavigateToOperators: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
+    val borderGlow by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "borderGlow"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -318,7 +329,18 @@ fun DashboardScreen(onNavigateToOperators: () -> Unit) {
                 onClick = onNavigateToOperators,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(220.dp)
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = borderGlow),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = borderGlow)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
@@ -395,7 +417,18 @@ fun DashboardScreen(onNavigateToOperators: () -> Unit) {
                 onClick = { /* TODO */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(220.dp)
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow),
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
