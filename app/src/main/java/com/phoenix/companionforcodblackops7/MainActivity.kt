@@ -403,6 +403,7 @@ fun DashboardScreen(
             item {
                 DashboardCard(
                     title = "OPERATORS",
+                    tagline = "View all characters",
                     onClick = onNavigateToOperators,
                     borderColor = MaterialTheme.colorScheme.primary,
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -417,6 +418,7 @@ fun DashboardScreen(
             item {
                 DashboardCard(
                     title = "COLLECTION TRACKER",
+                    tagline = "Track your stats locally",
                     onClick = onNavigateToChecklists,
                     borderColor = MaterialTheme.colorScheme.secondary,
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -432,6 +434,7 @@ fun DashboardScreen(
             item {
                 DashboardCard(
                     title = "MAPS",
+                    tagline = "Explore maps for all modes",
                     onClick = { /* TODO */ },
                     borderColor = MaterialTheme.colorScheme.tertiary,
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -474,6 +477,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardCard(
     title: String,
+    tagline: String,
     onClick: () -> Unit,
     borderColor: androidx.compose.ui.graphics.Color,
     backgroundColor: androidx.compose.ui.graphics.Color,
@@ -487,7 +491,7 @@ private fun DashboardCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(180.dp)
             .border(
                 width = 2.dp,
                 brush = Brush.linearGradient(
@@ -531,7 +535,7 @@ private fun DashboardCard(
                     .padding(24.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Title with accent line
+                // Title with accent line and tagline
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -553,6 +557,12 @@ private fun DashboardCard(
                             letterSpacing = 1.5.sp
                         ),
                         color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = tagline,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
