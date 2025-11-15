@@ -279,12 +279,15 @@ private fun OperatorCard(
     // Get division icon URL
     val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
     val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
+    val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
+        "$BASE_URL${operator.imageUrl}"
+    } else null
 
     Card(
         onClick = { /* TODO: Navigate to operator details */ },
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp),
+            .height(240.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
@@ -294,19 +297,43 @@ private fun OperatorCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Division-based gradient background
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                Color.Transparent
+            // Operator image as background with overlay
+            if (operatorImageUrl != null) {
+                AsyncImage(
+                    model = operatorImageUrl,
+                    contentDescription = operator.shortName,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Dark gradient overlay for text readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.7f),
+                                    Color.Black.copy(alpha = 0.5f),
+                                    Color.Black.copy(alpha = 0.8f)
+                                )
                             )
                         )
-                    )
-            )
+                )
+            } else {
+                // Fallback gradient background
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                    MaterialTheme.colorScheme.surfaceContainer
+                                )
+                            )
+                        )
+                )
+            }
 
             // Shimmer effect
             Box(
@@ -316,7 +343,7 @@ private fun OperatorCard(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.05f),
+                                Color.White.copy(alpha = 0.08f),
                                 Color.Transparent
                             )
                         )
@@ -327,7 +354,7 @@ private fun OperatorCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Top badges row
@@ -337,110 +364,75 @@ private fun OperatorCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Division badge with icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = MaterialTheme.shapes.small
-                            )
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        // Division icon
-                        if (divisionIconUrl != null) {
+                    if (divisionIconUrl != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .background(
+                                    color = Color.Black.copy(alpha = 0.6f),
+                                    shape = MaterialTheme.shapes.small
+                                )
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
                             AsyncImage(
                                 model = divisionIconUrl,
                                 contentDescription = operator.division,
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(20.dp),
                                 contentScale = ContentScale.Fit
                             )
+                            Text(
+                                text = operator.division.uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                        Text(
-                            text = operator.division.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp
-                            ),
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
 
                     // Zombie playable badge
                     if (operator.zombiePlayable && zombieIconUrl != null) {
-                        AsyncImage(
-                            model = zombieIconUrl,
-                            contentDescription = "Zombie playable",
-                            modifier = Modifier
-                                .size(24.dp)
-                                .background(
-                                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
-                                    shape = MaterialTheme.shapes.small
-                                )
-                                .padding(4.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Operator image
-                val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
-                    "$BASE_URL${operator.imageUrl}"
-                } else null
-
-                Surface(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .align(Alignment.CenterHorizontally),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest
-                ) {
-                    if (operatorImageUrl != null) {
-                        AsyncImage(
-                            model = operatorImageUrl,
-                            contentDescription = operator.shortName,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        // Fallback to first letter
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                        Surface(
+                            modifier = Modifier.size(32.dp),
+                            shape = MaterialTheme.shapes.small,
+                            color = Color(0xFF00E676).copy(alpha = 0.9f)
                         ) {
-                            Text(
-                                text = operator.shortName.firstOrNull()?.toString()?.uppercase() ?: "?",
-                                style = MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Black
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                AsyncImage(
+                                    model = zombieIconUrl,
+                                    contentDescription = "Zombie playable",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .padding(4.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Operator info
+                // Bottom info section
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.Start,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     // Short name
                     Text(
                         text = operator.shortName.uppercase(),
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
+                            letterSpacing = 1.2.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -448,13 +440,12 @@ private fun OperatorCard(
                     // Nationality
                     Text(
                         text = operator.nationality,
-                        style = MaterialTheme.typography.bodySmall.copy(
+                        style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Medium
                         ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.9f),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
