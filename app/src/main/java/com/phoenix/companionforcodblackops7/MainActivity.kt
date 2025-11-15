@@ -31,6 +31,9 @@ import com.phoenix.companionforcodblackops7.core.ui.theme.BlackOps7Theme
 import com.phoenix.companionforcodblackops7.core.ui.components.NoInternetDialog
 import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
 import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
+import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
+import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
@@ -136,6 +139,9 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
             DashboardScreen(
                 onNavigateToOperators = {
                     navController.navigate("operators")
+                },
+                onNavigateToChecklists = {
+                    navController.navigate("checklists")
                 }
             )
         }
@@ -163,6 +169,25 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
                     }
                 )
             }
+        }
+
+        composable("checklists") {
+            ChecklistOverviewScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCategory = { category ->
+                    navController.navigate("checklist/${category.name}")
+                }
+            )
+        }
+
+        composable("checklist/{category}") { backStackEntry ->
+            CategoryChecklistScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
@@ -344,7 +369,10 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DashboardScreen(onNavigateToOperators: () -> Unit) {
+fun DashboardScreen(
+    onNavigateToOperators: () -> Unit,
+    onNavigateToChecklists: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -538,6 +566,94 @@ fun DashboardScreen(onNavigateToOperators: () -> Unit) {
                                         letterSpacing = 1.sp
                                     ),
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Checklists Card
+            Card(
+                onClick = onNavigateToChecklists,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.secondary.copy(alpha = borderGlow),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = borderGlow)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Gradient overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+
+                    // Content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(28.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "COLLECTION TRACKER",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 2.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Track your progress unlocking operators and items",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Text(
+                                    text = "TRACK",
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                             }
                         }
