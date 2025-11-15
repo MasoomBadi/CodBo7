@@ -8,6 +8,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,7 +73,7 @@ fun AppNavigation() {
             HomeScreen(
                 onNavigateToDashboard = {
                     navController.navigate("dashboard") {
-                        popUpTo(0) { inclusive = true }  // Clear entire backstack
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -87,8 +88,6 @@ fun AppNavigation() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(onNavigateToDashboard: () -> Unit) {
-    var timeRemaining by remember { mutableStateOf(3) }
-
     val infiniteTransition = rememberInfiniteTransition(label = "homePulse")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.6f,
@@ -120,14 +119,7 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
                 stiffness = Spring.StiffnessMediumLow
             )
         )
-    }
-
-    // 3-second countdown timer
-    LaunchedEffect(Unit) {
-        while (timeRemaining > 0) {
-            kotlinx.coroutines.delay(1000)
-            timeRemaining--
-        }
+        kotlinx.coroutines.delay(2000)
         onNavigateToDashboard()
     }
 
@@ -164,7 +156,6 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
                         modifier = Modifier.size(160.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Outer glow effect
                         Box(
                             modifier = Modifier
                                 .size(160.dp)
@@ -180,7 +171,6 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
                                 )
                         )
 
-                        // Animated border container
                         Box(
                             modifier = Modifier
                                 .size(140.dp)
@@ -256,29 +246,6 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Countdown timer display
-                    Surface(
-                        modifier = Modifier.size(64.dp),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        tonalElevation = 3.dp
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Text(
-                                text = "$timeRemaining",
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
                 }
             }
 
@@ -300,48 +267,200 @@ fun DashboardScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        // Top App Bar
+        // Compact Top Bar
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 3.dp
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Black Ops 7 Logo",
-                    modifier = Modifier.size(48.dp)
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(40.dp)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = "BLACK OPS 7",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "BLACK OPS 7",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        // Main Content with weight to push ad to bottom
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Large Operators Card (Hero)
+            Card(
+                onClick = { /* TODO */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Gradient Overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                                    )
+                                )
+                            )
                     )
-                    Text(
-                        text = "Companion",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                    // Content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(28.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "OPERATORS",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 2.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "View all special operators and their unique abilities",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Text(
+                                    text = "EXPLORE",
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Maps Card (Secondary)
+            Card(
+                onClick = { /* TODO */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Subtle accent
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.05f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
                     )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "MAPS",
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Browse all multiplayer maps",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                text = "VIEW",
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Banner Ad Space (reserved)
+        // Banner Ad Space at Bottom
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
+            color = MaterialTheme.colorScheme.surfaceContainerLowest
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -350,128 +469,9 @@ fun DashboardScreen() {
                 Text(
                     text = "Banner Ad Space",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
             }
-        }
-
-        // Main Content
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Features",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            // Feature Grid
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Row 1
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FeatureCard(
-                        title = "Operators",
-                        icon = "👤",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                    FeatureCard(
-                        title = "Weapons",
-                        icon = "🔫",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                }
-
-                // Row 2
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FeatureCard(
-                        title = "Maps",
-                        icon = "🗺️",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                    FeatureCard(
-                        title = "Loadouts",
-                        icon = "⚙️",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                }
-
-                // Row 3
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FeatureCard(
-                        title = "Stats",
-                        icon = "📊",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                    FeatureCard(
-                        title = "More",
-                        icon = "⋯",
-                        modifier = Modifier.weight(1f),
-                        onClick = { /* TODO */ }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun FeatureCard(
-    title: String,
-    icon: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.height(120.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.displaySmall
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
