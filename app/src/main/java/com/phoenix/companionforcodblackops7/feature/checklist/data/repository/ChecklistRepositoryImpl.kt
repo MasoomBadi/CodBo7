@@ -23,7 +23,7 @@ class ChecklistRepositoryImpl @Inject constructor(
         return when (category) {
             ChecklistCategory.OPERATORS -> {
                 // Get operators from repository
-                val operatorsFlow = operatorsRepository.getOperators()
+                val operatorsFlow = operatorsRepository.getAllOperators()
 
                 // Get checklist state from realm
                 val checklistFlow = realm.query<ChecklistItemEntity>(
