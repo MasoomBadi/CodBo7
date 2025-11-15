@@ -72,7 +72,7 @@ class OperatorsRepositoryImpl @Inject constructor(
             shortName = getString("short_name", "Unknown"),
             fullName = getString("full_name", "Unknown Operator"),
             nationality = getString("nationality", "Unknown"),
-            division = getString("division", "Unknown"),
+            division = getString("divison", "Unknown"), // API has typo: "divison" instead of "division"
             zombiePlayable = getBoolean("zombie_playable", false),
             description = getString("description", ""),
             unlockCriteria = getString("unlock_criteria", ""),

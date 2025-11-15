@@ -13,13 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
+
+private const val BASE_URL = "http://codbo7.masoombadi.top"
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -56,7 +60,10 @@ fun OperatorsScreen(
                     )
                 }
                 is OperatorsUiState.Success -> {
-                    OperatorsGrid(operators = state.operators)
+                    OperatorsGrid(
+                        operators = state.operators,
+                        iconMap = state.iconMap
+                    )
                 }
             }
         }
@@ -178,7 +185,10 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun OperatorsGrid(operators: List<Operator>) {
+private fun OperatorsGrid(
+    operators: List<Operator>,
+    iconMap: Map<String, String>
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -187,7 +197,10 @@ private fun OperatorsGrid(operators: List<Operator>) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(operators, key = { it.id }) { operator ->
-            OperatorCard(operator = operator)
+            OperatorCard(
+                operator = operator,
+                iconMap = iconMap
+            )
         }
     }
 }
@@ -248,7 +261,10 @@ private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OperatorCard(operator: Operator) {
+private fun OperatorCard(
+    operator: Operator,
+    iconMap: Map<String, String>
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer_${operator.id}")
     val shimmerAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -259,6 +275,10 @@ private fun OperatorCard(operator: Operator) {
         ),
         label = "shimmer"
     )
+
+    // Get division icon URL
+    val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
+    val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
 
     Card(
         onClick = { /* TODO: Navigate to operator details */ },
@@ -313,16 +333,31 @@ private fun OperatorCard(operator: Operator) {
                 // Top badges row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Division badge
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = MaterialTheme.shapes.small
+                    // Division badge with icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = MaterialTheme.shapes.small
+                            )
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
+                        // Division icon
+                        if (divisionIconUrl != null) {
+                            AsyncImage(
+                                model = divisionIconUrl,
+                                contentDescription = operator.division,
+                                modifier = Modifier.size(16.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
                         Text(
                             text = operator.division.uppercase(),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp
@@ -334,27 +369,29 @@ private fun OperatorCard(operator: Operator) {
                     }
 
                     // Zombie playable badge
-                    if (operator.zombiePlayable) {
-                        Surface(
-                            color = Color(0xFF4CAF50).copy(alpha = 0.2f),
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                text = "ZOMBIE",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                ),
-                                color = Color(0xFF4CAF50)
-                            )
-                        }
+                    if (operator.zombiePlayable && zombieIconUrl != null) {
+                        AsyncImage(
+                            model = zombieIconUrl,
+                            contentDescription = "Zombie playable",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .background(
+                                    color = Color(0xFF4CAF50).copy(alpha = 0.2f),
+                                    shape = MaterialTheme.shapes.small
+                                )
+                                .padding(4.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Icon placeholder (Replace with actual image when Coil is integrated)
+                // Operator image
+                val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
+                    "$BASE_URL${operator.imageUrl}"
+                } else null
+
                 Surface(
                     modifier = Modifier
                         .size(80.dp)
@@ -362,17 +399,27 @@ private fun OperatorCard(operator: Operator) {
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text(
-                            text = operator.shortName.firstOrNull()?.toString()?.uppercase() ?: "?",
-                            style = MaterialTheme.typography.displaySmall.copy(
-                                fontWeight = FontWeight.Black
-                            ),
-                            color = MaterialTheme.colorScheme.primary
+                    if (operatorImageUrl != null) {
+                        AsyncImage(
+                            model = operatorImageUrl,
+                            contentDescription = operator.shortName,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        // Fallback to first letter
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = operator.shortName.firstOrNull()?.toString()?.uppercase() ?: "?",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Black
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
 
