@@ -19,16 +19,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
+import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
 
 @Composable
 fun SyncScreen(
     onSyncComplete: () -> Unit,
+    networkMonitor: NetworkMonitor,
     viewModel: SyncViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isConnected by rememberNetworkState(networkMonitor)
 
-    LaunchedEffect(Unit) {
-        viewModel.startSync()
+    // Start sync when internet becomes available
+    LaunchedEffect(isConnected) {
+        if (isConnected && uiState is SyncUiState.Idle) {
+            viewModel.startSync()
+        }
     }
 
     LaunchedEffect(uiState) {

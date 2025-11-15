@@ -29,9 +29,8 @@ class SyncViewModel @Inject constructor(
 
     fun startSync() {
         viewModelScope.launch {
-            // Check for network connectivity first
+            // Skip if no internet - let NoInternetDialog handle this
             if (!networkMonitor.isConnected()) {
-                _uiState.value = SyncUiState.Error("No internet connection available")
                 return@launch
             }
 
@@ -47,5 +46,9 @@ class SyncViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun resetToIdle() {
+        _uiState.value = SyncUiState.Idle
     }
 }
