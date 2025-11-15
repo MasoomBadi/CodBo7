@@ -182,13 +182,16 @@ private fun ChecklistItemCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .heightIn(min = 100.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Image
             item.imageUrl?.let { url ->
                 Surface(
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier
+                        .width(80.dp)
+                        .fillMaxHeight(),
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     tonalElevation = 2.dp
