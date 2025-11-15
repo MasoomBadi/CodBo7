@@ -15,8 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,12 +52,11 @@ fun OperatorDetailsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = operator.shortName.uppercase(),
+                        text = "OPERATOR",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp
-                        ),
-                        modifier = Modifier.basicMarquee()
+                            letterSpacing = 1.5.sp
+                        )
                     )
                 },
                 navigationIcon = {
@@ -87,33 +88,19 @@ fun OperatorDetailsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Hero image section
+                // Dramatic hero image section with operator name overlay
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(320.dp)
+                        .height(400.dp)
                 ) {
+                    // Operator image
                     if (operatorImageUrl != null) {
                         AsyncImage(
                             model = operatorImageUrl,
                             contentDescription = operator.shortName,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
-                        )
-                        // Gradient overlay
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Transparent,
-                                            MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                                            MaterialTheme.colorScheme.background
-                                        )
-                                    )
-                                )
                         )
                     } else {
                         Box(
@@ -130,119 +117,190 @@ fun OperatorDetailsScreen(
                         )
                     }
 
-                    // Badges at top right
-                    Row(
+                    // Sophisticated gradient overlay - dramatic lighting effect
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.6f),
+                                        Color.Transparent,
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.8f),
+                                        MaterialTheme.colorScheme.background
+                                    ),
+                                    startY = 0f,
+                                    endY = Float.POSITIVE_INFINITY
+                                )
+                            )
+                    )
+
+                    // Primary color accent overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+                            )
+                    )
+
+                    // Operator name at bottom - Material 3 Expressive bold typography
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        // Division badge
-                        if (divisionIconUrl != null) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = MaterialTheme.shapes.medium,
-                                tonalElevation = 6.dp
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
-                                ) {
-                                    AsyncImage(
-                                        model = divisionIconUrl,
-                                        contentDescription = operator.division,
-                                        modifier = Modifier.size(24.dp),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                    Text(
-                                        text = operator.division.uppercase(),
-                                        style = MaterialTheme.typography.labelLarge.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 1.2.sp
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-
-                        // Zombie badge
-                        if (operator.zombiePlayable && zombieIconUrl != null) {
-                            Surface(
-                                modifier = Modifier.size(48.dp),
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                tonalElevation = 6.dp
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    AsyncImage(
-                                        model = zombieIconUrl,
-                                        contentDescription = "Zombie playable",
-                                        modifier = Modifier.size(32.dp),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Info section
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    // Name section
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = operator.shortName.uppercase(),
-                            style = MaterialTheme.typography.displaySmall.copy(
+                            style = MaterialTheme.typography.displayLarge.copy(
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 1.5.sp
+                                letterSpacing = 2.sp,
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.8f),
+                                    offset = Offset(2f, 2f),
+                                    blurRadius = 8f
+                                )
                             ),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.basicMarquee()
                         )
                         Text(
                             text = operator.fullName,
-                            style = MaterialTheme.typography.titleLarge.copy(
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Medium,
-                                letterSpacing = 0.5.sp
+                                letterSpacing = 0.8.sp,
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.6f),
+                                    offset = Offset(1f, 1f),
+                                    blurRadius = 4f
+                                )
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.basicMarquee()
                         )
                     }
+                }
 
-                    // Nationality
-                    InfoCard(
+                // Info cards section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Nationality card
+                    DetailInfoCard(
                         title = "NATIONALITY",
-                        content = operator.nationality
+                        content = operator.nationality,
+                        icon = null,
+                        colorScheme = DetailCardColorScheme.Default
                     )
 
-                    // Description
-                    if (operator.description.isNotEmpty()) {
-                        InfoCard(
-                            title = "ABOUT",
-                            content = operator.description
+                    // Division card with icon
+                    DetailInfoCard(
+                        title = "DIVISION",
+                        content = operator.division.uppercase(),
+                        icon = divisionIconUrl,
+                        colorScheme = DetailCardColorScheme.Secondary
+                    )
+
+                    // Zombie playable card (only if true)
+                    if (operator.zombiePlayable) {
+                        DetailInfoCard(
+                            title = "ZOMBIE MODE",
+                            content = "Playable in Zombie Mode",
+                            icon = zombieIconUrl,
+                            colorScheme = DetailCardColorScheme.Tertiary
                         )
                     }
 
-                    // Unlock criteria
+                    // About section - prominent card
+                    if (operator.description.isNotEmpty()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = MaterialTheme.shapes.extraLarge,
+                            tonalElevation = 3.dp,
+                            shadowElevation = 1.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "ABOUT",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = operator.description,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        letterSpacing = 0.3.sp,
+                                        lineHeight = 26.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    // Unlock requirement - accent card
                     if (operator.unlockCriteria.isNotEmpty()) {
-                        InfoCard(
-                            title = "UNLOCK REQUIREMENT",
-                            content = operator.unlockCriteria,
-                            accent = true
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.extraLarge,
+                            tonalElevation = 4.dp,
+                            shadowElevation = 2.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = MaterialTheme.shapes.extraSmall
+                                            )
+                                    )
+                                    Text(
+                                        text = "UNLOCK REQUIREMENT",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Black,
+                                            letterSpacing = 2.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Text(
+                                    text = operator.unlockCriteria,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 0.4.sp,
+                                        lineHeight = 26.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Banner Ad Space
@@ -267,48 +325,92 @@ fun OperatorDetailsScreen(
     }
 }
 
+private enum class DetailCardColorScheme {
+    Default, Secondary, Tertiary
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun InfoCard(
+private fun DetailInfoCard(
     title: String,
     content: String,
-    accent: Boolean = false
+    icon: String?,
+    colorScheme: DetailCardColorScheme
 ) {
+    val (containerColor, contentColor, iconSize) = when (colorScheme) {
+        DetailCardColorScheme.Default -> Triple(
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            32.dp
+        )
+        DetailCardColorScheme.Secondary -> Triple(
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            36.dp
+        )
+        DetailCardColorScheme.Tertiary -> Triple(
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            40.dp
+        )
+    }
+
     Surface(
-        color = if (accent) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        },
+        color = containerColor,
         shape = MaterialTheme.shapes.large,
         tonalElevation = 2.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp
-                ),
-                color = if (accent) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+            // Icon (if provided)
+            if (icon != null) {
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                    tonalElevation = 1.dp
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        AsyncImage(
+                            model = icon,
+                            contentDescription = title,
+                            modifier = Modifier.size(iconSize),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 }
-            )
-            Text(
-                text = content,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    letterSpacing = 0.3.sp,
-                    lineHeight = 24.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            }
+
+            // Text content
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.8.sp
+                    ),
+                    color = contentColor.copy(alpha = 0.8f)
+                )
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = contentColor
+                )
+            }
         }
     }
 }
