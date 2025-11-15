@@ -269,49 +269,20 @@ fun DashboardScreen() {
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        // Compact Top Bar
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 2.dp
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "BLACK OPS 7",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
         // Main Content with weight to push ad to bottom
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Large Operators Card (Hero)
+            // Operators Card
             Card(
                 onClick = { /* TODO */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp),
+                    .height(220.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
@@ -383,16 +354,16 @@ fun DashboardScreen() {
                 }
             }
 
-            // Maps Card (Secondary)
+            // Maps Card
             Card(
                 onClick = { /* TODO */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp),
+                    .height(220.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = MaterialTheme.shapes.extraLarge
             ) {
                 Box(
@@ -405,61 +376,66 @@ fun DashboardScreen() {
                             .background(
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.05f),
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.06f),
                                         Color.Transparent
                                     )
                                 )
                             )
                     )
 
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(28.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             Text(
                                 text = "MAPS",
-                                style = MaterialTheme.typography.headlineLarge.copy(
+                                style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Black,
-                                    letterSpacing = 1.5.sp
+                                    letterSpacing = 2.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Browse all multiplayer maps",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = "Browse all multiplayer maps and locations",
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
-                        Surface(
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = MaterialTheme.shapes.medium
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.Bottom
                         ) {
-                            Text(
-                                text = "VIEW",
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
+                            Surface(
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Text(
+                                    text = "EXPLORE",
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Banner Ad Space at Bottom
+        // Banner Ad Space at Bottom - Standard full banner height
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
+                .height(90.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest
         ) {
             Box(
@@ -467,7 +443,7 @@ fun DashboardScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Banner Ad Space",
+                    text = "Banner Ad Space (320x90)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
