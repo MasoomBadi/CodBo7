@@ -3,6 +3,7 @@ package com.phoenix.companionforcodblackops7.feature.sync.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phoenix.companionforcodblackops7.core.data.repository.SyncRepository
+import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ sealed interface SyncUiState {
 
 @HiltViewModel
 class SyncViewModel @Inject constructor(
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SyncUiState>(SyncUiState.Idle)
@@ -27,6 +29,12 @@ class SyncViewModel @Inject constructor(
 
     fun startSync() {
         viewModelScope.launch {
+            // Check for network connectivity first
+            if (!networkMonitor.isConnected()) {
+                _uiState.value = SyncUiState.Error("No internet connection available")
+                return@launch
+            }
+
             _uiState.value = SyncUiState.Loading("Initializing...")
 
             syncRepository.checkAndSync { progress ->

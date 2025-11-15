@@ -28,14 +28,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.phoenix.companionforcodblackops7.core.ui.theme.BlackOps7Theme
+import com.phoenix.companionforcodblackops7.core.ui.components.NoInternetDialog
+import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
+import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
 import com.phoenix.companionforcodblackops7.feature.sync.presentation.SyncScreen
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlin.system.exitProcess
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var networkMonitor: NetworkMonitor
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -47,9 +55,46 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    ConnectivityWrapper(
+                        networkMonitor = networkMonitor,
+                        onExit = {
+                            finish()
+                            exitProcess(0)
+                        }
+                    ) {
+                        AppNavigation()
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ConnectivityWrapper(
+    networkMonitor: NetworkMonitor,
+    onExit: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val isConnected by rememberNetworkState(networkMonitor)
+    var showDialog by remember { mutableStateOf(!isConnected) }
+
+    LaunchedEffect(isConnected) {
+        showDialog = !isConnected
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        content()
+
+        if (showDialog) {
+            NoInternetDialog(
+                onRetry = {
+                    if (networkMonitor.isConnected()) {
+                        showDialog = false
+                    }
+                },
+                onExit = onExit
+            )
         }
     }
 }
