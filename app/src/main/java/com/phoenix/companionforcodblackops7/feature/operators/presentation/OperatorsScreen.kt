@@ -4,6 +4,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -86,7 +87,18 @@ fun OperatorDetailsScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .border(
+                        width = 2.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.primary
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
                 shape = MaterialTheme.shapes.extraLarge,
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 8.dp
@@ -703,7 +715,18 @@ private fun OperatorCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp),
+            .height(260.dp)
+            .border(
+                width = 1.5.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha)
+                    )
+                ),
+                shape = MaterialTheme.shapes.extraLarge
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
