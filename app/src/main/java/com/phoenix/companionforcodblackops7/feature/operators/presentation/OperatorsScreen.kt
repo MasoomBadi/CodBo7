@@ -266,17 +266,30 @@ private fun OperatorCard(
     iconMap: Map<String, String>
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer_${operator.id}")
+
+    // Subtle shimmer animation for premium feel
     val shimmerAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
+        initialValue = 0.0f,
+        targetValue = 0.15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "shimmer"
     )
 
-    // Get division icon URL
+    // Subtle glow pulse for accent border
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    // Get URLs
     val divisionIconUrl = iconMap[operator.division.lowercase()]?.let { "$BASE_URL$it" }
     val zombieIconUrl = iconMap["zombie"]?.let { "$BASE_URL$it" }
     val operatorImageUrl = if (operator.imageUrl.isNotEmpty()) {
@@ -287,17 +300,20 @@ private fun OperatorCard(
         onClick = { /* TODO: Navigate to operator details */ },
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp),
+            .height(260.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 2.dp
+        ),
         shape = MaterialTheme.shapes.extraLarge
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Operator image as background with overlay
+            // Operator image background
             if (operatorImageUrl != null) {
                 AsyncImage(
                     model = operatorImageUrl,
@@ -305,56 +321,70 @@ private fun OperatorCard(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // Dark gradient overlay for text readability
+
+                // Sophisticated gradient scrim - darker at edges, lighter in middle
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.Black.copy(alpha = 0.7f),
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Black.copy(alpha = 0.8f)
-                                )
+                                    Color.Black.copy(alpha = 0.85f),
+                                    Color.Black.copy(alpha = 0.4f),
+                                    Color.Black.copy(alpha = 0.3f),
+                                    Color.Black.copy(alpha = 0.9f)
+                                ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY
                             )
                         )
                 )
+
+                // Subtle primary color overlay for brand consistency
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                        )
+                )
             } else {
-                // Fallback gradient background
+                // Fallback: Dynamic gradient using theme colors
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                    MaterialTheme.colorScheme.surfaceContainer
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.surfaceContainerLow
                                 )
                             )
                         )
                 )
             }
 
-            // Shimmer effect
+            // Subtle shimmer overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .alpha(shimmerAlpha)
                     .background(
-                        brush = Brush.verticalGradient(
+                        brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.08f),
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                 Color.Transparent
                             )
                         )
                     )
             )
 
-            // Content
+            // Content with proper Material 3 spacing
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Top badges row
@@ -363,43 +393,44 @@ private fun OperatorCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Division badge with icon
+                    // Division badge - Material 3 Surface with elevation
                     if (divisionIconUrl != null) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.6f),
-                                    shape = MaterialTheme.shapes.small
-                                )
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
+                            shape = MaterialTheme.shapes.small,
+                            tonalElevation = 3.dp
                         ) {
-                            AsyncImage(
-                                model = divisionIconUrl,
-                                contentDescription = operator.division,
-                                modifier = Modifier.size(20.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                            Text(
-                                text = operator.division.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                ),
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                AsyncImage(
+                                    model = divisionIconUrl,
+                                    contentDescription = operator.division,
+                                    modifier = Modifier.size(18.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Text(
+                                    text = operator.division.uppercase(),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.2.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
 
-                    // Zombie playable badge
+                    // Zombie badge - Bright, prominent with proper elevation
                     if (operator.zombiePlayable && zombieIconUrl != null) {
                         Surface(
-                            modifier = Modifier.size(32.dp),
-                            shape = MaterialTheme.shapes.small,
-                            color = Color(0xFF00E676).copy(alpha = 0.9f)
+                            modifier = Modifier.size(40.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            tonalElevation = 4.dp,
+                            shadowElevation = 2.dp
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
@@ -408,9 +439,7 @@ private fun OperatorCard(
                                 AsyncImage(
                                     model = zombieIconUrl,
                                     contentDescription = "Zombie playable",
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .padding(4.dp),
+                                    modifier = Modifier.size(28.dp),
                                     contentScale = ContentScale.Fit
                                 )
                             }
@@ -418,37 +447,80 @@ private fun OperatorCard(
                     }
                 }
 
-                // Bottom info section
+                // Bottom info with enhanced hierarchy
                 Column(
                     horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Short name
+                    // Operator name - Bold, expressive typography
                     Text(
                         text = operator.shortName.uppercase(),
-                        style = MaterialTheme.typography.titleLarge.copy(
+                        style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp
+                            letterSpacing = 1.5.sp
                         ),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Nationality
+                    // Full name - Supporting detail
                     Text(
-                        text = operator.nationality,
+                        text = operator.fullName,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.5.sp
                         ),
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+
+                    // Nationality with subtle styling
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = MaterialTheme.shapes.extraSmall
+                                )
+                        )
+                        Text(
+                            text = operator.nationality,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.4.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
+
+            // Subtle accent border with glow effect
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(glowAlpha * 0.5f)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                Color.Transparent,
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    )
+            )
         }
     }
 }
