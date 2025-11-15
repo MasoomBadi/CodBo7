@@ -54,24 +54,34 @@ class ChecklistRepositoryImpl @Inject constructor(
     }
 
     override fun getProgress(): Flow<ChecklistProgress> {
-        return realm.query<ChecklistItemEntity>().asFlow().map { results ->
-            val items = results.list
+        // Combine operators data with checklist state
+        val operatorsFlow = operatorsRepository.getAllOperators()
+        val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { results ->
+            results.list
+        }
+
+        return combine(operatorsFlow, checklistFlow) { operators, checklistItems ->
             val categoryProgressMap = mutableMapOf<ChecklistCategory, CategoryProgress>()
 
-            // For now, only calculate operators progress
-            val operatorItems = items.filter { it.category == ChecklistCategory.OPERATORS.name }
+            // Calculate operators progress
+            if (operators.isNotEmpty()) {
+                val operatorChecklistMap = checklistItems
+                    .filter { it.category == ChecklistCategory.OPERATORS.name }
+                    .associate { it.id to it.isUnlocked }
 
-            if (operatorItems.isNotEmpty()) {
-                val unlockedCount = operatorItems.count { it.isUnlocked }
+                val unlockedCount = operators.count { operator ->
+                    operatorChecklistMap[operator.id] == true
+                }
+
                 categoryProgressMap[ChecklistCategory.OPERATORS] = CategoryProgress(
                     category = ChecklistCategory.OPERATORS,
-                    totalItems = operatorItems.size,
+                    totalItems = operators.size,
                     unlockedItems = unlockedCount
                 )
             }
 
-            val totalUnlocked = items.count { it.isUnlocked }
-            val totalItems = items.size
+            val totalItems = categoryProgressMap.values.sumOf { it.totalItems }
+            val totalUnlocked = categoryProgressMap.values.sumOf { it.unlockedItems }
 
             ChecklistProgress(
                 totalItems = totalItems,

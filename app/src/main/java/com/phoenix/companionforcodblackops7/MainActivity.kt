@@ -390,279 +390,65 @@ fun DashboardScreen(
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        // Main Content with weight to push ad to bottom
-        Column(
+        // Scrollable Main Content
+        LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Operators Card
-            Card(
-                onClick = onNavigateToOperators,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .border(
-                        width = 2.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = borderGlow),
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.primary.copy(alpha = borderGlow)
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.extraLarge
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = MaterialTheme.shapes.extraLarge
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Gradient Overlay
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                                    )
-                                )
-                            )
-                    )
+            item {
+                DashboardCard(
+                    title = "OPERATORS",
+                    onClick = onNavigateToOperators,
+                    borderColor = MaterialTheme.colorScheme.primary,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+                    gradientColor = MaterialTheme.colorScheme.primary,
+                    buttonColor = MaterialTheme.colorScheme.primary,
+                    buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
 
-                    // Content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(28.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "OPERATORS",
-                                style = MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "View all special operators and their unique abilities",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Text(
-                                    text = "EXPLORE",
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
-                    }
-                }
+            // Collection Tracker Card
+            item {
+                DashboardCard(
+                    title = "COLLECTION TRACKER",
+                    onClick = onNavigateToChecklists,
+                    borderColor = MaterialTheme.colorScheme.secondary,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = MaterialTheme.colorScheme.secondary,
+                    buttonColor = MaterialTheme.colorScheme.secondaryContainer,
+                    buttonTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    buttonLabel = "TRACK",
+                    borderGlow = borderGlow
+                )
             }
 
             // Maps Card
-            Card(
-                onClick = { /* TODO */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .border(
-                        width = 2.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow)
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.extraLarge
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = MaterialTheme.shapes.extraLarge
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Subtle accent
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.06f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(28.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "MAPS",
-                                style = MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Browse all multiplayer maps and locations",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Text(
-                                    text = "EXPLORE",
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            }
-                        }
-                    }
-                }
+            item {
+                DashboardCard(
+                    title = "MAPS",
+                    onClick = { /* TODO */ },
+                    borderColor = MaterialTheme.colorScheme.tertiary,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = MaterialTheme.colorScheme.tertiary,
+                    buttonColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    buttonTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
             }
 
-            // Checklists Card
-            Card(
-                onClick = onNavigateToChecklists,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .border(
-                        width = 2.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.secondary.copy(alpha = borderGlow),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = borderGlow)
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.extraLarge
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                shape = MaterialTheme.shapes.extraLarge
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // Gradient overlay
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-
-                    // Content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(28.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "COLLECTION TRACKER",
-                                style = MaterialTheme.typography.displaySmall.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Track your progress unlocking operators and items",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Text(
-                                    text = "TRACK",
-                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
-                    }
-                }
+            // Scroll indicator spacer
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
-        // Banner Ad Space at Bottom - Standard full banner height
+        // Banner Ad Space at Bottom
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -678,6 +464,95 @@ fun DashboardScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DashboardCard(
+    title: String,
+    onClick: () -> Unit,
+    borderColor: androidx.compose.ui.graphics.Color,
+    backgroundColor: androidx.compose.ui.graphics.Color,
+    gradientColor: androidx.compose.ui.graphics.Color,
+    buttonColor: androidx.compose.ui.graphics.Color,
+    buttonTextColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onPrimary,
+    buttonLabel: String,
+    borderGlow: Float
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .border(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        borderColor.copy(alpha = borderGlow),
+                        borderColor.copy(alpha = 0.3f),
+                        borderColor.copy(alpha = borderGlow)
+                    )
+                ),
+                shape = MaterialTheme.shapes.extraLarge
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Gradient Overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                gradientColor.copy(alpha = 0.08f)
+                            )
+                        )
+                    )
+            )
+
+            // Content
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Surface(
+                    color = buttonColor,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(
+                        text = buttonLabel,
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        ),
+                        color = buttonTextColor
+                    )
+                }
             }
         }
     }
