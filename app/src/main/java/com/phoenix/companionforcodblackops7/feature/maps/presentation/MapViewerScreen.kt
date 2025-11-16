@@ -11,6 +11,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -220,7 +221,8 @@ fun MapViewerScreen(
                                     markers = uiState.markers,
                                     layerControls = uiState.layerControls,
                                     visibleControlIds = uiState.visibleControlIds,
-                                    canvasSize = canvasSize
+                                    canvasSize = canvasSize,
+                                    currentScale = scale
                                 )
                             }
 
@@ -252,7 +254,8 @@ private fun MapCanvas(
     markers: List<MapMarker>,
     layerControls: List<LayerControl>,
     visibleControlIds: Set<String>,
-    canvasSize: IntSize
+    canvasSize: IntSize,
+    currentScale: Float
 ) {
     // Get visible marker categories from controls
     val visibleMarkerCategories = layerControls
@@ -306,27 +309,110 @@ private fun MapCanvas(
                     mapBounds = map.bounds
                 )
 
-                    Box(
-                        modifier = Modifier
-                            .offset {
-                                IntOffset(
-                                    x = markerPosition.x.toInt(),
-                                    y = markerPosition.y.toInt()
-                                )
-                            }
-                            .size(32.dp)
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                model = "http://codbo7.masoombadi.top${marker.iconUrl}"
-                            ),
-                            contentDescription = marker.name,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                x = markerPosition.x.toInt(),
+                                y = markerPosition.y.toInt()
+                            )
+                        }
+                        .graphicsLayer {
+                            // Counter-scale to maintain reasonable size
+                            val counterScale = 1f / currentScale.coerceAtLeast(1f)
+                            scaleX = counterScale
+                            scaleY = counterScale
+                        }
+                ) {
+                    // Check if this is a POI label (text-based marker)
+                    if (marker.category == "poiLabel") {
+                        TextLabelMarker(text = marker.name)
+                    } else {
+                        LocationPinMarker(iconUrl = marker.iconUrl)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LocationPinMarker(iconUrl: String) {
+    Box(
+        modifier = Modifier.size(40.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        // Location pin background
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val pinRadius = 30f
+            val pinCenterX = size.width / 2f
+            val pinCenterY = pinRadius
+
+            // Draw circular top part
+            drawCircle(
+                color = Color.Black,
+                radius = pinRadius,
+                center = Offset(pinCenterX, pinCenterY)
+            )
+
+            // Draw bottom triangle/teardrop part
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(pinCenterX - pinRadius * 0.5f, pinCenterY + pinRadius * 0.7f)
+                lineTo(pinCenterX, size.height)
+                lineTo(pinCenterX + pinRadius * 0.5f, pinCenterY + pinRadius * 0.7f)
+                close()
+            }
+            drawPath(
+                path = path,
+                color = Color.Black
+            )
+        }
+
+        // Icon inside pin
+        Box(
+            modifier = Modifier
+                .offset(y = 8.dp)
+                .size(20.dp)
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = "http://codbo7.masoombadi.top${iconUrl}"
+                ),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
+    }
+}
+
+@Composable
+private fun TextLabelMarker(text: String) {
+    Box(
+        modifier = Modifier
+            .background(
+                color = Color.Black,
+                shape = MaterialTheme.shapes.small
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                shape = MaterialTheme.shapes.small
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            ),
+            color = Color.White,
+            maxLines = 1
+        )
     }
 }
 
@@ -372,8 +458,13 @@ private fun calculateMarkerPosition(
     }
 
     // Calculate marker position within the actual image bounds
-    val markerX = imageOffsetX + (normalizedX * imageWidth) - 16f
-    val markerY = imageOffsetY + (normalizedY * imageHeight) - 16f
+    // For location pins, offset so the bottom point is at the coordinate
+    // For text labels, center them
+    val markerOffsetX = if (marker.category == "poiLabel") 0f else 20f  // Half of 40dp pin width
+    val markerOffsetY = if (marker.category == "poiLabel") 0f else 40f  // Full pin height
+
+    val markerX = imageOffsetX + (normalizedX * imageWidth) - markerOffsetX
+    val markerY = imageOffsetY + (normalizedY * imageHeight) - markerOffsetY
 
     Timber.d("Marker '${marker.name}': coords=(${marker.coordX},${marker.coordY}), normalized=($normalizedX,$normalizedY), position=($markerX,$markerY)")
 
