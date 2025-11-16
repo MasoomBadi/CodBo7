@@ -219,6 +219,7 @@ class MapsRepositoryImpl @Inject constructor(
         return MapLayer(
             id = getString("id", entity.id),
             mapId = getString("map_id", ""),
+            layerKey = getString("layer_key", ""),
             layerName = getString("layer_name", ""),
             layerType = getString("layer_type", ""),
             imageUrl = getString("image_url", ""),
@@ -255,13 +256,13 @@ class MapsRepositoryImpl @Inject constructor(
         return MapMarker(
             id = getString("id", entity.id),
             mapId = getString("map_id", ""),
-            layerId = getString("layer_id", ""),
+            category = getString("category", ""),
             markerType = getString("marker_type", ""),
             coordX = getInt("coord_x", 0),
             coordY = getInt("coord_y", 0),
             iconUrl = getString("icon_url", ""),
-            label = getString("label", ""),
-            description = getString("description", "")
+            name = getString("name", ""),
+            properties = getString("properties", "")
         )
     }
 }

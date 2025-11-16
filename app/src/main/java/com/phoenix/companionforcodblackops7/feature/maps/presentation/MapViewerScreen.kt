@@ -160,6 +160,7 @@ fun MapViewerScreen(
                                             val marker = findMarkerAtPosition(
                                                 tapOffset = tapOffset,
                                                 markers = uiState.markers,
+                                                layers = uiState.layers,
                                                 visibleLayerIds = uiState.visibleLayerIds,
                                                 canvasSize = canvasSize,
                                                 mapBounds = map.bounds,
@@ -210,11 +211,18 @@ private fun MapCanvas(
     canvasSize: IntSize
 ) {
     val visibleLayers = layers.filter { it.id in visibleLayerIds }
+
+    // Create a map of layer keys to layer IDs for visible layers
+    val visibleLayerKeyToId = layers
+        .filter { it.id in visibleLayerIds }
+        .associate { it.layerKey to it.id }
+
+    // Match markers to layers using category -> layerKey relationship
     val visibleMarkers = markers.filter { marker ->
         when {
             layers.isEmpty() -> true
-            marker.layerId.isEmpty() -> true
-            marker.layerId in visibleLayerIds -> true
+            marker.category.isEmpty() -> true
+            visibleLayerKeyToId.keys.any { it.contains(marker.markerType) || marker.category.contains(it) } -> true
             else -> false
         }
     }
@@ -295,6 +303,7 @@ private fun calculateMarkerPosition(
 private fun findMarkerAtPosition(
     tapOffset: Offset,
     markers: List<MapMarker>,
+    layers: List<com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer>,
     visibleLayerIds: Set<String>,
     canvasSize: IntSize,
     mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds,
@@ -305,8 +314,21 @@ private fun findMarkerAtPosition(
     val adjustedTapX = (tapOffset.x - offsetX) / scale
     val adjustedTapY = (tapOffset.y - offsetY) / scale
 
+    // Create a map of layer keys to layer IDs for visible layers
+    val visibleLayerKeyToId = layers
+        .filter { it.id in visibleLayerIds }
+        .associate { it.layerKey to it.id }
+
+    // Match markers to layers using category -> layerKey relationship
     return markers
-        .filter { it.layerId in visibleLayerIds || visibleLayerIds.isEmpty() }
+        .filter { marker ->
+            when {
+                layers.isEmpty() -> true
+                marker.category.isEmpty() -> true
+                visibleLayerKeyToId.keys.any { it.contains(marker.markerType) || marker.category.contains(it) } -> true
+                else -> false
+            }
+        }
         .firstOrNull { marker ->
             val markerPos = calculateMarkerPosition(marker, canvasSize, mapBounds)
             val distance = kotlin.math.sqrt(
@@ -375,11 +397,11 @@ private fun MarkerDetailCard(
                         painter = rememberAsyncImagePainter(
                             model = "http://codbo7.masoombadi.top${marker.iconUrl}"
                         ),
-                        contentDescription = marker.label,
+                        contentDescription = marker.name,
                         modifier = Modifier.size(40.dp)
                     )
                     Text(
-                        text = marker.label,
+                        text = marker.name,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -396,16 +418,6 @@ private fun MarkerDetailCard(
                 )
             }
 
-            if (marker.description.isNotBlank()) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                )
-                Text(
-                    text = marker.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
 
             Text(
                 text = "Tap to close",
