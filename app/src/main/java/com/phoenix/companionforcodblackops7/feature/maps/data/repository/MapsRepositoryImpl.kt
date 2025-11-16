@@ -126,6 +126,18 @@ class MapsRepositoryImpl @Inject constructor(
     }
 
     override fun getLayersForMap(mapId: String): Flow<List<MapLayer>> {
+        Timber.d("Querying layers for mapId: $mapId")
+
+        // Debug: Check all map_layers entities
+        val allLayersCount = realm.query<DynamicEntity>("tableName == $0", "map_layers").find().size
+        Timber.d("Total map_layers entities in database: $allLayersCount")
+
+        // Debug: Log all map_layers to see their map_id values
+        realm.query<DynamicEntity>("tableName == $0", "map_layers").find().forEach { entity ->
+            val entityMapId = entity.data["map_id"]
+            Timber.d("Found layer entity: id=${entity.id}, map_id value=$entityMapId, type=${entityMapId?.type}")
+        }
+
         return realm.query<DynamicEntity>(
             "tableName == $0 AND data['map_id'] == $1",
             "map_layers",
@@ -133,6 +145,7 @@ class MapsRepositoryImpl @Inject constructor(
         )
             .asFlow()
             .map { results ->
+                Timber.d("Query returned ${results.list.size} layers for mapId=$mapId")
                 results.list.mapNotNull { entity ->
                     try {
                         deserializeMapLayer(entity)
@@ -145,6 +158,18 @@ class MapsRepositoryImpl @Inject constructor(
     }
 
     override fun getMarkersForMap(mapId: String): Flow<List<MapMarker>> {
+        Timber.d("Querying markers for mapId: $mapId")
+
+        // Debug: Check all map_markers entities
+        val allMarkersCount = realm.query<DynamicEntity>("tableName == $0", "map_markers").find().size
+        Timber.d("Total map_markers entities in database: $allMarkersCount")
+
+        // Debug: Log first few map_markers to see their map_id values
+        realm.query<DynamicEntity>("tableName == $0", "map_markers").find().take(5).forEach { entity ->
+            val entityMapId = entity.data["map_id"]
+            Timber.d("Found marker entity: id=${entity.id}, map_id value=$entityMapId, type=${entityMapId?.type}")
+        }
+
         return realm.query<DynamicEntity>(
             "tableName == $0 AND data['map_id'] == $1",
             "map_markers",
@@ -152,6 +177,7 @@ class MapsRepositoryImpl @Inject constructor(
         )
             .asFlow()
             .map { results ->
+                Timber.d("Query returned ${results.list.size} markers for mapId=$mapId")
                 results.list.mapNotNull { entity ->
                     try {
                         deserializeMapMarker(entity)
