@@ -126,13 +126,23 @@ class MapsRepositoryImpl @Inject constructor(
     }
 
     override fun getLayersForMap(mapId: String): Flow<List<MapLayer>> {
+        Timber.d("Querying layers for mapId: $mapId")
+
+        // Convert string mapId to int for query (database stores map_id as integer)
+        val mapIdInt = mapId.toIntOrNull() ?: 0
+
+        // Debug: Check all map_layers entities
+        val allLayersCount = realm.query<DynamicEntity>("tableName == $0", "map_layers").find().size
+        Timber.d("Total map_layers entities in database: $allLayersCount")
+
         return realm.query<DynamicEntity>(
             "tableName == $0 AND data['map_id'] == $1",
             "map_layers",
-            mapId
+            mapIdInt
         )
             .asFlow()
             .map { results ->
+                Timber.d("Query returned ${results.list.size} layers for mapId=$mapId (as int: $mapIdInt)")
                 results.list.mapNotNull { entity ->
                     try {
                         deserializeMapLayer(entity)
@@ -145,13 +155,23 @@ class MapsRepositoryImpl @Inject constructor(
     }
 
     override fun getMarkersForMap(mapId: String): Flow<List<MapMarker>> {
+        Timber.d("Querying markers for mapId: $mapId")
+
+        // Convert string mapId to int for query (database stores map_id as integer)
+        val mapIdInt = mapId.toIntOrNull() ?: 0
+
+        // Debug: Check all map_markers entities
+        val allMarkersCount = realm.query<DynamicEntity>("tableName == $0", "map_markers").find().size
+        Timber.d("Total map_markers entities in database: $allMarkersCount")
+
         return realm.query<DynamicEntity>(
             "tableName == $0 AND data['map_id'] == $1",
             "map_markers",
-            mapId
+            mapIdInt
         )
             .asFlow()
             .map { results ->
+                Timber.d("Query returned ${results.list.size} markers for mapId=$mapId (as int: $mapIdInt)")
                 results.list.mapNotNull { entity ->
                     try {
                         deserializeMapMarker(entity)
@@ -202,7 +222,7 @@ class MapsRepositoryImpl @Inject constructor(
             layerName = getString("layer_name", ""),
             layerType = getString("layer_type", ""),
             imageUrl = getString("image_url", ""),
-            isDefaultVisible = getBoolean("is_default_visible", true),
+            isDefaultVisible = getBoolean("default_visible", true),
             displayOrder = getInt("display_order", 0),
             parentLayerId = getString("parent_layer_id", "").takeIf { it.isNotEmpty() },
             category = getString("category", "")
