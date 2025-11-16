@@ -292,20 +292,20 @@ private fun TeamsRow(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            teamsList.forEach { teamName ->
+            teamsList.forEachIndexed { index, teamName ->
+                // Map team names to icon keys
                 val teamKey = when {
                     teamName.contains("JSOC", ignoreCase = true) -> "jsoc"
-                    teamName.contains("Guild", ignoreCase = true) -> "guilds"
+                    teamName.contains("Guild", ignoreCase = true) -> "guild"
                     else -> teamName.lowercase().replace(" ", "_")
                 }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Team icon
                     val iconUrl = iconMap[teamKey]?.iconUrl
@@ -319,13 +319,24 @@ private fun TeamsRow(
                         )
                     }
 
-                    // Team name
+                    // Team name - display as is from database
                     Text(
                         text = teamName,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Medium
                         ),
                         color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                // Add "vs" separator between teams
+                if (index < teamsList.size - 1) {
+                    Text(
+                        text = "vs",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Normal
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
