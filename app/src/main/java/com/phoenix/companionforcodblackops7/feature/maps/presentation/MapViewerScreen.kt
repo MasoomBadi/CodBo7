@@ -82,9 +82,9 @@ fun MapViewerScreen(
         drawerState = drawerState,
         drawerContent = {
             LayerControlDrawer(
-                layers = uiState.layers,
-                visibleLayerIds = uiState.visibleLayerIds,
-                onToggleLayer = { layerId -> viewModel.toggleLayerVisibility(layerId) },
+                layerControls = uiState.layerControls,
+                visibleControlIds = uiState.visibleControlIds,
+                onToggleControl = { controlId -> viewModel.toggleLayerVisibility(controlId) },
                 onClose = { scope.launch { drawerState.close() } }
             )
         }
@@ -160,8 +160,8 @@ fun MapViewerScreen(
                                             val marker = findMarkerAtPosition(
                                                 tapOffset = tapOffset,
                                                 markers = uiState.markers,
-                                                layers = uiState.layers,
-                                                visibleLayerIds = uiState.visibleLayerIds,
+                                                layerControls = uiState.layerControls,
+                                                visibleControlIds = uiState.visibleControlIds,
                                                 canvasSize = canvasSize,
                                                 mapBounds = map.bounds,
                                                 scale = scale,
@@ -176,7 +176,8 @@ fun MapViewerScreen(
                                     map = map,
                                     layers = uiState.layers,
                                     markers = uiState.markers,
-                                    visibleLayerIds = uiState.visibleLayerIds,
+                                    layerControls = uiState.layerControls,
+                                    visibleControlIds = uiState.visibleControlIds,
                                     canvasSize = canvasSize
                                 )
                             }
@@ -207,28 +208,30 @@ private fun MapCanvas(
     map: GameMap,
     layers: List<com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer>,
     markers: List<MapMarker>,
-    visibleLayerIds: Set<String>,
+    layerControls: List<LayerControl>,
+    visibleControlIds: Set<String>,
     canvasSize: IntSize
 ) {
-    val visibleLayers = layers.filter { it.id in visibleLayerIds }
+    // Get visible marker categories from controls
+    val visibleMarkerCategories = layerControls
+        .filter { it.id in visibleControlIds && it.markerCategory != null }
+        .mapNotNull { it.markerCategory }
+        .toSet()
 
-    // Create a map of layer keys to layer IDs for visible layers
-    val visibleLayerKeyToId = layers
-        .filter { it.id in visibleLayerIds }
-        .associate { it.layerKey to it.id }
+    // Get visible layer keys from controls
+    val visibleLayerKeys = layerControls
+        .filter { it.id in visibleControlIds && it.layerKey != null }
+        .mapNotNull { it.layerKey }
+        .toSet()
 
-    // Match markers to layers using category -> layerKey relationship
-    val visibleMarkers = markers.filter { marker ->
-        when {
-            layers.isEmpty() -> true
-            marker.category.isEmpty() -> true
-            visibleLayerKeyToId.keys.any { it.contains(marker.markerType) || marker.category.contains(it) } -> true
-            else -> false
-        }
-    }
+    // Filter layers
+    val visibleLayers = layers.filter { it.layerKey in visibleLayerKeys }
+
+    // Filter markers by category
+    val visibleMarkers = markers.filter { it.category in visibleMarkerCategories }
 
     LaunchedEffect(visibleLayers.size, visibleMarkers.size, canvasSize) {
-        Timber.d("MapCanvas: ${visibleLayers.size} visible layers, ${visibleMarkers.size} visible markers, canvas size: $canvasSize")
+        Timber.d("MapCanvas: ${visibleLayers.size} visible layers, ${visibleMarkers.size} visible markers (from ${visibleMarkerCategories.size} categories), canvas size: $canvasSize")
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -288,23 +291,58 @@ private fun calculateMarkerPosition(
     canvasSize: IntSize,
     mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds
 ): Offset {
-    val mapWidth = mapBounds.northeastX - mapBounds.southwestX
-    val mapHeight = mapBounds.northeastY - mapBounds.southwestY
+    if (canvasSize.width == 0 || canvasSize.height == 0) {
+        return Offset.Zero
+    }
 
+    val mapWidth = (mapBounds.northeastX - mapBounds.southwestX).toFloat()
+    val mapHeight = (mapBounds.northeastY - mapBounds.southwestY).toFloat()
+
+    // Normalize coordinates (0.0 to 1.0)
     val normalizedX = (marker.coordX - mapBounds.southwestX).toFloat() / mapWidth
     val normalizedY = (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
 
+    // Calculate the aspect ratio of the map and canvas
+    val mapAspectRatio = mapWidth / mapHeight
+    val canvasAspectRatio = canvasSize.width.toFloat() / canvasSize.height.toFloat()
+
+    // Determine the actual image bounds within the canvas (accounting for ContentScale.Fit)
+    val imageWidth: Float
+    val imageHeight: Float
+    val imageOffsetX: Float
+    val imageOffsetY: Float
+
+    if (canvasAspectRatio > mapAspectRatio) {
+        // Canvas is wider - image will have letterboxing on left/right
+        imageHeight = canvasSize.height.toFloat()
+        imageWidth = imageHeight * mapAspectRatio
+        imageOffsetX = (canvasSize.width - imageWidth) / 2f
+        imageOffsetY = 0f
+    } else {
+        // Canvas is taller - image will have pillarboxing on top/bottom
+        imageWidth = canvasSize.width.toFloat()
+        imageHeight = imageWidth / mapAspectRatio
+        imageOffsetX = 0f
+        imageOffsetY = (canvasSize.height - imageHeight) / 2f
+    }
+
+    // Calculate marker position within the actual image bounds
+    val markerX = imageOffsetX + (normalizedX * imageWidth) - 16f
+    val markerY = imageOffsetY + (normalizedY * imageHeight) - 16f
+
+    Timber.d("Marker '${marker.name}': coords=(${marker.coordX},${marker.coordY}), normalized=($normalizedX,$normalizedY), position=($markerX,$markerY)")
+
     return Offset(
-        x = normalizedX * canvasSize.width - 16f,
-        y = normalizedY * canvasSize.height - 16f
+        x = markerX,
+        y = markerY
     )
 }
 
 private fun findMarkerAtPosition(
     tapOffset: Offset,
     markers: List<MapMarker>,
-    layers: List<com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer>,
-    visibleLayerIds: Set<String>,
+    layerControls: List<LayerControl>,
+    visibleControlIds: Set<String>,
     canvasSize: IntSize,
     mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds,
     scale: Float,
@@ -314,21 +352,15 @@ private fun findMarkerAtPosition(
     val adjustedTapX = (tapOffset.x - offsetX) / scale
     val adjustedTapY = (tapOffset.y - offsetY) / scale
 
-    // Create a map of layer keys to layer IDs for visible layers
-    val visibleLayerKeyToId = layers
-        .filter { it.id in visibleLayerIds }
-        .associate { it.layerKey to it.id }
+    // Get visible marker categories from controls
+    val visibleMarkerCategories = layerControls
+        .filter { it.id in visibleControlIds && it.markerCategory != null }
+        .mapNotNull { it.markerCategory }
+        .toSet()
 
-    // Match markers to layers using category -> layerKey relationship
+    // Filter markers by category
     return markers
-        .filter { marker ->
-            when {
-                layers.isEmpty() -> true
-                marker.category.isEmpty() -> true
-                visibleLayerKeyToId.keys.any { it.contains(marker.markerType) || marker.category.contains(it) } -> true
-                else -> false
-            }
-        }
+        .filter { it.category in visibleMarkerCategories }
         .firstOrNull { marker ->
             val markerPos = calculateMarkerPosition(marker, canvasSize, mapBounds)
             val distance = kotlin.math.sqrt(
@@ -433,9 +465,9 @@ private fun MarkerDetailCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LayerControlDrawer(
-    layers: List<com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer>,
-    visibleLayerIds: Set<String>,
-    onToggleLayer: (String) -> Unit,
+    layerControls: List<LayerControl>,
+    visibleControlIds: Set<String>,
+    onToggleControl: (String) -> Unit,
     onClose: () -> Unit
 ) {
     ModalDrawerSheet(
@@ -480,46 +512,28 @@ private fun LayerControlDrawer(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val parentLayers = layers.filter { it.parentLayerId == null }
+                val parentControls = layerControls.filter { it.parentId == null }
 
-                if (parentLayers.isEmpty()) {
+                parentControls.forEach { parent ->
                     item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No layers available for this map",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-
-                parentLayers.forEach { parent ->
-                    item {
-                        LayerToggleItem(
-                            layer = parent,
-                            isVisible = parent.id in visibleLayerIds,
-                            onToggle = { onToggleLayer(parent.id) },
+                        ControlToggleItem(
+                            control = parent,
+                            isVisible = parent.id in visibleControlIds,
+                            onToggle = { onToggleControl(parent.id) },
                             isIndented = false,
                             isEnabled = true
                         )
                     }
 
-                    val childLayers = layers.filter { it.parentLayerId == parent.id }
-                    childLayers.forEach { child ->
+                    val childControls = layerControls.filter { it.parentId == parent.id }
+                    childControls.forEach { child ->
                         item {
-                            LayerToggleItem(
-                                layer = child,
-                                isVisible = child.id in visibleLayerIds,
-                                onToggle = { onToggleLayer(child.id) },
+                            ControlToggleItem(
+                                control = child,
+                                isVisible = child.id in visibleControlIds,
+                                onToggle = { onToggleControl(child.id) },
                                 isIndented = true,
-                                isEnabled = parent.id in visibleLayerIds
+                                isEnabled = parent.id in visibleControlIds
                             )
                         }
                     }
@@ -530,8 +544,8 @@ private fun LayerControlDrawer(
 }
 
 @Composable
-private fun LayerToggleItem(
-    layer: com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer,
+private fun ControlToggleItem(
+    control: LayerControl,
     isVisible: Boolean,
     onToggle: () -> Unit,
     isIndented: Boolean = false,
@@ -563,7 +577,7 @@ private fun LayerToggleItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = layer.layerName,
+                    text = control.displayName,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium
                     ),
@@ -574,7 +588,7 @@ private fun LayerToggleItem(
                     }
                 )
                 Text(
-                    text = layer.layerType.uppercase(),
+                    text = control.type.name.replace("_", " "),
                     style = MaterialTheme.typography.labelSmall.copy(
                         letterSpacing = 0.5.sp
                     ),
@@ -602,7 +616,7 @@ private fun LayerToggleItem(
                 if (isVisible && isEnabled) {
                     Icon(
                         imageVector = Icons.Default.Layers,
-                        contentDescription = "Layer visible",
+                        contentDescription = "Control visible",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
                     )
