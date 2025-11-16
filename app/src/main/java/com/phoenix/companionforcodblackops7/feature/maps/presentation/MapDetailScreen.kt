@@ -44,8 +44,8 @@ fun MapDetailScreen(
         label = "borderGlow"
     )
 
-    // Fetch team icons
-    val teamIcons by iconsRepository.getIconsByCategory("maps").collectAsState(initial = emptyList())
+    // Fetch team icons from operators category
+    val teamIcons by iconsRepository.getIconsByCategory("operators").collectAsState(initial = emptyList())
     val teamIconMap = remember(teamIcons) {
         teamIcons.associateBy { it.name.lowercase() }
     }
