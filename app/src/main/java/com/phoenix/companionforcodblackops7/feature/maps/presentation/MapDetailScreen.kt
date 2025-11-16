@@ -296,15 +296,10 @@ private fun TeamsRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             teamsList.forEach { teamName ->
-                // Try multiple variations for icon lookup
+                // Map team names to icon keys
                 val teamKey = when {
                     teamName.contains("JSOC", ignoreCase = true) -> "jsoc"
-                    teamName.contains("Guild", ignoreCase = true) -> {
-                        // Try "guilds" first, then "the_guilds"
-                        if (iconMap.containsKey("guilds")) "guilds"
-                        else if (iconMap.containsKey("the_guilds")) "the_guilds"
-                        else teamName.lowercase().replace(" ", "_")
-                    }
+                    teamName.contains("Guild", ignoreCase = true) -> "guild"
                     else -> teamName.lowercase().replace(" ", "_")
                 }
 
