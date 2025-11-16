@@ -35,6 +35,8 @@ import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
+import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
+import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapListScreen
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
@@ -111,6 +113,9 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
     var selectedOperator by remember { mutableStateOf<Operator?>(null) }
     var iconMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
+    // State to hold selected map for navigation to viewer
+    var selectedMap by remember { mutableStateOf<GameMap?>(null) }
+
     NavHost(
         navController = navController,
         startDestination = "sync"
@@ -143,6 +148,9 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
                 },
                 onNavigateToChecklists = {
                     navController.navigate("checklists")
+                },
+                onNavigateToMaps = {
+                    navController.navigate("maps")
                 }
             )
         }
@@ -189,6 +197,46 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable("maps") {
+            MapListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMapClick = { map ->
+                    selectedMap = map
+                    navController.navigate("mapViewer")
+                }
+            )
+        }
+
+        composable("mapViewer") {
+            selectedMap?.let { map ->
+                // TODO: MapViewerScreen will be implemented next
+                // For now, just show a placeholder
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Map Viewer",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Text(
+                            text = map.displayName,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Button(onClick = { navController.popBackStack() }) {
+                            Text("Back")
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -372,7 +420,8 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 @Composable
 fun DashboardScreen(
     onNavigateToOperators: () -> Unit,
-    onNavigateToChecklists: () -> Unit
+    onNavigateToChecklists: () -> Unit,
+    onNavigateToMaps: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -435,7 +484,7 @@ fun DashboardScreen(
                 DashboardCard(
                     title = "MAPS",
                     tagline = "Explore maps for all modes",
-                    onClick = { /* TODO */ },
+                    onClick = onNavigateToMaps,
                     borderColor = MaterialTheme.colorScheme.tertiary,
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     gradientColor = MaterialTheme.colorScheme.tertiary,
