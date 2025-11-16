@@ -3,6 +3,7 @@ package com.phoenix.companionforcodblackops7.feature.maps.domain.model
 data class MapLayer(
     val id: String,
     val mapId: String,
+    val layerKey: String,
     val layerName: String,
     val layerType: String,
     val imageUrl: String,
