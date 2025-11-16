@@ -305,9 +305,9 @@ private fun calculateMarkerPosition(
     val mapHeight = (mapBounds.northeastY - mapBounds.southwestY).toFloat()
 
     // Normalize coordinates (0.0 to 1.0)
+    // Coordinates are from webscript, already using top-left origin like Compose
     val normalizedX = (marker.coordX - mapBounds.southwestX).toFloat() / mapWidth
-    // Invert Y because game coordinates use bottom-left origin but Compose uses top-left
-    val normalizedY = 1.0f - (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
+    val normalizedY = (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
 
     // Calculate the aspect ratio of the map and canvas
     val mapAspectRatio = mapWidth / mapHeight
