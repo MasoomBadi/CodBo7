@@ -39,6 +39,7 @@ import com.phoenix.companionforcodblackops7.feature.checklist.presentation.Check
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapDetailScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapListScreen
+import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapViewerScreen
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
@@ -239,29 +240,12 @@ fun AppNavigation(
 
         composable("mapViewer") {
             selectedMap?.let { map ->
-                // TODO: MapViewerScreen will be implemented next
-                // For now, just show a placeholder
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Map Viewer",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        Text(
-                            text = map.displayName,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Button(onClick = { navController.popBackStack() }) {
-                            Text("Back")
-                        }
+                MapViewerScreen(
+                    map = map,
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
-                }
+                )
             }
         }
     }
