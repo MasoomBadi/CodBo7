@@ -3,6 +3,8 @@ package com.phoenix.companionforcodblackops7.feature.maps.data.repository
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
+import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer
+import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
 import com.phoenix.companionforcodblackops7.feature.maps.domain.repository.MapsRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
@@ -120,6 +122,126 @@ class MapsRepositoryImpl @Inject constructor(
             modes = getString("modes", ""),
             campaignMap = getString("campaign_map", ""),
             bounds = parseBounds("bounds")
+        )
+    }
+
+    override fun getLayersForMap(mapId: String): Flow<List<MapLayer>> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0 AND data['map_id'] == $1",
+            "map_layers",
+            mapId
+        )
+            .asFlow()
+            .map { results ->
+                results.list.mapNotNull { entity ->
+                    try {
+                        deserializeMapLayer(entity)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize layer: ${entity.id}")
+                        null
+                    }
+                }.sortedBy { it.displayOrder }
+            }
+    }
+
+    override fun getMarkersForMap(mapId: String): Flow<List<MapMarker>> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0 AND data['map_id'] == $1",
+            "map_markers",
+            mapId
+        )
+            .asFlow()
+            .map { results ->
+                results.list.mapNotNull { entity ->
+                    try {
+                        deserializeMapMarker(entity)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize marker: ${entity.id}")
+                        null
+                    }
+                }
+            }
+    }
+
+    private fun deserializeMapLayer(entity: DynamicEntity): MapLayer {
+        val data = entity.data
+
+        fun getString(key: String, default: String = ""): String {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.STRING -> value.asString()
+                else -> default
+            }
+        }
+
+        fun getInt(key: String, default: Int = 0): Int {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.INT -> value.asInt()
+                value.type == RealmAny.Type.LONG -> value.asLong().toInt()
+                value.type == RealmAny.Type.DOUBLE -> value.asDouble().toInt()
+                value.type == RealmAny.Type.FLOAT -> value.asFloat().toInt()
+                else -> default
+            }
+        }
+
+        fun getBoolean(key: String, default: Boolean = false): Boolean {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.BOOL -> value.asBoolean()
+                value.type == RealmAny.Type.INT -> value.asInt() != 0
+                else -> default
+            }
+        }
+
+        return MapLayer(
+            id = getString("id", entity.id),
+            mapId = getString("map_id", ""),
+            layerName = getString("layer_name", ""),
+            layerType = getString("layer_type", ""),
+            imageUrl = getString("image_url", ""),
+            isDefaultVisible = getBoolean("is_default_visible", true),
+            displayOrder = getInt("display_order", 0)
+        )
+    }
+
+    private fun deserializeMapMarker(entity: DynamicEntity): MapMarker {
+        val data = entity.data
+
+        fun getString(key: String, default: String = ""): String {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.STRING -> value.asString()
+                else -> default
+            }
+        }
+
+        fun getInt(key: String, default: Int = 0): Int {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.INT -> value.asInt()
+                value.type == RealmAny.Type.LONG -> value.asLong().toInt()
+                value.type == RealmAny.Type.DOUBLE -> value.asDouble().toInt()
+                value.type == RealmAny.Type.FLOAT -> value.asFloat().toInt()
+                else -> default
+            }
+        }
+
+        return MapMarker(
+            id = getString("id", entity.id),
+            mapId = getString("map_id", ""),
+            layerId = getString("layer_id", ""),
+            markerType = getString("marker_type", ""),
+            coordX = getInt("coord_x", 0),
+            coordY = getInt("coord_y", 0),
+            iconUrl = getString("icon_url", ""),
+            label = getString("label", ""),
+            description = getString("description", "")
         )
     }
 }
