@@ -85,13 +85,24 @@ class MapViewerViewModel @Inject constructor(
 
     fun toggleLayerVisibility(layerId: String) {
         val currentVisible = _uiState.value.visibleLayerIds
-        _uiState.value = _uiState.value.copy(
-            visibleLayerIds = if (layerId in currentVisible) {
-                currentVisible - layerId
-            } else {
-                currentVisible + layerId
-            }
-        )
+        val layers = _uiState.value.layers
+
+        val isCurrentlyVisible = layerId in currentVisible
+
+        if (isCurrentlyVisible) {
+            val childLayerIds = layers
+                .filter { it.parentLayerId == layerId }
+                .map { it.id }
+                .toSet()
+
+            _uiState.value = _uiState.value.copy(
+                visibleLayerIds = currentVisible - layerId - childLayerIds
+            )
+        } else {
+            _uiState.value = _uiState.value.copy(
+                visibleLayerIds = currentVisible + layerId
+            )
+        }
     }
 
     fun selectMarker(marker: MapMarker?) {

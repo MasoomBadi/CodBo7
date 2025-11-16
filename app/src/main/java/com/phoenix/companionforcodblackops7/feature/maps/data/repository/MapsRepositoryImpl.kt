@@ -203,7 +203,9 @@ class MapsRepositoryImpl @Inject constructor(
             layerType = getString("layer_type", ""),
             imageUrl = getString("image_url", ""),
             isDefaultVisible = getBoolean("is_default_visible", true),
-            displayOrder = getInt("display_order", 0)
+            displayOrder = getInt("display_order", 0),
+            parentLayerId = getString("parent_layer_id", "").takeIf { it.isNotEmpty() },
+            category = getString("category", "")
         )
     }
 
