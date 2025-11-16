@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,12 +52,12 @@ fun OperatorDetailsScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = "OPERATOR DETAILS",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
                         )
                     )
@@ -63,15 +65,14 @@ fun OperatorDetailsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_menu_revert),
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         },
@@ -647,12 +648,12 @@ private fun OperatorsGrid(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
             Text(
                 text = "OPERATORS",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 )
             )
@@ -660,15 +661,14 @@ private fun OperatorsTopBar(onNavigateBack: () -> Unit) {
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_revert),
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            titleContentColor = MaterialTheme.colorScheme.primary
         )
     )
 }

@@ -36,6 +36,7 @@ import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.Check
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
+import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapDetailScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapListScreen
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
@@ -206,9 +207,23 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
                 },
                 onMapClick = { map ->
                     selectedMap = map
-                    navController.navigate("mapViewer")
+                    navController.navigate("mapDetail")
                 }
             )
+        }
+
+        composable("mapDetail") {
+            selectedMap?.let { map ->
+                MapDetailScreen(
+                    map = map,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onViewMap = {
+                        navController.navigate("mapViewer")
+                    }
+                )
+            }
         }
 
         composable("mapViewer") {
