@@ -2,6 +2,8 @@ package com.phoenix.companionforcodblackops7.core.di
 
 import com.phoenix.companionforcodblackops7.core.data.repository.IconsRepositoryImpl
 import com.phoenix.companionforcodblackops7.core.domain.repository.IconsRepository
+import com.phoenix.companionforcodblackops7.feature.maps.data.repository.MapsRepositoryImpl
+import com.phoenix.companionforcodblackops7.feature.maps.domain.repository.MapsRepository
 import com.phoenix.companionforcodblackops7.feature.operators.data.repository.OperatorsRepositoryImpl
 import com.phoenix.companionforcodblackops7.feature.operators.domain.repository.OperatorsRepository
 import dagger.Binds
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindIconsRepository(
         iconsRepositoryImpl: IconsRepositoryImpl
     ): IconsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMapsRepository(
+        mapsRepositoryImpl: MapsRepositoryImpl
+    ): MapsRepository
 }
