@@ -457,12 +457,31 @@ private fun LayerControlDrawer(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(layers) { layer ->
-                    LayerToggleItem(
-                        layer = layer,
-                        isVisible = layer.id in visibleLayerIds,
-                        onToggle = { onToggleLayer(layer.id) }
-                    )
+                val parentLayers = layers.filter { it.parentLayerId == null }
+
+                parentLayers.forEach { parent ->
+                    item {
+                        LayerToggleItem(
+                            layer = parent,
+                            isVisible = parent.id in visibleLayerIds,
+                            onToggle = { onToggleLayer(parent.id) },
+                            isIndented = false,
+                            isEnabled = true
+                        )
+                    }
+
+                    val childLayers = layers.filter { it.parentLayerId == parent.id }
+                    childLayers.forEach { child ->
+                        item {
+                            LayerToggleItem(
+                                layer = child,
+                                isVisible = child.id in visibleLayerIds,
+                                onToggle = { onToggleLayer(child.id) },
+                                isIndented = true,
+                                isEnabled = parent.id in visibleLayerIds
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -473,18 +492,22 @@ private fun LayerControlDrawer(
 private fun LayerToggleItem(
     layer: com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer,
     isVisible: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    isIndented: Boolean = false,
+    isEnabled: Boolean = true
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = if (isIndented) 24.dp else 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isVisible) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = when {
+                !isEnabled -> MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f)
+                isVisible -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainerLowest
             }
         ),
-        onClick = onToggle,
+        onClick = { if (isEnabled) onToggle() },
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
@@ -503,10 +526,10 @@ private fun LayerToggleItem(
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Medium
                     ),
-                    color = if (isVisible) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
+                    color = when {
+                        !isEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        isVisible -> MaterialTheme.colorScheme.onPrimaryContainer
+                        else -> MaterialTheme.colorScheme.onSurface
                     }
                 )
                 Text(
@@ -514,10 +537,10 @@ private fun LayerToggleItem(
                     style = MaterialTheme.typography.labelSmall.copy(
                         letterSpacing = 0.5.sp
                     ),
-                    color = if (isVisible) {
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                    color = when {
+                        !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        isVisible -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
                 )
             }
@@ -527,15 +550,15 @@ private fun LayerToggleItem(
                     .size(24.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isVisible) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
+                        when {
+                            !isEnabled -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            isVisible -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.outlineVariant
                         }
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isVisible) {
+                if (isVisible && isEnabled) {
                     Icon(
                         imageVector = Icons.Default.Layers,
                         contentDescription = "Layer visible",

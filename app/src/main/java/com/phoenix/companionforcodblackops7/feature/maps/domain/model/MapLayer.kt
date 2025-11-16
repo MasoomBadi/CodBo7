@@ -7,5 +7,7 @@ data class MapLayer(
     val layerType: String,
     val imageUrl: String,
     val isDefaultVisible: Boolean,
-    val displayOrder: Int
+    val displayOrder: Int,
+    val parentLayerId: String? = null,
+    val category: String = ""
 )
