@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -165,6 +164,7 @@ private fun MapCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
+            .height(200.dp)
             .border(
                 width = 2.dp,
                 brush = Brush.linearGradient(
@@ -182,55 +182,41 @@ private fun MapCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         shape = MaterialTheme.shapes.extraLarge
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Cover Image with gradient overlay
+            // Background image
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = "http://codbo7.masoombadi.top${map.coverImageUrl}"
+                ),
+                contentDescription = "${map.displayName} cover",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Gradient overlay for text visibility
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-            ) {
-                // Background image
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = "http://codbo7.masoombadi.top${map.coverImageUrl}"
-                    ),
-                    contentDescription = "${map.displayName} cover",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(
-                            MaterialTheme.shapes.extraLarge.copy(
-                                bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-                                bottomEnd = androidx.compose.foundation.shape.CornerSize(0.dp)
-                            )
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Gradient overlay for better text visibility
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.9f)
-                                ),
-                                startY = 0f,
-                                endY = 600f
-                            )
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.8f)
+                            ),
+                            startY = 200f
                         )
-                )
-            }
+                    )
+            )
 
-            // Map Details
+            // Map name at bottom
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .align(Alignment.BottomStart)
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Accent line
                 Box(
@@ -250,94 +236,10 @@ private fun MapCard(
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
-
-                // Metadata rows
-                if (map.teams.isNotBlank()) {
-                    MetadataRow(
-                        icon = "⚔",
-                        label = map.teams
-                    )
-                }
-
-                if (map.modes.isNotBlank()) {
-                    MetadataRow(
-                        icon = "🎮",
-                        label = map.modes
-                    )
-                }
-
-                if (map.campaignMap.isNotBlank()) {
-                    MetadataRow(
-                        icon = "📍",
-                        label = "Campaign: ${map.campaignMap}"
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // View Map button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = MaterialTheme.shapes.medium,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "VIEW MAP",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Text(
-                                text = "→",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
-                }
             }
         }
-    }
-}
-
-@Composable
-private fun MetadataRow(
-    icon: String,
-    label: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.width(24.dp),
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
@@ -382,10 +284,6 @@ private fun ErrorContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "⚠️",
-                style = MaterialTheme.typography.displayLarge
-            )
             Text(
                 text = "Error Loading Maps",
                 style = MaterialTheme.typography.titleLarge.copy(
