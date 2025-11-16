@@ -22,6 +22,7 @@ data class MapViewerState(
     val markers: List<MapMarker> = emptyList(),
     val layerControls: List<LayerControl> = emptyList(),
     val visibleControlIds: Set<String> = emptySet(),
+    val expandedParentIds: Set<String> = emptySet(),
     val selectedMarker: MapMarker? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -69,6 +70,9 @@ class MapViewerViewModel @Inject constructor(
                         // Default: all controls visible
                         val defaultVisible = controls.map { it.id }.toSet()
 
+                        // Default: all parents expanded
+                        val allParents = controls.filter { it.parentId == null }.map { it.id }.toSet()
+
                         Timber.d("Built ${controls.size} layer controls, all visible by default")
 
                         _uiState.value = _uiState.value.copy(
@@ -76,6 +80,7 @@ class MapViewerViewModel @Inject constructor(
                             markers = markers,
                             layerControls = controls,
                             visibleControlIds = defaultVisible,
+                            expandedParentIds = allParents,
                             isLoading = false,
                             error = null
                         )
@@ -88,6 +93,17 @@ class MapViewerViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun toggleParentExpansion(parentId: String) {
+        val currentExpanded = _uiState.value.expandedParentIds
+        _uiState.value = _uiState.value.copy(
+            expandedParentIds = if (parentId in currentExpanded) {
+                currentExpanded - parentId
+            } else {
+                currentExpanded + parentId
+            }
+        )
     }
 
     fun toggleLayerVisibility(controlId: String) {

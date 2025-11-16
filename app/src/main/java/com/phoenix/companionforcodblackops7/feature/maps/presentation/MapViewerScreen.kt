@@ -7,8 +7,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,6 +24,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ChevronRight
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -84,7 +88,9 @@ fun MapViewerScreen(
             LayerControlDrawer(
                 layerControls = uiState.layerControls,
                 visibleControlIds = uiState.visibleControlIds,
+                expandedParentIds = uiState.expandedParentIds,
                 onToggleControl = { controlId -> viewModel.toggleLayerVisibility(controlId) },
+                onToggleExpansion = { parentId -> viewModel.toggleParentExpansion(parentId) },
                 onClose = { scope.launch { drawerState.close() } }
             )
         }
@@ -300,7 +306,8 @@ private fun calculateMarkerPosition(
 
     // Normalize coordinates (0.0 to 1.0)
     val normalizedX = (marker.coordX - mapBounds.southwestX).toFloat() / mapWidth
-    val normalizedY = (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
+    // Invert Y because game coordinates use bottom-left origin but Compose uses top-left
+    val normalizedY = 1.0f - (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
 
     // Calculate the aspect ratio of the map and canvas
     val mapAspectRatio = mapWidth / mapHeight
@@ -462,164 +469,242 @@ private fun MarkerDetailCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LayerControlDrawer(
-    layerControls: List<LayerControl>,
-    visibleControlIds: Set<String>,
-    onToggleControl: (String) -> Unit,
-    onClose: () -> Unit
-) {
-    ModalDrawerSheet(
-        modifier = Modifier.width(320.dp),
-        drawerContainerColor = MaterialTheme.colorScheme.surface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .height(24.dp)
-                        .background(
-                            MaterialTheme.colorScheme.tertiary,
-                            shape = MaterialTheme.shapes.small
-                        )
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "MAP LAYERS",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-            )
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val parentControls = layerControls.filter { it.parentId == null }
-
-                parentControls.forEach { parent ->
-                    item {
-                        ControlToggleItem(
-                            control = parent,
-                            isVisible = parent.id in visibleControlIds,
-                            onToggle = { onToggleControl(parent.id) },
-                            isIndented = false,
-                            isEnabled = true
-                        )
-                    }
-
-                    val childControls = layerControls.filter { it.parentId == parent.id }
-                    childControls.forEach { child ->
-                        item {
-                            ControlToggleItem(
-                                control = child,
-                                isVisible = child.id in visibleControlIds,
-                                onToggle = { onToggleControl(child.id) },
-                                isIndented = true,
-                                isEnabled = parent.id in visibleControlIds
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ControlToggleItem(
+private fun ParentControlItem(
     control: LayerControl,
     isVisible: Boolean,
+    isExpanded: Boolean,
     onToggle: () -> Unit,
-    isIndented: Boolean = false,
-    isEnabled: Boolean = true
+    onExpandToggle: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = if (isIndented) 24.dp else 0.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when {
-                !isEnabled -> MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f)
-                isVisible -> MaterialTheme.colorScheme.primaryContainer
-                else -> MaterialTheme.colorScheme.surfaceContainerLowest
+            containerColor = if (isVisible) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLowest
             }
         ),
-        onClick = { if (isEnabled) onToggle() },
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { onExpandToggle() }
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
+            Row(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = if (isExpanded) {
+                        Icons.Default.ExpandMore
+                    } else {
+                        Icons.AutoMirrored.Filled.ChevronRight
+                    },
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = if (isVisible) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(24.dp)
+                )
+
                 Text(
                     text = control.displayName,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Medium
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
                     ),
-                    color = when {
-                        !isEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                        isVisible -> MaterialTheme.colorScheme.onPrimaryContainer
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-                )
-                Text(
-                    text = control.type.name.replace("_", " "),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = when {
-                        !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        isVisible -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isVisible) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
                     }
                 )
             }
 
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            !isEnabled -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                            isVisible -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.outlineVariant
-                        }
-                    ),
-                contentAlignment = Alignment.Center
+            Checkbox(
+                checked = isVisible,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    uncheckedColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChildControlItem(
+    control: LayerControl,
+    isVisible: Boolean,
+    onToggle: () -> Unit,
+    isEnabled: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                !isEnabled -> MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f)
+                isVisible -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainerLowest
+            }
+        ),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = isEnabled) { if (isEnabled) onToggle() }
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isVisible && isEnabled) {
-                    Icon(
-                        imageVector = Icons.Default.Layers,
-                        contentDescription = "Control visible",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(20.dp)
+                        .background(
+                            if (isEnabled && isVisible) {
+                                MaterialTheme.colorScheme.secondary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            },
+                            shape = MaterialTheme.shapes.small
+                        )
+                )
+
+                Text(
+                    text = control.displayName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = when {
+                        !isEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        isVisible -> MaterialTheme.colorScheme.onSecondaryContainer
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            }
+
+            Checkbox(
+                checked = isVisible,
+                onCheckedChange = { onToggle() },
+                enabled = isEnabled,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.secondary,
+                    uncheckedColor = MaterialTheme.colorScheme.outlineVariant,
+                    disabledCheckedColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                    disabledUncheckedColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LayerControlDrawer(
+    layerControls: List<LayerControl>,
+    visibleControlIds: Set<String>,
+    expandedParentIds: Set<String>,
+    onToggleControl: (String) -> Unit,
+    onToggleExpansion: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    ModalDrawerSheet(
+        modifier = Modifier.width(340.dp),
+        drawerContainerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .height(28.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.tertiary
+                                    )
+                                ),
+                                shape = MaterialTheme.shapes.small
+                            )
                     )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "MAP LAYERS",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val parentControls = layerControls.filter { it.parentId == null }
+
+                parentControls.forEach { parent ->
+                    item {
+                        ParentControlItem(
+                            control = parent,
+                            isVisible = parent.id in visibleControlIds,
+                            isExpanded = parent.id in expandedParentIds,
+                            onToggle = { onToggleControl(parent.id) },
+                            onExpandToggle = { onToggleExpansion(parent.id) }
+                        )
+                    }
+
+                    val childControls = layerControls.filter { it.parentId == parent.id }
+                    if (parent.id in expandedParentIds && childControls.isNotEmpty()) {
+                        childControls.forEach { child ->
+                            item {
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    ChildControlItem(
+                                        control = child,
+                                        isVisible = child.id in visibleControlIds,
+                                        onToggle = { onToggleControl(child.id) },
+                                        isEnabled = parent.id in visibleControlIds
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
