@@ -273,7 +273,7 @@ private fun MapCanvas(
                             painter = rememberAsyncImagePainter(
                                 model = "http://codbo7.masoombadi.top${marker.iconUrl}"
                             ),
-                            contentDescription = marker.label,
+                            contentDescription = marker.name,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
