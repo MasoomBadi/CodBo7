@@ -288,15 +288,50 @@ private fun calculateMarkerPosition(
     canvasSize: IntSize,
     mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds
 ): Offset {
-    val mapWidth = mapBounds.northeastX - mapBounds.southwestX
-    val mapHeight = mapBounds.northeastY - mapBounds.southwestY
+    if (canvasSize.width == 0 || canvasSize.height == 0) {
+        return Offset.Zero
+    }
 
+    val mapWidth = (mapBounds.northeastX - mapBounds.southwestX).toFloat()
+    val mapHeight = (mapBounds.northeastY - mapBounds.southwestY).toFloat()
+
+    // Normalize coordinates (0.0 to 1.0)
     val normalizedX = (marker.coordX - mapBounds.southwestX).toFloat() / mapWidth
     val normalizedY = (marker.coordY - mapBounds.southwestY).toFloat() / mapHeight
 
+    // Calculate the aspect ratio of the map and canvas
+    val mapAspectRatio = mapWidth / mapHeight
+    val canvasAspectRatio = canvasSize.width.toFloat() / canvasSize.height.toFloat()
+
+    // Determine the actual image bounds within the canvas (accounting for ContentScale.Fit)
+    val imageWidth: Float
+    val imageHeight: Float
+    val imageOffsetX: Float
+    val imageOffsetY: Float
+
+    if (canvasAspectRatio > mapAspectRatio) {
+        // Canvas is wider - image will have letterboxing on left/right
+        imageHeight = canvasSize.height.toFloat()
+        imageWidth = imageHeight * mapAspectRatio
+        imageOffsetX = (canvasSize.width - imageWidth) / 2f
+        imageOffsetY = 0f
+    } else {
+        // Canvas is taller - image will have pillarboxing on top/bottom
+        imageWidth = canvasSize.width.toFloat()
+        imageHeight = imageWidth / mapAspectRatio
+        imageOffsetX = 0f
+        imageOffsetY = (canvasSize.height - imageHeight) / 2f
+    }
+
+    // Calculate marker position within the actual image bounds
+    val markerX = imageOffsetX + (normalizedX * imageWidth) - 16f
+    val markerY = imageOffsetY + (normalizedY * imageHeight) - 16f
+
+    Timber.d("Marker '${marker.name}': coords=(${marker.coordX},${marker.coordY}), normalized=($normalizedX,$normalizedY), position=($markerX,$markerY)")
+
     return Offset(
-        x = normalizedX * canvasSize.width - 16f,
-        y = normalizedY * canvasSize.height - 16f
+        x = markerX,
+        y = markerY
     )
 }
 
