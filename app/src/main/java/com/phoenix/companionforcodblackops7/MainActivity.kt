@@ -28,6 +28,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.phoenix.companionforcodblackops7.core.domain.repository.IconsRepository
 import com.phoenix.companionforcodblackops7.core.ui.theme.BlackOps7Theme
 import com.phoenix.companionforcodblackops7.core.ui.components.NoInternetDialog
 import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
@@ -52,6 +53,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var networkMonitor: NetworkMonitor
 
+    @Inject
+    lateinit var iconsRepository: IconsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -69,7 +73,10 @@ class MainActivity : ComponentActivity() {
                             exitProcess(0)
                         }
                     ) {
-                        AppNavigation(networkMonitor = networkMonitor)
+                        AppNavigation(
+                            networkMonitor = networkMonitor,
+                            iconsRepository = iconsRepository
+                        )
                     }
                 }
             }
@@ -107,7 +114,10 @@ fun ConnectivityWrapper(
 }
 
 @Composable
-fun AppNavigation(networkMonitor: NetworkMonitor) {
+fun AppNavigation(
+    networkMonitor: NetworkMonitor,
+    iconsRepository: IconsRepository
+) {
     val navController = rememberNavController()
 
     // State to hold selected operator and iconMap for navigation to details
@@ -221,7 +231,8 @@ fun AppNavigation(networkMonitor: NetworkMonitor) {
                     },
                     onViewMap = {
                         navController.navigate("mapViewer")
-                    }
+                    },
+                    iconsRepository = iconsRepository
                 )
             }
         }

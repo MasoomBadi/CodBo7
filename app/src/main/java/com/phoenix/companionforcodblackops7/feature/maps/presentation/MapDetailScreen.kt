@@ -20,7 +20,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.phoenix.companionforcodblackops7.core.domain.repository.IconsRepository
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -28,7 +30,8 @@ import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 fun MapDetailScreen(
     map: GameMap,
     onNavigateBack: () -> Unit,
-    onViewMap: () -> Unit
+    onViewMap: () -> Unit,
+    iconsRepository: IconsRepository
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "borderGlow")
     val borderGlow by infiniteTransition.animateFloat(
@@ -40,6 +43,12 @@ fun MapDetailScreen(
         ),
         label = "borderGlow"
     )
+
+    // Fetch team icons from operators category
+    val teamIcons by iconsRepository.getIconsByCategory("operators").collectAsState(initial = emptyList())
+    val teamIconMap = remember(teamIcons) {
+        teamIcons.associateBy { it.name.lowercase() }
+    }
 
     Scaffold(
         topBar = {
@@ -173,11 +182,11 @@ fun MapDetailScreen(
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
-                        // Teams
+                        // Teams with icons
                         if (map.teams.isNotBlank()) {
-                            InfoRow(
-                                label = "Teams",
-                                value = map.teams
+                            TeamsRow(
+                                teams = map.teams,
+                                iconMap = teamIconMap
                             )
                         }
 
@@ -196,12 +205,6 @@ fun MapDetailScreen(
                                 value = map.campaignMap
                             )
                         }
-
-                        // Map Bounds
-                        InfoRow(
-                            label = "Map Size",
-                            value = "${map.bounds.northeastX} x ${map.bounds.northeastY}px"
-                        )
                     }
                 }
 
@@ -260,6 +263,70 @@ fun MapDetailScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamsRow(
+    teams: String,
+    iconMap: Map<String, com.phoenix.companionforcodblackops7.core.domain.model.Icon>
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Teams",
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        // Parse teams (e.g., "JSOC vs The Guilds")
+        val teamsList = teams.split(" vs ", " VS ", ignoreCase = true).map { it.trim() }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            teamsList.forEach { teamName ->
+                val teamKey = when {
+                    teamName.contains("JSOC", ignoreCase = true) -> "jsoc"
+                    teamName.contains("Guild", ignoreCase = true) -> "guilds"
+                    else -> teamName.lowercase().replace(" ", "_")
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    // Team icon
+                    val iconUrl = iconMap[teamKey]?.iconUrl
+                    if (iconUrl != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = "http://codbo7.masoombadi.top$iconUrl"
+                            ),
+                            contentDescription = "$teamName icon",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    // Team name
+                    Text(
+                        text = teamName,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
