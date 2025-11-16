@@ -60,10 +60,20 @@ class MapViewerViewModel @Inject constructor(
                         )
                     }
                     .collect { (layers, markers) ->
+                        Timber.d("Loaded ${layers.size} layers and ${markers.size} markers for map ${map.id}")
+                        layers.forEach { layer ->
+                            Timber.d("Layer: id=${layer.id}, name=${layer.layerName}, parent=${layer.parentLayerId}, category=${layer.category}")
+                        }
+                        markers.forEach { marker ->
+                            Timber.d("Marker: id=${marker.id}, label=${marker.label}, layerId=${marker.layerId}, coords=(${marker.coordX}, ${marker.coordY})")
+                        }
+
                         val defaultVisibleLayers = layers
                             .filter { it.isDefaultVisible }
                             .map { it.id }
                             .toSet()
+
+                        Timber.d("Default visible layers: $defaultVisibleLayers")
 
                         _uiState.value = _uiState.value.copy(
                             layers = layers,
