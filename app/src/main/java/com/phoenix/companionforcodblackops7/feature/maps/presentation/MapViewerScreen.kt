@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -272,10 +273,12 @@ private fun MapCanvas(
 
                     Box(
                         modifier = Modifier
-                            .offset(
-                                x = markerPosition.x.dp,
-                                y = markerPosition.y.dp
-                            )
+                            .offset {
+                                IntOffset(
+                                    x = markerPosition.x.toInt(),
+                                    y = markerPosition.y.toInt()
+                                )
+                            }
                             .size(32.dp)
                     ) {
                         Image(
