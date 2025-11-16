@@ -180,7 +180,6 @@ class MapsRepositoryImpl @Inject constructor(
             return when {
                 value == null -> default
                 value.type == RealmAny.Type.INT -> value.asInt()
-                value.type == RealmAny.Type.LONG -> value.asLong().toInt()
                 value.type == RealmAny.Type.DOUBLE -> value.asDouble().toInt()
                 value.type == RealmAny.Type.FLOAT -> value.asFloat().toInt()
                 else -> default
@@ -225,7 +224,6 @@ class MapsRepositoryImpl @Inject constructor(
             return when {
                 value == null -> default
                 value.type == RealmAny.Type.INT -> value.asInt()
-                value.type == RealmAny.Type.LONG -> value.asLong().toInt()
                 value.type == RealmAny.Type.DOUBLE -> value.asDouble().toInt()
                 value.type == RealmAny.Type.FLOAT -> value.asFloat().toInt()
                 else -> default
