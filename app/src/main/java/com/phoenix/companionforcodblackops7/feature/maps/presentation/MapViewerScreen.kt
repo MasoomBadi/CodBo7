@@ -18,20 +18,54 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ChevronRight
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,7 +85,6 @@ import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -142,9 +175,11 @@ fun MapViewerScreen(
                     uiState.isLoading -> {
                         LoadingContent()
                     }
+
                     uiState.error != null -> {
                         ErrorContent(message = uiState.error!!)
                     }
+
                     uiState.map != null -> {
                         Box(
                             modifier = Modifier
@@ -264,12 +299,12 @@ private fun MapCanvas(
         }
 
         visibleMarkers.forEach { marker ->
-                if (canvasSize.width > 0 && canvasSize.height > 0) {
-                    val markerPosition = calculateMarkerPosition(
-                        marker = marker,
-                        canvasSize = canvasSize,
-                        mapBounds = map.bounds
-                    )
+            if (canvasSize.width > 0 && canvasSize.height > 0) {
+                val markerPosition = calculateMarkerPosition(
+                    marker = marker,
+                    canvasSize = canvasSize,
+                    mapBounds = map.bounds
+                )
 
                     Box(
                         modifier = Modifier
@@ -375,7 +410,7 @@ private fun findMarkerAtPosition(
             val markerPos = calculateMarkerPosition(marker, canvasSize, mapBounds)
             val distance = kotlin.math.sqrt(
                 (adjustedTapX - markerPos.x).let { it * it } +
-                (adjustedTapY - markerPos.y).let { it * it }
+                        (adjustedTapY - markerPos.y).let { it * it }
             )
             distance < 32f
         }
@@ -508,7 +543,7 @@ private fun ParentControlItem(
                     imageVector = if (isExpanded) {
                         Icons.Default.ExpandMore
                     } else {
-                        Icons.AutoMirrored.Filled.ChevronRight
+                        Icons.Default.ChevronRight
                     },
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
                     tint = if (isVisible) {
