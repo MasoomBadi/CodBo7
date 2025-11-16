@@ -45,6 +45,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -208,6 +209,20 @@ private fun MapCanvas(
     visibleLayerIds: Set<String>,
     canvasSize: IntSize
 ) {
+    val visibleLayers = layers.filter { it.id in visibleLayerIds }
+    val visibleMarkers = markers.filter { marker ->
+        when {
+            layers.isEmpty() -> true
+            marker.layerId.isEmpty() -> true
+            marker.layerId in visibleLayerIds -> true
+            else -> false
+        }
+    }
+
+    LaunchedEffect(visibleLayers.size, visibleMarkers.size, canvasSize) {
+        Timber.d("MapCanvas: ${visibleLayers.size} visible layers, ${visibleMarkers.size} visible markers, canvas size: $canvasSize")
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = rememberAsyncImagePainter(
@@ -218,23 +233,19 @@ private fun MapCanvas(
             contentScale = ContentScale.Fit
         )
 
-        layers
-            .filter { it.id in visibleLayerIds }
-            .forEach { layer ->
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = "http://codbo7.masoombadi.top${layer.imageUrl}"
-                    ),
-                    contentDescription = layer.layerName,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    alpha = 0.7f
-                )
-            }
+        visibleLayers.forEach { layer ->
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = "http://codbo7.masoombadi.top${layer.imageUrl}"
+                ),
+                contentDescription = layer.layerName,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+                alpha = 0.7f
+            )
+        }
 
-        markers
-            .filter { it.layerId in visibleLayerIds || visibleLayerIds.isEmpty() }
-            .forEach { marker ->
+        visibleMarkers.forEach { marker ->
                 if (canvasSize.width > 0 && canvasSize.height > 0) {
                     val markerPosition = calculateMarkerPosition(
                         marker = marker,
@@ -458,6 +469,24 @@ private fun LayerControlDrawer(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val parentLayers = layers.filter { it.parentLayerId == null }
+
+                if (parentLayers.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No layers available for this map",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
 
                 parentLayers.forEach { parent ->
                     item {
