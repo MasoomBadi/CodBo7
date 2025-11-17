@@ -244,11 +244,11 @@ fun MapDetailScreen(
                         )
                     }
 
-                    // Ad Space
+                    // Ad Space (Google AdSense 320x50 Mobile Banner)
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
+                            .height(50.dp),
                         color = MaterialTheme.colorScheme.surfaceContainerLowest,
                         shape = MaterialTheme.shapes.medium
                     ) {
