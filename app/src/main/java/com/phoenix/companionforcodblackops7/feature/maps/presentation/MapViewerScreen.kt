@@ -78,6 +78,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -99,6 +100,7 @@ fun MapViewerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val density = LocalDensity.current
 
     LaunchedEffect(map) {
         viewModel.loadMap(map)
@@ -108,6 +110,9 @@ fun MapViewerScreen(
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+    val pinWidthPx = with(density) { 40.dp.toPx() }
+    val pinHeightPx = with(density) { 40.dp.toPx() }
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
         scale = (scale * zoomChange).coerceIn(0.5f, 5f)
@@ -211,7 +216,9 @@ fun MapViewerScreen(
                                                 mapBounds = map.bounds,
                                                 scale = scale,
                                                 offsetX = offsetX,
-                                                offsetY = offsetY
+                                                offsetY = offsetY,
+                                                pinWidthPx = pinWidthPx,
+                                                pinHeightPx = pinHeightPx
                                             )
                                             viewModel.selectMarker(marker)
                                         }
@@ -259,6 +266,7 @@ private fun MapCanvas(
     canvasSize: IntSize,
     currentScale: Float
 ) {
+    val density = LocalDensity.current
     // Get visible marker categories from controls
     val visibleMarkerCategories = layerControls
         .filter { it.id in visibleControlIds && it.markerCategory != null }
@@ -305,11 +313,15 @@ private fun MapCanvas(
 
         visibleMarkers.forEach { marker ->
             if (canvasSize.width > 0 && canvasSize.height > 0) {
-                val markerPosition = calculateMarkerPosition(
-                    marker = marker,
-                    canvasSize = canvasSize,
-                    mapBounds = map.bounds
-                )
+                val markerPosition = with(density) {
+                    calculateMarkerPosition(
+                        marker = marker,
+                        canvasSize = canvasSize,
+                        mapBounds = map.bounds,
+                        pinWidthPx = 40.dp.toPx(),
+                        pinHeightPx = 40.dp.toPx()
+                    )
+                }
 
                 Box(
                     modifier = Modifier
@@ -421,7 +433,9 @@ private fun TextLabelMarker(text: String) {
 private fun calculateMarkerPosition(
     marker: MapMarker,
     canvasSize: IntSize,
-    mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds
+    mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds,
+    pinWidthPx: Float,
+    pinHeightPx: Float
 ): Offset {
     if (canvasSize.width == 0 || canvasSize.height == 0) {
         return Offset.Zero
@@ -459,16 +473,26 @@ private fun calculateMarkerPosition(
         imageOffsetY = (canvasSize.height - imageHeight) / 2f
     }
 
-    // Calculate marker position within the actual image bounds
-    // For location pins, offset so the bottom point is at the coordinate
-    // For text labels, center them
-    val markerOffsetX = if (marker.category == "poiLabel") 0f else 20f  // Half of 40dp pin width
-    val markerOffsetY = if (marker.category == "poiLabel") 0f else 40f  // Full pin height
+    // Calculate the coordinate position on the map
+    val coordX = imageOffsetX + (normalizedX * imageWidth)
+    val coordY = imageOffsetY + (normalizedY * imageHeight)
 
-    val markerX = imageOffsetX + (normalizedX * imageWidth) - markerOffsetX
-    val markerY = imageOffsetY + (normalizedY * imageHeight) - markerOffsetY
+    // Offset markers so they point at the coordinate
+    // For location pins: bottom tip should be at coordinate (offset by half width and full height)
+    // For text labels: center should be at coordinate (offset by approximate half size)
+    val markerX = if (marker.category == "poiLabel") {
+        coordX - (pinWidthPx * 0.75f)  // Approximate text label half-width
+    } else {
+        coordX - (pinWidthPx / 2f)  // Center the pin horizontally
+    }
 
-    Timber.d("Marker '${marker.name}': coords=(${marker.coordX},${marker.coordY}), normalized=($normalizedX,$normalizedY), position=($markerX,$markerY)")
+    val markerY = if (marker.category == "poiLabel") {
+        coordY - (pinHeightPx * 0.25f)  // Approximate text label half-height
+    } else {
+        coordY - pinHeightPx  // Position pin so bottom tip is at coordinate
+    }
+
+    Timber.d("Marker '${marker.name}': coords=(${marker.coordX},${marker.coordY}), normalized=($normalizedX,$normalizedY), mapPos=($coordX,$coordY), finalPos=($markerX,$markerY)")
 
     return Offset(
         x = markerX,
@@ -485,7 +509,9 @@ private fun findMarkerAtPosition(
     mapBounds: com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds,
     scale: Float,
     offsetX: Float,
-    offsetY: Float
+    offsetY: Float,
+    pinWidthPx: Float,
+    pinHeightPx: Float
 ): MapMarker? {
     val adjustedTapX = (tapOffset.x - offsetX) / scale
     val adjustedTapY = (tapOffset.y - offsetY) / scale
@@ -500,7 +526,7 @@ private fun findMarkerAtPosition(
     return markers
         .filter { it.category in visibleMarkerCategories }
         .firstOrNull { marker ->
-            val markerPos = calculateMarkerPosition(marker, canvasSize, mapBounds)
+            val markerPos = calculateMarkerPosition(marker, canvasSize, mapBounds, pinWidthPx, pinHeightPx)
             val distance = kotlin.math.sqrt(
                 (adjustedTapX - markerPos.x).let { it * it } +
                         (adjustedTapY - markerPos.y).let { it * it }
