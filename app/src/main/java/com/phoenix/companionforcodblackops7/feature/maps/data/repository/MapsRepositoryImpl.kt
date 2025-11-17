@@ -5,6 +5,7 @@ import com.phoenix.companionforcodblackops7.feature.maps.domain.model.Bounds
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
+import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapTile
 import com.phoenix.companionforcodblackops7.feature.maps.domain.repository.MapsRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
