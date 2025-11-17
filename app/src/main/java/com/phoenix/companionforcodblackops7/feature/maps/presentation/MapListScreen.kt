@@ -132,11 +132,11 @@ private fun MapListContent(
             }
         }
 
-        // Banner Ad Space at Bottom (Google AdSense 320x100 Large Mobile Banner)
+        // Banner Ad Space at Bottom (320x90)
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
+                .height(90.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest
         ) {
             Box(
@@ -144,7 +144,7 @@ private fun MapListContent(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Ad Space (320x100)",
+                    text = "Ad Space (320x90)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
