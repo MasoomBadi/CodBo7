@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -135,6 +136,7 @@ fun MapViewerScreen(
         drawerContent = {
             LayerControlDrawer(
                 layerControls = uiState.layerControls,
+                markers = uiState.markers,
                 visibleControlIds = uiState.visibleControlIds,
                 expandedParentIds = uiState.expandedParentIds,
                 onToggleControl = { controlId -> viewModel.toggleLayerVisibility(controlId) },
@@ -252,6 +254,37 @@ fun MapViewerScreen(
                                         canvasSize = canvasSize,
                                         currentScale = scale
                                     )
+                                }
+                            }
+
+                            // Large Map Info Banner - Top overlay
+                            if (uiState.isTiledMap) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                                    color = Color.Black.copy(alpha = 0.6f),
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Info,
+                                            contentDescription = "Info",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Large map • Tiles load on zoom",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                    }
                                 }
                             }
 
@@ -892,10 +925,16 @@ private fun ParentControlItem(
 @Composable
 private fun ChildControlItem(
     control: LayerControl,
+    markers: List<MapMarker>,
     isVisible: Boolean,
     onToggle: () -> Unit,
     isEnabled: Boolean
 ) {
+    // Find icon URL for this marker category
+    val iconUrl = control.markerCategory?.let { category ->
+        markers.firstOrNull { it.category == category }?.iconUrl
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -936,6 +975,29 @@ private fun ChildControlItem(
                         )
                 )
 
+                // Icon preview
+                if (iconUrl != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.1f),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = "http://codbo7.masoombadi.top$iconUrl"
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+
                 Text(
                     text = control.displayName,
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -969,6 +1031,7 @@ private fun ChildControlItem(
 @Composable
 private fun LayerControlDrawer(
     layerControls: List<LayerControl>,
+    markers: List<MapMarker>,
     visibleControlIds: Set<String>,
     expandedParentIds: Set<String>,
     onToggleControl: (String) -> Unit,
@@ -1045,6 +1108,7 @@ private fun LayerControlDrawer(
                                 ) {
                                     ChildControlItem(
                                         control = child,
+                                        markers = markers,
                                         isVisible = child.id in visibleControlIds,
                                         onToggle = { onToggleControl(child.id) },
                                         isEnabled = parent.id in visibleControlIds
