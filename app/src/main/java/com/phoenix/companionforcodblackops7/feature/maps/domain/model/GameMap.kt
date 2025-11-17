@@ -9,6 +9,7 @@ data class GameMap(
     val teams: String,
     val modes: String,
     val campaignMap: String,
+    val location: String,
     val bounds: Bounds
 )
 
