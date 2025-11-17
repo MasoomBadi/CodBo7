@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapLayer
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
+import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapTile
 import com.phoenix.companionforcodblackops7.feature.maps.domain.repository.MapsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,9 @@ data class MapViewerState(
     val map: GameMap? = null,
     val layers: List<MapLayer> = emptyList(),
     val markers: List<MapMarker> = emptyList(),
+    val tiles: List<MapTile> = emptyList(),
+    val currentZoomLevel: Int = 1,
+    val isTiledMap: Boolean = false,
     val layerControls: List<LayerControl> = emptyList(),
     val visibleControlIds: Set<String> = emptySet(),
     val expandedParentIds: Set<String> = emptySet(),
@@ -41,8 +45,14 @@ class MapViewerViewModel @Inject constructor(
 
     fun loadMap(map: GameMap) {
         viewModelScope.launch {
+            // Detect if this is a tiled map (contains {z}/{x}/{y} pattern)
+            val isTiled = map.baseImageUrl.contains("{z}") &&
+                    map.baseImageUrl.contains("{x}") &&
+                    map.baseImageUrl.contains("{y}")
+
             _uiState.value = _uiState.value.copy(
                 map = map,
+                isTiledMap = isTiled,
                 isLoading = true,
                 error = null
             )
@@ -84,6 +94,11 @@ class MapViewerViewModel @Inject constructor(
                             isLoading = false,
                             error = null
                         )
+
+                        // If tiled map, load initial tiles for zoom level 1
+                        if (isTiled) {
+                            loadTilesForZoomLevel(1)
+                        }
                     }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load map data")
@@ -92,6 +107,47 @@ class MapViewerViewModel @Inject constructor(
                     error = e.message ?: "Failed to load map data"
                 )
             }
+        }
+    }
+
+    fun loadTilesForZoomLevel(zoomLevel: Int) {
+        val mapId = _uiState.value.map?.id ?: return
+
+        viewModelScope.launch {
+            try {
+                mapsRepository.getTilesForMap(mapId, zoomLevel)
+                    .catch { error ->
+                        Timber.e(error, "Failed to load tiles for zoom $zoomLevel")
+                    }
+                    .collect { tiles ->
+                        Timber.d("Loaded ${tiles.size} tiles for zoom level $zoomLevel")
+                        _uiState.value = _uiState.value.copy(
+                            tiles = tiles,
+                            currentZoomLevel = zoomLevel
+                        )
+                    }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load tiles for zoom $zoomLevel")
+            }
+        }
+    }
+
+    fun updateZoomLevel(scale: Float) {
+        if (!_uiState.value.isTiledMap) return
+
+        val newZoomLevel = calculateZoomLevel(scale)
+        if (newZoomLevel != _uiState.value.currentZoomLevel) {
+            loadTilesForZoomLevel(newZoomLevel)
+        }
+    }
+
+    private fun calculateZoomLevel(scale: Float): Int {
+        return when {
+            scale < 1.0f -> 1
+            scale < 1.5f -> 2
+            scale < 2.5f -> 3
+            scale < 4.0f -> 4
+            else -> 5
         }
     }
 

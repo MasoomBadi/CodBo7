@@ -266,4 +266,65 @@ class MapsRepositoryImpl @Inject constructor(
             properties = getString("properties", "")
         )
     }
+
+    override fun getTilesForMap(mapId: String, zoomLevel: Int?): Flow<List<MapTile>> {
+        Timber.d("Querying tiles for mapId: $mapId, zoomLevel: $zoomLevel")
+
+        val mapIdInt = mapId.toIntOrNull() ?: 0
+
+        return realm.query<DynamicEntity>(
+            if (zoomLevel != null) {
+                "tableName == $0 AND data['map_id'] == $1 AND data['zoom_level'] == $2"
+            } else {
+                "tableName == $0 AND data['map_id'] == $1"
+            },
+            "map_tiles",
+            mapIdInt,
+            *(if (zoomLevel != null) arrayOf(zoomLevel) else emptyArray())
+        )
+            .asFlow()
+            .map { results ->
+                results.list.mapNotNull { entity ->
+                    try {
+                        deserializeMapTile(entity)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize tile: ${entity.id}")
+                        null
+                    }
+                }
+            }
+    }
+
+    private fun deserializeMapTile(entity: DynamicEntity): MapTile {
+        val data = entity.data
+
+        fun getString(key: String, default: String = ""): String {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.STRING -> value.asString()
+                else -> default
+            }
+        }
+
+        fun getInt(key: String, default: Int = 0): Int {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.INT -> value.asInt()
+                value.type == RealmAny.Type.DOUBLE -> value.asDouble().toInt()
+                value.type == RealmAny.Type.FLOAT -> value.asFloat().toInt()
+                else -> default
+            }
+        }
+
+        return MapTile(
+            id = getString("id", entity.id),
+            mapId = getInt("map_id", 0).toString(),
+            zoomLevel = getInt("zoom_level", 1),
+            tileX = getInt("tile_x", 0),
+            tileY = getInt("tile_y", 0),
+            tileUrl = getString("tile_url", "")
+        )
+    }
 }
