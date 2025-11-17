@@ -264,11 +264,11 @@ fun MapViewerScreen(
                                         .align(Alignment.TopCenter)
                                         .fillMaxWidth()
                                         .padding(top = 8.dp, start = 16.dp, end = 16.dp),
-                                    color = Color.Black.copy(alpha = 0.6f),
+                                    color = Color.Black.copy(alpha = 0.7f),
                                     shape = MaterialTheme.shapes.small
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                         horizontalArrangement = Arrangement.Center,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -276,13 +276,16 @@ fun MapViewerScreen(
                                             imageVector = Icons.Default.Info,
                                             contentDescription = "Info",
                                             tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = "Large map • Tiles load on zoom",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.9f)
+                                            text = "Large zombie map - Tiles load dynamically when zooming. Loading speed depends on your internet connection.",
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                lineHeight = 16.sp
+                                            ),
+                                            color = Color.White.copy(alpha = 0.95f),
+                                            textAlign = TextAlign.Center
                                         )
                                     }
                                 }
@@ -853,11 +856,17 @@ private fun MarkerDetailCard(
 @Composable
 private fun ParentControlItem(
     control: LayerControl,
+    markers: List<MapMarker>,
     isVisible: Boolean,
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onExpandToggle: () -> Unit
 ) {
+    // Find icon URL for this marker category
+    val iconUrl = control.markerCategory?.let { category ->
+        markers.firstOrNull { it.category == category }?.iconUrl
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -896,6 +905,29 @@ private fun ParentControlItem(
                     },
                     modifier = Modifier.size(24.dp)
                 )
+
+                // Icon preview for parent if it has a marker category
+                if (iconUrl != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                model = "http://codbo7.masoombadi.top$iconUrl"
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
 
                 Text(
                     text = control.displayName,
@@ -1090,6 +1122,7 @@ private fun LayerControlDrawer(
                     item {
                         ParentControlItem(
                             control = parent,
+                            markers = markers,
                             isVisible = parent.id in visibleControlIds,
                             isExpanded = parent.id in expandedParentIds,
                             onToggle = { onToggleControl(parent.id) },
