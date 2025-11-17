@@ -211,6 +211,31 @@ fun MapViewerScreen(
                                     )
                                 }
                             }
+
+                            // Ad Space - Floating above bottom
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 3.dp,
+                                shadowElevation = 8.dp,
+                                shape = MaterialTheme.shapes.medium
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Ad Space (320x50)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
