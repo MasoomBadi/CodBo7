@@ -165,6 +165,10 @@ fun AppNavigation(
                 },
                 onNavigateToMaps = {
                     navController.navigate("maps")
+                },
+                onNavigateToGameModes = {
+                    // TODO: Navigate to game modes screen when implemented
+                    navController.navigate("gameModes")
                 }
             )
         }
@@ -262,6 +266,73 @@ fun AppNavigation(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
+                )
+            }
+        }
+
+        composable("gameModes") {
+            GameModesPlaceholderScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GameModesPlaceholderScreen(onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "GAME MODES",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "COMING SOON",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Game Modes feature is under development",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -448,7 +519,8 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 fun DashboardScreen(
     onNavigateToOperators: () -> Unit,
     onNavigateToChecklists: () -> Unit,
-    onNavigateToMaps: () -> Unit = {}
+    onNavigateToMaps: () -> Unit = {},
+    onNavigateToGameModes: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -518,6 +590,22 @@ fun DashboardScreen(
                     buttonColor = MaterialTheme.colorScheme.tertiaryContainer,
                     buttonTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
+
+            // Game Modes Card
+            item {
+                DashboardCard(
+                    title = "GAME MODES",
+                    tagline = "Browse all game modes",
+                    onClick = onNavigateToGameModes,
+                    borderColor = MaterialTheme.colorScheme.error,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = MaterialTheme.colorScheme.error,
+                    buttonColor = MaterialTheme.colorScheme.errorContainer,
+                    buttonTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                    buttonLabel = "VIEW",
                     borderGlow = borderGlow
                 )
             }
