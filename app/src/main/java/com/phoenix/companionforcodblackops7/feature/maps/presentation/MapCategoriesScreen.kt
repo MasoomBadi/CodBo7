@@ -1,8 +1,6 @@
 package com.phoenix.companionforcodblackops7.feature.maps.presentation
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,25 +11,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.rememberAsyncImagePainter
-import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun MapListScreen(
-    category: String,
+fun MapCategoriesScreen(
     onNavigateBack: () -> Unit,
-    onMapClick: (GameMap) -> Unit,
-    viewModel: MapListViewModel = hiltViewModel()
+    onCategoryClick: (String) -> Unit,
+    viewModel: MapCategoriesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -51,7 +44,7 @@ fun MapListScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "${category.uppercase()} MAPS",
+                        text = "MAP CATEGORIES",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
@@ -80,18 +73,17 @@ fun MapListScreen(
                 .padding(paddingValues)
         ) {
             when (val state = uiState) {
-                is MapListUiState.Loading -> {
+                is MapCategoriesUiState.Loading -> {
                     LoadingContent()
                 }
-                is MapListUiState.Success -> {
-                    MapListContent(
-                        maps = state.maps,
-                        category = category,
+                is MapCategoriesUiState.Success -> {
+                    CategoriesContent(
+                        categories = state.categories,
                         borderGlow = borderGlow,
-                        onMapClick = onMapClick
+                        onCategoryClick = onCategoryClick
                     )
                 }
-                is MapListUiState.Error -> {
+                is MapCategoriesUiState.Error -> {
                     ErrorContent(
                         message = state.message,
                         onRetry = { viewModel.retry() }
@@ -102,25 +94,16 @@ fun MapListScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun MapListContent(
-    maps: List<GameMap>,
-    category: String,
+private fun CategoriesContent(
+    categories: List<String>,
     borderGlow: Float,
-    onMapClick: (GameMap) -> Unit
+    onCategoryClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Filter maps based on category
-        // Extract category from type by removing "_big" suffix
-        val filteredMaps = maps.filter { map ->
-            val mapCategory = map.type.removeSuffix("_big")
-            mapCategory == category
-        }
-
-        // Scrollable Map List
+        // Scrollable Category List
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -128,11 +111,11 @@ private fun MapListContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(filteredMaps) { map ->
-                MapCard(
-                    map = map,
+            items(categories) { category ->
+                CategoryCard(
+                    category = category,
                     borderGlow = borderGlow,
-                    onClick = { onMapClick(map) }
+                    onClick = { onCategoryClick(category) }
                 )
             }
 
@@ -165,23 +148,42 @@ private fun MapListContent(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun MapCard(
-    map: GameMap,
+private fun CategoryCard(
+    category: String,
     borderGlow: Float,
     onClick: () -> Unit
 ) {
+    // Determine colors based on category
+    val (borderColor, gradientColor, buttonColor) = when (category) {
+        "core" -> Triple(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.primary
+        )
+        "zombie" -> Triple(
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.tertiaryContainer
+        )
+        else -> Triple(
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.secondaryContainer
+        )
+    }
+
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(180.dp)
             .border(
                 width = 2.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow),
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = borderGlow)
+                        borderColor.copy(alpha = borderGlow),
+                        borderColor.copy(alpha = 0.3f),
+                        borderColor.copy(alpha = borderGlow)
                     )
                 ),
                 shape = MaterialTheme.shapes.extraLarge
@@ -195,59 +197,105 @@ private fun MapCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Background image
-            Image(
-                painter = rememberAsyncImagePainter(
-                    model = "http://codbo7.masoombadi.top${map.coverImageUrl}"
-                ),
-                contentDescription = "${map.displayName} cover",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-
-            // Gradient overlay for text visibility
+            // Gradient Overlay
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.verticalGradient(
+                        brush = Brush.radialGradient(
                             colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.8f)
+                                gradientColor.copy(alpha = 0.15f),
+                                Color.Transparent
                             ),
-                            startY = 200f
+                            center = androidx.compose.ui.geometry.Offset(100f, 100f),
+                            radius = 400f
                         )
                     )
             )
 
-            // Map name at bottom
+            // Content
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomStart)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Accent line
-                Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(4.dp)
-                        .background(
-                            MaterialTheme.colorScheme.tertiary,
-                            shape = MaterialTheme.shapes.small
-                        )
-                )
+                // Title with accent line
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Accent indicator
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                borderColor,
+                                shape = MaterialTheme.shapes.small
+                            )
+                    )
 
-                // Map display name
-                Text(
-                    text = map.displayName.uppercase(),
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
-                    ),
-                    color = Color.White
-                )
+                    Text(
+                        text = category.uppercase(),
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "Explore ${category} maps",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Action button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Surface(
+                        color = buttonColor,
+                        shape = MaterialTheme.shapes.medium,
+                        tonalElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "EXPLORE",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = if (category == "zombie") {
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                } else if (category != "core") {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onPrimary
+                                }
+                            )
+                            Text(
+                                text = "→",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = if (category == "zombie") {
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                } else if (category != "core") {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onPrimary
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -270,7 +318,7 @@ private fun LoadingContent() {
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Loading maps...",
+                text = "Loading categories...",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -295,7 +343,7 @@ private fun ErrorContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Error Loading Maps",
+                text = "Error Loading Categories",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),

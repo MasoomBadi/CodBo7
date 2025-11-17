@@ -37,6 +37,7 @@ import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.Check
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
+import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapCategoriesScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapDetailScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapListScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapViewerScreen
@@ -125,7 +126,8 @@ fun AppNavigation(
     var selectedOperator by remember { mutableStateOf<Operator?>(null) }
     var iconMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
-    // State to hold selected map for navigation to viewer
+    // State to hold selected map category and map for navigation
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedMap by remember { mutableStateOf<GameMap?>(null) }
 
     NavHost(
@@ -212,15 +214,30 @@ fun AppNavigation(
         }
 
         composable("maps") {
-            MapListScreen(
+            MapCategoriesScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onMapClick = { map ->
-                    selectedMap = map
-                    navController.navigate("mapDetail")
+                onCategoryClick = { category ->
+                    selectedCategory = category
+                    navController.navigate("mapList")
                 }
             )
+        }
+
+        composable("mapList") {
+            selectedCategory?.let { category ->
+                MapListScreen(
+                    category = category,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onMapClick = { map ->
+                        selectedMap = map
+                        navController.navigate("mapDetail")
+                    }
+                )
+            }
         }
 
         composable("mapDetail") {
