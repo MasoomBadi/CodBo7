@@ -211,58 +211,50 @@ fun MapDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Bottom Button Area
+            // View Map Button Area
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 3.dp,
                 shadowElevation = 8.dp
             ) {
-                Column(
+                Button(
+                    onClick = onViewMap,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(20.dp)
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    shape = MaterialTheme.shapes.large
                 ) {
-                    // View Map Button
-                    Button(
-                        onClick = onViewMap,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
-                        shape = MaterialTheme.shapes.large
-                    ) {
-                        Text(
-                            text = "VIEW INTERACTIVE MAP",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
+                    Text(
+                        text = "VIEW INTERACTIVE MAP",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
                         )
-                    }
+                    )
+                }
+            }
 
-                    // Ad Space (Google AdSense 320x50 Mobile Banner)
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Ad Space (320x50)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                            )
-                        }
-                    }
+            // Ad Space - Stuck at bottom (Google AdSense 320x50 Mobile Banner)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Ad Space (320x50)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
                 }
             }
         }
