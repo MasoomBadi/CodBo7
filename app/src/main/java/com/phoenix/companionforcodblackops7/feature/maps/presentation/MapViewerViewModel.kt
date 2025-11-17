@@ -45,10 +45,8 @@ class MapViewerViewModel @Inject constructor(
 
     fun loadMap(map: GameMap) {
         viewModelScope.launch {
-            // Detect if this is a tiled map (contains {z}/{x}/{y} pattern)
-            val isTiled = map.baseImageUrl.contains("{z}") &&
-                    map.baseImageUrl.contains("{x}") &&
-                    map.baseImageUrl.contains("{y}")
+            // Detect if this is a tiled map based on type
+            val isTiled = map.type == "zombie_big"
 
             _uiState.value = _uiState.value.copy(
                 map = map,

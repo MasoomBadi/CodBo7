@@ -4,6 +4,7 @@ data class GameMap(
     val id: String,
     val name: String,
     val displayName: String,
+    val type: String,
     val baseImageUrl: String,
     val coverImageUrl: String,
     val teams: String,

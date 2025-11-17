@@ -116,6 +116,7 @@ class MapsRepositoryImpl @Inject constructor(
             id = getString("id", entity.id),
             name = getString("name", "Unknown"),
             displayName = getString("display_name", "Unknown Map"),
+            type = getString("type", "core"),
             baseImageUrl = getString("base_image_url", ""),
             coverImageUrl = getString("cover_image_url", ""),
             teams = getString("teams", ""),
