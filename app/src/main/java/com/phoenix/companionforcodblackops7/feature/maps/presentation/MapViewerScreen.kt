@@ -125,6 +125,11 @@ fun MapViewerScreen(
         offsetY = (offsetY + panChange.y).coerceIn(-maxOffsetY, maxOffsetY)
     }
 
+    // Update zoom level for tiled maps when scale changes
+    LaunchedEffect(scale) {
+        viewModel.updateZoomLevel(scale)
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -225,15 +230,29 @@ fun MapViewerScreen(
                                         }
                                     }
                             ) {
-                                MapCanvas(
-                                    map = map,
-                                    layers = uiState.layers,
-                                    markers = uiState.markers,
-                                    layerControls = uiState.layerControls,
-                                    visibleControlIds = uiState.visibleControlIds,
-                                    canvasSize = canvasSize,
-                                    currentScale = scale
-                                )
+                                // Render tiled map or single image map
+                                if (uiState.isTiledMap) {
+                                    TiledMapCanvas(
+                                        map = map,
+                                        tiles = uiState.tiles,
+                                        markers = uiState.markers,
+                                        layerControls = uiState.layerControls,
+                                        visibleControlIds = uiState.visibleControlIds,
+                                        canvasSize = canvasSize,
+                                        currentScale = scale,
+                                        currentZoomLevel = uiState.currentZoomLevel
+                                    )
+                                } else {
+                                    MapCanvas(
+                                        map = map,
+                                        layers = uiState.layers,
+                                        markers = uiState.markers,
+                                        layerControls = uiState.layerControls,
+                                        visibleControlIds = uiState.visibleControlIds,
+                                        canvasSize = canvasSize,
+                                        currentScale = scale
+                                    )
+                                }
                             }
 
                             // Marker Detail Card - Above ad space
@@ -335,6 +354,154 @@ private fun MapCanvas(
             )
         }
 
+        visibleMarkers.forEach { marker ->
+            if (canvasSize.width > 0 && canvasSize.height > 0) {
+                val markerPosition = with(density) {
+                    calculateMarkerPosition(
+                        marker = marker,
+                        canvasSize = canvasSize,
+                        mapBounds = map.bounds,
+                        pinWidthPx = 40.dp.toPx(),
+                        pinHeightPx = 40.dp.toPx()
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                x = markerPosition.x.toInt(),
+                                y = markerPosition.y.toInt()
+                            )
+                        }
+                        .graphicsLayer {
+                            // Counter-scale to maintain reasonable size
+                            val counterScale = 1f / currentScale.coerceAtLeast(1f)
+                            scaleX = counterScale
+                            scaleY = counterScale
+                        }
+                ) {
+                    // Check if this is a POI label (text-based marker)
+                    if (marker.category == "poiLabel") {
+                        TextLabelMarker(text = marker.name)
+                    } else {
+                        LocationPinMarker(iconUrl = marker.iconUrl)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TiledMapCanvas(
+    map: GameMap,
+    tiles: List<com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapTile>,
+    markers: List<MapMarker>,
+    layerControls: List<LayerControl>,
+    visibleControlIds: Set<String>,
+    canvasSize: IntSize,
+    currentScale: Float,
+    currentZoomLevel: Int
+) {
+    val density = LocalDensity.current
+
+    // Get visible marker categories from controls
+    val visibleMarkerCategories = layerControls
+        .filter { it.id in visibleControlIds && it.markerCategory != null }
+        .mapNotNull { it.markerCategory }
+        .toSet()
+
+    // Filter markers by category
+    val visibleMarkers = markers.filter { it.category in visibleMarkerCategories }
+
+    LaunchedEffect(tiles.size, visibleMarkers.size, canvasSize, currentZoomLevel) {
+        Timber.d("TiledMapCanvas: ${tiles.size} tiles at zoom $currentZoomLevel, ${visibleMarkers.size} visible markers, canvas size: $canvasSize")
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Determine tile grid dimensions based on zoom level
+        val gridSize = when (currentZoomLevel) {
+            1 -> 2
+            2 -> 4
+            3 -> 8
+            4 -> 16
+            5 -> 32
+            else -> 2
+        }
+
+        // Calculate tile size (assuming square tiles and map is 8192x8192)
+        val tileSize = 8192f / gridSize
+
+        // Render tiles
+        tiles.forEach { tile ->
+            val tileX = tile.tileX
+            val tileY = tile.tileY
+
+            // Calculate tile position in the 8192x8192 space
+            val tilePosX = tileX * tileSize
+            val tilePosY = tileY * tileSize
+
+            // Convert to canvas coordinates (accounting for ContentScale.Fit)
+            val mapAspectRatio = 1f // 8192x8192 is square
+            val canvasAspectRatio = canvasSize.width.toFloat() / canvasSize.height.toFloat()
+
+            val imageWidth: Float
+            val imageHeight: Float
+            val imageOffsetX: Float
+            val imageOffsetY: Float
+
+            if (canvasAspectRatio > mapAspectRatio) {
+                // Canvas is wider - letterboxing on left/right
+                imageHeight = canvasSize.height.toFloat()
+                imageWidth = imageHeight * mapAspectRatio
+                imageOffsetX = (canvasSize.width - imageWidth) / 2f
+                imageOffsetY = 0f
+            } else {
+                // Canvas is taller - pillarboxing on top/bottom
+                imageWidth = canvasSize.width.toFloat()
+                imageHeight = imageWidth / mapAspectRatio
+                imageOffsetX = 0f
+                imageOffsetY = (canvasSize.height - imageHeight) / 2f
+            }
+
+            // Normalize tile position (0.0 to 1.0)
+            val normalizedX = tilePosX / 8192f
+            val normalizedY = tilePosY / 8192f
+            val normalizedWidth = tileSize / 8192f
+            val normalizedHeight = tileSize / 8192f
+
+            // Calculate screen position and size
+            val screenX = imageOffsetX + (normalizedX * imageWidth)
+            val screenY = imageOffsetY + (normalizedY * imageHeight)
+            val screenWidth = normalizedWidth * imageWidth
+            val screenHeight = normalizedHeight * imageHeight
+
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = screenX.toInt(),
+                            y = screenY.toInt()
+                        )
+                    }
+                    .size(
+                        width = with(density) { screenWidth.toDp() },
+                        height = with(density) { screenHeight.toDp() }
+                    )
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = "http://codbo7.masoombadi.top${tile.tileUrl}"
+                    ),
+                    contentDescription = "Tile ${tile.tileX},${tile.tileY}",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+
+        // Render markers on top of tiles
         visibleMarkers.forEach { marker ->
             if (canvasSize.width > 0 && canvasSize.height > 0) {
                 val markerPosition = with(density) {
