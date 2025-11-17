@@ -242,7 +242,7 @@ fun MapViewerScreen(
                                 exit = fadeOut(),
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
-                                    .padding(bottom = 50.dp)
+                                    .padding(bottom = 90.dp)
                             ) {
                                 uiState.selectedMarker?.let { marker ->
                                     MarkerDetailCard(
@@ -252,12 +252,12 @@ fun MapViewerScreen(
                                 }
                             }
 
-                            // Ad Space - Stuck at bottom (Google AdSense 320x50 Mobile Banner)
+                            // Ad Space - Stuck at bottom (320x90)
                             Surface(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .height(50.dp),
+                                    .height(90.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerLowest
                             ) {
                                 Box(
@@ -265,7 +265,7 @@ fun MapViewerScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "Ad Space (320x50)",
+                                        text = "Ad Space (320x90)",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                     )

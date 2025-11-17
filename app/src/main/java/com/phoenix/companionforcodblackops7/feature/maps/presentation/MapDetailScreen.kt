@@ -211,39 +211,34 @@ fun MapDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // View Map Button Area
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp
+            // View Map Button
+            Button(
+                onClick = onViewMap,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = MaterialTheme.shapes.large
             ) {
-                Button(
-                    onClick = onViewMap,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Text(
-                        text = "VIEW INTERACTIVE MAP",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
+                Text(
+                    text = "VIEW INTERACTIVE MAP",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
-                }
+                )
             }
 
-            // Ad Space - Stuck at bottom (Google AdSense 320x50 Mobile Banner)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Ad Space - Stuck at bottom (320x90)
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(90.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLowest
             ) {
                 Box(
@@ -251,7 +246,7 @@ fun MapDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Ad Space (320x50)",
+                        text = "Ad Space (320x90)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
