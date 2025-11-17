@@ -33,6 +33,7 @@ fun MapListScreen(
     viewModel: MapListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     val infiniteTransition = rememberInfiniteTransition(label = "borderGlow")
     val borderGlow by infiniteTransition.animateFloat(
@@ -85,6 +86,8 @@ fun MapListScreen(
                 is MapListUiState.Success -> {
                     MapListContent(
                         maps = state.maps,
+                        selectedTabIndex = selectedTabIndex,
+                        onTabSelected = { selectedTabIndex = it },
                         borderGlow = borderGlow,
                         onMapClick = onMapClick
                     )
@@ -104,12 +107,64 @@ fun MapListScreen(
 @Composable
 private fun MapListContent(
     maps: List<GameMap>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
     borderGlow: Float,
     onMapClick: (GameMap) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
+        // Category Tabs
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary,
+            indicator = { tabPositions ->
+                if (selectedTabIndex < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        ) {
+            Tab(
+                selected = selectedTabIndex == 0,
+                onClick = { onTabSelected(0) },
+                text = {
+                    Text(
+                        text = "CORE MAPS",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                }
+            )
+            Tab(
+                selected = selectedTabIndex == 1,
+                onClick = { onTabSelected(1) },
+                text = {
+                    Text(
+                        text = "ZOMBIE MAPS",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                }
+            )
+        }
+
+        // Filter maps based on selected tab
+        val filteredMaps = when (selectedTabIndex) {
+            0 -> maps.filter { it.type != "zombie_big" } // Core maps
+            1 -> maps.filter { it.type == "zombie_big" } // Zombie maps
+            else -> maps
+        }
+
         // Scrollable Map List
         LazyColumn(
             modifier = Modifier
@@ -118,7 +173,7 @@ private fun MapListContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(maps) { map ->
+            items(filteredMaps) { map ->
                 MapCard(
                     map = map,
                     borderGlow = borderGlow,
