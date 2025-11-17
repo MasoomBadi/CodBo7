@@ -36,6 +36,9 @@ import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
+import com.phoenix.companionforcodblackops7.feature.gamemodes.domain.model.GameMode
+import com.phoenix.companionforcodblackops7.feature.gamemodes.presentation.GameModeDetailScreen
+import com.phoenix.companionforcodblackops7.feature.gamemodes.presentation.GameModesListScreen
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapCategoriesScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapDetailScreen
@@ -129,6 +132,9 @@ fun AppNavigation(
     // State to hold selected map category and map for navigation
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedMap by remember { mutableStateOf<GameMap?>(null) }
+
+    // State to hold selected game mode for navigation
+    var selectedGameMode by remember { mutableStateOf<GameMode?>(null) }
 
     NavHost(
         navController = navController,
@@ -271,68 +277,24 @@ fun AppNavigation(
         }
 
         composable("gameModes") {
-            GameModesPlaceholderScreen(
+            GameModesListScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onGameModeClick = { gameMode ->
+                    selectedGameMode = gameMode
+                    navController.navigate("gameModeDetail")
                 }
             )
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GameModesPlaceholderScreen(onNavigateBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "GAME MODES",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+        composable("gameModeDetail") {
+            selectedGameMode?.let { gameMode ->
+                GameModeDetailScreen(
+                    gameMode = gameMode,
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "COMING SOON",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Game Modes feature is under development",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
