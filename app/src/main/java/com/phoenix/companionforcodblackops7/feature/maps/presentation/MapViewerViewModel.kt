@@ -118,7 +118,23 @@ class MapViewerViewModel @Inject constructor(
                         Timber.e(error, "Failed to load tiles for zoom $zoomLevel")
                     }
                     .collect { tiles ->
-                        Timber.d("Loaded ${tiles.size} tiles for zoom level $zoomLevel")
+                        val gridSize = when (zoomLevel) {
+                            1 -> 2
+                            2 -> 4
+                            3 -> 8
+                            4 -> 16
+                            5 -> 32
+                            else -> 2
+                        }
+                        val expectedTiles = gridSize * gridSize
+
+                        Timber.d("Loaded ${tiles.size} tiles for zoom level $zoomLevel (grid: ${gridSize}x$gridSize, expected max: $expectedTiles)")
+
+                        if (tiles.isNotEmpty()) {
+                            val tileCoords = tiles.map { "(${it.tileX},${it.tileY})" }.joinToString(", ")
+                            Timber.d("Tile coordinates: $tileCoords")
+                        }
+
                         _uiState.value = _uiState.value.copy(
                             tiles = tiles,
                             currentZoomLevel = zoomLevel
@@ -135,6 +151,7 @@ class MapViewerViewModel @Inject constructor(
 
         val newZoomLevel = calculateZoomLevel(scale)
         if (newZoomLevel != _uiState.value.currentZoomLevel) {
+            Timber.d("Zoom level changed: ${_uiState.value.currentZoomLevel} → $newZoomLevel (scale: $scale)")
             loadTilesForZoomLevel(newZoomLevel)
         }
     }
@@ -186,60 +203,21 @@ class MapViewerViewModel @Inject constructor(
 
     private fun buildLayerControls(layers: List<MapLayer>, markers: List<MapMarker>): List<LayerControl> {
         val controls = mutableListOf<LayerControl>()
+        val mapType = _uiState.value.map?.type ?: ""
+        val isZombieMap = mapType == "zombie_big" || mapType == "zombie"
 
-        // Main Spawn Location (no parent)
-        controls.add(LayerControl(
-            id = "spawn",
-            displayName = "Main Spawn Location",
-            type = LayerControlType.MARKER_CATEGORY,
-            markerCategory = "multiplayer_mainSpawnLocation"
-        ))
+        // Get unique marker categories
+        val markerCategories = markers.map { it.category }.distinct()
 
-        // POI parent
-        controls.add(LayerControl(
-            id = "poi",
-            displayName = "POI",
-            type = LayerControlType.MARKER_CATEGORY
-        ))
-        // POI Label Primary child
-        controls.add(LayerControl(
-            id = "poi_label",
-            displayName = "POI Label Primary",
-            type = LayerControlType.MARKER_CATEGORY,
-            parentId = "poi",
-            markerCategory = "poiLabel"
-        ))
+        if (isZombieMap) {
+            // Build zombie map controls dynamically
+            buildZombieControls(controls, markerCategories)
+        } else {
+            // Build multiplayer controls
+            buildMultiplayerControls(controls, markerCategories)
+        }
 
-        // Objective parent
-        controls.add(LayerControl(
-            id = "objective",
-            displayName = "Objective",
-            type = LayerControlType.MARKER_CATEGORY
-        ))
-        // Objective children
-        controls.add(LayerControl(
-            id = "obj_dom",
-            displayName = "Domination",
-            type = LayerControlType.MARKER_CATEGORY,
-            parentId = "objective",
-            markerCategory = "multiplayer_objective_domination"
-        ))
-        controls.add(LayerControl(
-            id = "obj_hp",
-            displayName = "Hardpoint",
-            type = LayerControlType.MARKER_CATEGORY,
-            parentId = "objective",
-            markerCategory = "multiplayer_objective_hardpoint"
-        ))
-        controls.add(LayerControl(
-            id = "obj_snd",
-            displayName = "Search and Destroy",
-            type = LayerControlType.MARKER_CATEGORY,
-            parentId = "objective",
-            markerCategory = "multiplayer_objective_searchAndDestroy"
-        ))
-
-        // Layers parent
+        // Layers parent (common for both)
         controls.add(LayerControl(
             id = "layers",
             displayName = "Layers",
@@ -257,6 +235,176 @@ class MapViewerViewModel @Inject constructor(
         }
 
         return controls
+    }
+
+    private fun buildMultiplayerControls(controls: MutableList<LayerControl>, categories: List<String>) {
+        // Main Spawn Location
+        if (categories.contains("multiplayer_mainSpawnLocation")) {
+            controls.add(LayerControl(
+                id = "spawn",
+                displayName = "Main Spawn Location",
+                type = LayerControlType.MARKER_CATEGORY,
+                markerCategory = "multiplayer_mainSpawnLocation"
+            ))
+        }
+
+        // POI parent
+        if (categories.contains("poiLabel")) {
+            controls.add(LayerControl(
+                id = "poi",
+                displayName = "POI",
+                type = LayerControlType.MARKER_CATEGORY
+            ))
+            controls.add(LayerControl(
+                id = "poi_label",
+                displayName = "POI Label Primary",
+                type = LayerControlType.MARKER_CATEGORY,
+                parentId = "poi",
+                markerCategory = "poiLabel"
+            ))
+        }
+
+        // Objective parent
+        val objectiveCategories = categories.filter { it.startsWith("multiplayer_objective_") }
+        if (objectiveCategories.isNotEmpty()) {
+            controls.add(LayerControl(
+                id = "objective",
+                displayName = "Objective",
+                type = LayerControlType.MARKER_CATEGORY
+            ))
+
+            objectiveCategories.forEach { category ->
+                val displayName = when (category) {
+                    "multiplayer_objective_domination" -> "Domination"
+                    "multiplayer_objective_hardpoint" -> "Hardpoint"
+                    "multiplayer_objective_searchAndDestroy" -> "Search and Destroy"
+                    else -> category.removePrefix("multiplayer_objective_").replaceFirstChar { it.uppercase() }
+                }
+                controls.add(LayerControl(
+                    id = "obj_${category.substringAfter("_")}",
+                    displayName = displayName,
+                    type = LayerControlType.MARKER_CATEGORY,
+                    parentId = "objective",
+                    markerCategory = category
+                ))
+            }
+        }
+    }
+
+    private fun buildZombieControls(controls: MutableList<LayerControl>, categories: List<String>) {
+        // POI Labels (common with multiplayer)
+        if (categories.contains("poiLabel")) {
+            controls.add(LayerControl(
+                id = "poi",
+                displayName = "POI",
+                type = LayerControlType.MARKER_CATEGORY
+            ))
+            controls.add(LayerControl(
+                id = "poi_label",
+                displayName = "POI Label Primary",
+                type = LayerControlType.MARKER_CATEGORY,
+                parentId = "poi",
+                markerCategory = "poiLabel"
+            ))
+        }
+
+        // Perks parent
+        val perkCategories = categories.filter { it.startsWith("zombies_perk_") }
+        if (perkCategories.isNotEmpty()) {
+            controls.add(LayerControl(
+                id = "perks",
+                displayName = "Perks",
+                type = LayerControlType.MARKER_CATEGORY
+            ))
+
+            perkCategories.forEach { category ->
+                val perkName = category.removePrefix("zombies_perk_")
+                    .replace("_", " ")
+                    .split(" ")
+                    .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+
+                controls.add(LayerControl(
+                    id = "perk_$perkName",
+                    displayName = perkName,
+                    type = LayerControlType.MARKER_CATEGORY,
+                    parentId = "perks",
+                    markerCategory = category
+                ))
+            }
+        }
+
+        // Wall Buys
+        val wallBuyCategories = categories.filter { it.contains("wallBuy") || it.contains("wall_buy") }
+        if (wallBuyCategories.isNotEmpty()) {
+            controls.add(LayerControl(
+                id = "wallbuys",
+                displayName = "Wall Buys",
+                type = LayerControlType.MARKER_CATEGORY
+            ))
+
+            wallBuyCategories.forEach { category ->
+                val displayName = category.removePrefix("zombies_")
+                    .replace("_", " ")
+                    .split(" ")
+                    .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+
+                controls.add(LayerControl(
+                    id = "wallbuy_$category",
+                    displayName = displayName,
+                    type = LayerControlType.MARKER_CATEGORY,
+                    parentId = "wallbuys",
+                    markerCategory = category
+                ))
+            }
+        }
+
+        // Fast Travel
+        val fastTravelCategories = categories.filter { it.contains("fastTravel") || it.contains("fast_travel") }
+        if (fastTravelCategories.isNotEmpty()) {
+            fastTravelCategories.forEach { category ->
+                controls.add(LayerControl(
+                    id = "fast_travel",
+                    displayName = "Fast Travel",
+                    type = LayerControlType.MARKER_CATEGORY,
+                    markerCategory = category
+                ))
+            }
+        }
+
+        // Exfil
+        val exfilCategories = categories.filter { it.contains("exfil") }
+        if (exfilCategories.isNotEmpty()) {
+            exfilCategories.forEach { category ->
+                controls.add(LayerControl(
+                    id = "exfil",
+                    displayName = "Exfil",
+                    type = LayerControlType.MARKER_CATEGORY,
+                    markerCategory = category
+                ))
+            }
+        }
+
+        // Other zombie-specific categories
+        val otherZombieCategories = categories.filter {
+            it.startsWith("zombies_") &&
+            !it.startsWith("zombies_perk_") &&
+            !it.contains("wallBuy") &&
+            !it.contains("fastTravel") &&
+            !it.contains("exfil")
+        }
+        otherZombieCategories.forEach { category ->
+            val displayName = category.removePrefix("zombies_")
+                .replace("_", " ")
+                .split(" ")
+                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+
+            controls.add(LayerControl(
+                id = "zombie_$category",
+                displayName = displayName,
+                type = LayerControlType.MARKER_CATEGORY,
+                markerCategory = category
+            ))
+        }
     }
 
     fun selectMarker(marker: MapMarker?) {
