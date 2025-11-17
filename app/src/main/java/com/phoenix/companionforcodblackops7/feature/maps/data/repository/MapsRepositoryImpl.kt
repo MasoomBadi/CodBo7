@@ -121,6 +121,7 @@ class MapsRepositoryImpl @Inject constructor(
             teams = getString("teams", ""),
             modes = getString("modes", ""),
             campaignMap = getString("campaign_map", ""),
+            location = getString("location", ""),
             bounds = parseBounds("bounds")
         )
     }

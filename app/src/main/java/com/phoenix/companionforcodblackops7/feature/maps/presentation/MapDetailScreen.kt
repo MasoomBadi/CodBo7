@@ -190,6 +190,14 @@ fun MapDetailScreen(
                             )
                         }
 
+                        // Location
+                        if (map.location.isNotBlank()) {
+                            InfoRow(
+                                label = "Location",
+                                value = map.location
+                            )
+                        }
+
                         // Modes
                         if (map.modes.isNotBlank()) {
                             InfoRow(
