@@ -36,6 +36,9 @@ import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.CategoryChecklistScreen
 import com.phoenix.companionforcodblackops7.feature.checklist.presentation.ChecklistOverviewScreen
+import com.phoenix.companionforcodblackops7.feature.gamemodes.domain.model.GameMode
+import com.phoenix.companionforcodblackops7.feature.gamemodes.presentation.GameModeDetailScreen
+import com.phoenix.companionforcodblackops7.feature.gamemodes.presentation.GameModesListScreen
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapCategoriesScreen
 import com.phoenix.companionforcodblackops7.feature.maps.presentation.MapDetailScreen
@@ -130,6 +133,9 @@ fun AppNavigation(
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedMap by remember { mutableStateOf<GameMap?>(null) }
 
+    // State to hold selected game mode for navigation
+    var selectedGameMode by remember { mutableStateOf<GameMode?>(null) }
+
     NavHost(
         navController = navController,
         startDestination = "sync"
@@ -165,6 +171,10 @@ fun AppNavigation(
                 },
                 onNavigateToMaps = {
                     navController.navigate("maps")
+                },
+                onNavigateToGameModes = {
+                    // TODO: Navigate to game modes screen when implemented
+                    navController.navigate("gameModes")
                 }
             )
         }
@@ -259,6 +269,29 @@ fun AppNavigation(
             selectedMap?.let { map ->
                 MapViewerScreen(
                     map = map,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("gameModes") {
+            GameModesListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onGameModeClick = { gameMode ->
+                    selectedGameMode = gameMode
+                    navController.navigate("gameModeDetail")
+                }
+            )
+        }
+
+        composable("gameModeDetail") {
+            selectedGameMode?.let { gameMode ->
+                GameModeDetailScreen(
+                    gameMode = gameMode,
                     onNavigateBack = {
                         navController.popBackStack()
                     }
@@ -448,7 +481,8 @@ fun HomeScreen(onNavigateToDashboard: () -> Unit) {
 fun DashboardScreen(
     onNavigateToOperators: () -> Unit,
     onNavigateToChecklists: () -> Unit,
-    onNavigateToMaps: () -> Unit = {}
+    onNavigateToMaps: () -> Unit = {},
+    onNavigateToGameModes: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -518,6 +552,22 @@ fun DashboardScreen(
                     buttonColor = MaterialTheme.colorScheme.tertiaryContainer,
                     buttonTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
+
+            // Game Modes Card
+            item {
+                DashboardCard(
+                    title = "GAME MODES",
+                    tagline = "Browse all game modes",
+                    onClick = onNavigateToGameModes,
+                    borderColor = MaterialTheme.colorScheme.error,
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = MaterialTheme.colorScheme.error,
+                    buttonColor = MaterialTheme.colorScheme.errorContainer,
+                    buttonTextColor = MaterialTheme.colorScheme.onErrorContainer,
+                    buttonLabel = "VIEW",
                     borderGlow = borderGlow
                 )
             }
