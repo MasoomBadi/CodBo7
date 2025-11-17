@@ -235,16 +235,39 @@ fun MapViewerScreen(
                                 )
                             }
 
+                            // Marker Detail Card - Above ad space
                             AnimatedVisibility(
                                 visible = uiState.selectedMarker != null,
                                 enter = fadeIn(),
                                 exit = fadeOut(),
-                                modifier = Modifier.align(Alignment.BottomCenter)
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(bottom = 50.dp)
                             ) {
                                 uiState.selectedMarker?.let { marker ->
                                     MarkerDetailCard(
                                         marker = marker,
                                         onDismiss = { viewModel.selectMarker(null) }
+                                    )
+                                }
+                            }
+
+                            // Ad Space - Stuck at bottom (Google AdSense 320x50 Mobile Banner)
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerLowest
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Ad Space (320x50)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                     )
                                 }
                             }
