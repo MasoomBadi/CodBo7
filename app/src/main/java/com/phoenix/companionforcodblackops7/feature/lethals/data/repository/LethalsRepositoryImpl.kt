@@ -17,7 +17,7 @@ class LethalsRepositoryImpl @Inject constructor(
 ) : LethalsRepository {
 
     override fun getAllLethals(): Flow<List<Lethal>> {
-        return realm.query<DynamicEntity>("tableName == $0", "lethals_mp")
+        return realm.query<DynamicEntity>("tableName == $0", "lethals")
             .asFlow()
             .map { results ->
                 results.list.mapNotNull { entity ->
