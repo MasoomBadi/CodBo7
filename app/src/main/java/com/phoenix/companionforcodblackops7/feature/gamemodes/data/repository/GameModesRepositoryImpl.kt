@@ -1,23 +1,16 @@
 package com.phoenix.companionforcodblackops7.feature.gamemodes.data.repository
 
+import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.gamemodes.domain.model.GameMode
 import com.phoenix.companionforcodblackops7.feature.gamemodes.domain.repository.GameModesRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmDictionary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
-
-class DynamicEntity : io.realm.kotlin.types.RealmObject {
-    var id: String = ""
-    var tableName: String = ""
-    var data: RealmDictionary<RealmAny?> = realmDictionaryOf()
-}
 
 class GameModesRepositoryImpl @Inject constructor(
     private val realm: Realm
