@@ -255,25 +255,44 @@ private fun HeroSection(
             }
         }
 
-        // Stats row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        // Stats rows
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Unlock level
-            StatCard(
-                label = "UNLOCK",
-                value = if (tactical.isDefault()) "DEFAULT" else "LVL ${tactical.unlockLevel}",
-                color = if (tactical.isDefault()) Color(0xFF43A047) else accentColor,
-                modifier = Modifier.weight(1f)
-            )
+            // First row: Unlock and Overclocks
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Unlock level
+                StatCard(
+                    label = "UNLOCK",
+                    value = if (tactical.isDefault()) "DEFAULT" else "LVL ${tactical.unlockLevel}",
+                    color = if (tactical.isDefault()) Color(0xFF43A047) else accentColor,
+                    modifier = Modifier.weight(1f)
+                )
 
-            // Overclocks count
+                // Overclocks count
+                StatCard(
+                    label = "OVERCLOCKS",
+                    value = tactical.getOverclockCount().toString(),
+                    color = if (tactical.hasOverclocks()) Color(0xFFFF9800) else Color.Gray,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Second row: Availability (full width)
+            val availabilityColor = when {
+                tactical.availableMultiplayer && tactical.availableZombies -> Color(0xFF9C27B0) // Purple for both
+                tactical.availableMultiplayer -> Color(0xFF2196F3) // Blue for MP
+                tactical.availableZombies -> Color(0xFF4CAF50) // Green for Zombies
+                else -> Color.Gray
+            }
             StatCard(
-                label = "OVERCLOCKS",
-                value = tactical.getOverclockCount().toString(),
-                color = if (tactical.hasOverclocks()) Color(0xFFFF9800) else Color.Gray,
-                modifier = Modifier.weight(1f)
+                label = "AVAILABLE IN",
+                value = tactical.getAvailabilityModes(),
+                color = availabilityColor,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
