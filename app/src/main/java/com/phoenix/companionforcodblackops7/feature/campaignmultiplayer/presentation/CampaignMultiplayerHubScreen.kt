@@ -33,7 +33,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun CampaignMultiplayerHubScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToPerks: () -> Unit
+    onNavigateToPerks: () -> Unit,
+    onNavigateToCombatSpecialties: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -107,15 +108,15 @@ fun CampaignMultiplayerHubScreen(
                 )
             }
 
-            // Combat Specialties Card - Coming Soon
+            // Combat Specialties Card - Active
             item {
                 HubCategoryCard(
                     title = "COMBAT SPECIALTIES",
                     subtitle = "Specialty Bonuses & Combinations",
                     icon = Icons.Filled.Shield,
                     accentColor = Color(0xFFEC407A), // Pink
-                    isAvailable = false,
-                    onClick = { }
+                    isAvailable = true,
+                    onClick = onNavigateToCombatSpecialties
                 )
             }
 

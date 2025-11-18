@@ -51,6 +51,7 @@ import com.phoenix.companionforcodblackops7.feature.operators.presentation.Opera
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
 import com.phoenix.companionforcodblackops7.feature.sync.presentation.SyncScreen
 import com.phoenix.companionforcodblackops7.feature.campaignmultiplayer.presentation.CampaignMultiplayerHubScreen
+import com.phoenix.companionforcodblackops7.feature.combatspecialties.presentation.CombatSpecialtiesListScreen
 import com.phoenix.companionforcodblackops7.feature.perks.domain.model.Perk
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerkDetailScreen
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerksListScreen
@@ -320,6 +321,9 @@ fun AppNavigation(
                 },
                 onNavigateToPerks = {
                     navController.navigate("perks")
+                },
+                onNavigateToCombatSpecialties = {
+                    navController.navigate("combatSpecialties")
                 }
             )
         }
@@ -332,6 +336,14 @@ fun AppNavigation(
                 onPerkClick = { perk ->
                     selectedPerk = perk
                     navController.navigate("perkDetail")
+                }
+            )
+        }
+
+        composable("combatSpecialties") {
+            CombatSpecialtiesListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
