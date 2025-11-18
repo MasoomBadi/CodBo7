@@ -64,142 +64,150 @@ fun CampaignMultiplayerHubScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Header Section
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "LOADOUT TOOLKIT",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 2.sp
-                        ),
-                        color = Color(0xFF00BCD4)
+            // Scrollable content
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                // Header Section
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "LOADOUT TOOLKIT",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 2.sp
+                            ),
+                            color = Color(0xFF00BCD4)
+                        )
+                        Text(
+                            text = "Master your arsenal with comprehensive data",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Perks Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "PERKS",
+                        subtitle = "Combat Specialties & Abilities",
+                        icon = Icons.Filled.Star,
+                        accentColor = Color(0xFFAB47BC), // Purple
+                        isAvailable = true,
+                        onClick = onNavigateToPerks
                     )
-                    Text(
-                        text = "Master your arsenal with comprehensive data",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                }
+
+                // Combat Specialties Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "COMBAT SPECIALTIES",
+                        subtitle = "Specialty Bonuses & Combinations",
+                        icon = Icons.Filled.Shield,
+                        accentColor = Color(0xFFEC407A), // Pink
+                        isAvailable = true,
+                        onClick = onNavigateToCombatSpecialties
                     )
+                }
+
+                // Weapons Card - Coming Soon
+                item {
+                    HubCategoryCard(
+                        title = "WEAPONS",
+                        subtitle = "Arsenal & Attachments",
+                        icon = Icons.Filled.Info,
+                        accentColor = Color(0xFFFF6F00), // Deep Orange
+                        isAvailable = false,
+                        onClick = { }
+                    )
+                }
+
+                // Equipment Card - Coming Soon
+                item {
+                    HubCategoryCard(
+                        title = "EQUIPMENT",
+                        subtitle = "Lethal & Tactical Gear",
+                        icon = Icons.Filled.Warning,
+                        accentColor = Color(0xFFE53935), // Red
+                        isAvailable = false,
+                        onClick = { }
+                    )
+                }
+
+                // Scorestreaks Card - Coming Soon
+                item {
+                    HubCategoryCard(
+                        title = "SCORESTREAKS",
+                        subtitle = "Killstreak Rewards",
+                        icon = Icons.Filled.AccountBox,
+                        accentColor = Color(0xFF1E88E5), // Blue
+                        isAvailable = false,
+                        onClick = { }
+                    )
+                }
+
+                // Field Upgrades Card - Coming Soon
+                item {
+                    HubCategoryCard(
+                        title = "FIELD UPGRADES",
+                        subtitle = "Deployable Abilities",
+                        icon = Icons.Filled.Build,
+                        accentColor = Color(0xFF43A047), // Green
+                        isAvailable = false,
+                        onClick = { }
+                    )
+                }
+
+                // Wildcards Card - Coming Soon
+                item {
+                    HubCategoryCard(
+                        title = "WILDCARDS",
+                        subtitle = "Loadout Modifiers",
+                        icon = Icons.Filled.Send,
+                        accentColor = Color(0xFFFDD835), // Yellow
+                        isAvailable = false,
+                        onClick = { }
+                    )
+                }
+
+                // Scroll indicator spacer
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            // Perks Card - Active
-            item {
-                HubCategoryCard(
-                    title = "PERKS",
-                    subtitle = "Combat Specialties & Abilities",
-                    icon = Icons.Filled.Star,
-                    accentColor = Color(0xFFAB47BC), // Purple
-                    isAvailable = true,
-                    onClick = onNavigateToPerks
-                )
-            }
-
-            // Combat Specialties Card - Active
-            item {
-                HubCategoryCard(
-                    title = "COMBAT SPECIALTIES",
-                    subtitle = "Specialty Bonuses & Combinations",
-                    icon = Icons.Filled.Shield,
-                    accentColor = Color(0xFFEC407A), // Pink
-                    isAvailable = true,
-                    onClick = onNavigateToCombatSpecialties
-                )
-            }
-
-            // Weapons Card - Coming Soon
-            item {
-                HubCategoryCard(
-                    title = "WEAPONS",
-                    subtitle = "Arsenal & Attachments",
-                    icon = Icons.Filled.Info,
-                    accentColor = Color(0xFFFF6F00), // Deep Orange
-                    isAvailable = false,
-                    onClick = { }
-                )
-            }
-
-            // Equipment Card - Coming Soon
-            item {
-                HubCategoryCard(
-                    title = "EQUIPMENT",
-                    subtitle = "Lethal & Tactical Gear",
-                    icon = Icons.Filled.Warning,
-                    accentColor = Color(0xFFE53935), // Red
-                    isAvailable = false,
-                    onClick = { }
-                )
-            }
-
-            // Scorestreaks Card - Coming Soon
-            item {
-                HubCategoryCard(
-                    title = "SCORESTREAKS",
-                    subtitle = "Killstreak Rewards",
-                    icon = Icons.Filled.AccountBox,
-                    accentColor = Color(0xFF1E88E5), // Blue
-                    isAvailable = false,
-                    onClick = { }
-                )
-            }
-
-            // Field Upgrades Card - Coming Soon
-            item {
-                HubCategoryCard(
-                    title = "FIELD UPGRADES",
-                    subtitle = "Deployable Abilities",
-                    icon = Icons.Filled.Build,
-                    accentColor = Color(0xFF43A047), // Green
-                    isAvailable = false,
-                    onClick = { }
-                )
-            }
-
-            // Wildcards Card - Coming Soon
-            item {
-                HubCategoryCard(
-                    title = "WILDCARDS",
-                    subtitle = "Loadout Modifiers",
-                    icon = Icons.Filled.Send,
-                    accentColor = Color(0xFFFDD835), // Yellow
-                    isAvailable = false,
-                    onClick = { }
-                )
-            }
-
-            // Banner Ad Space
-            item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(90.dp)
-                        .padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    shape = RoundedCornerShape(12.dp)
+            // Fixed Banner Ad Space at Bottom
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Banner Ad Space (320x90)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                    }
+                    Text(
+                        text = "Banner Ad Space (320x90)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
                 }
             }
         }
