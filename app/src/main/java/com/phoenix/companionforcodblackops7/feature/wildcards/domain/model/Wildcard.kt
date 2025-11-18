@@ -9,6 +9,8 @@ data class Wildcard(
     val id: Int,
     val name: String,
     val displayName: String,
+    val unlockLevel: Int,
+    val unlockLabel: String,
     val description: String,
     val iconUrl: String,
     val sortOrder: Int
@@ -17,4 +19,9 @@ data class Wildcard(
      * Get the accent color for wildcards (Yellow)
      */
     fun getAccentColor(): Color = Color(0xFFFDD835)
+
+    /**
+     * Check if wildcard is unlocked by default
+     */
+    fun isDefault(): Boolean = unlockLevel == 0
 }

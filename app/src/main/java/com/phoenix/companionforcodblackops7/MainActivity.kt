@@ -55,6 +55,9 @@ import com.phoenix.companionforcodblackops7.feature.combatspecialties.presentati
 import com.phoenix.companionforcodblackops7.feature.perks.domain.model.Perk
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerkDetailScreen
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerksListScreen
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.domain.model.Scorestreak
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation.ScorestreakDetailScreen
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation.ScorestreaksListScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -146,6 +149,9 @@ fun AppNavigation(
 
     // State to hold selected perk for navigation
     var selectedPerk by remember { mutableStateOf<Perk?>(null) }
+
+    // State to hold selected scorestreak for navigation
+    var selectedScorestreak by remember { mutableStateOf<Scorestreak?>(null) }
 
     NavHost(
         navController = navController,
@@ -328,6 +334,9 @@ fun AppNavigation(
                 },
                 onNavigateToWildcards = {
                     navController.navigate("wildcards")
+                },
+                onNavigateToScorestreaks = {
+                    navController.navigate("scorestreaks")
                 }
             )
         }
@@ -364,6 +373,29 @@ fun AppNavigation(
             selectedPerk?.let { perk ->
                 PerkDetailScreen(
                     perk = perk,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("scorestreaks") {
+            ScorestreaksListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onScorestreakClick = { scorestreak ->
+                    selectedScorestreak = scorestreak
+                    navController.navigate("scorestreakDetail")
+                }
+            )
+        }
+
+        composable("scorestreakDetail") {
+            selectedScorestreak?.let { scorestreak ->
+                ScorestreakDetailScreen(
+                    scorestreak = scorestreak,
                     onNavigateBack = {
                         navController.popBackStack()
                     }

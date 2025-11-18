@@ -1,8 +1,8 @@
-package com.phoenix.companionforcodblackops7.feature.wildcards.data.repository
+package com.phoenix.companionforcodblackops7.feature.scorestreaks.data.repository
 
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
-import com.phoenix.companionforcodblackops7.feature.wildcards.domain.model.Wildcard
-import com.phoenix.companionforcodblackops7.feature.wildcards.domain.repository.WildcardsRepository
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.domain.model.Scorestreak
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.domain.repository.ScorestreaksRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
@@ -12,32 +12,32 @@ import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
 
-class WildcardsRepositoryImpl @Inject constructor(
+class ScorestreaksRepositoryImpl @Inject constructor(
     private val realm: Realm
-) : WildcardsRepository {
+) : ScorestreaksRepository {
 
-    override fun getAllWildcards(): Flow<List<Wildcard>> {
-        return realm.query<DynamicEntity>("tableName == $0", "wildcards")
+    override fun getAllScorestreaks(): Flow<List<Scorestreak>> {
+        return realm.query<DynamicEntity>("tableName == $0", "scorestreaks")
             .asFlow()
             .map { results ->
                 results.list.mapNotNull { entity ->
                     try {
-                        deserializeWildcard(entity)
+                        deserializeScorestreak(entity)
                     } catch (e: Exception) {
-                        Timber.e(e, "Failed to deserialize wildcard: ${entity.id}")
+                        Timber.e(e, "Failed to deserialize scorestreak: ${entity.id}")
                         null
                     }
                 }.sortedBy { it.sortOrder }
             }
     }
 
-    override fun getWildcardById(id: Int): Flow<Wildcard?> {
-        return getAllWildcards().map { wildcards ->
-            wildcards.find { it.id == id }
+    override fun getScorestreakById(id: Int): Flow<Scorestreak?> {
+        return getAllScorestreaks().map { scorestreaks ->
+            scorestreaks.find { it.id == id }
         }
     }
 
-    private fun deserializeWildcard(entity: DynamicEntity): Wildcard {
+    private fun deserializeScorestreak(entity: DynamicEntity): Scorestreak {
         val data = entity.data
 
         fun getString(key: String, default: String = ""): String {
@@ -59,14 +59,19 @@ class WildcardsRepositoryImpl @Inject constructor(
             }
         }
 
-        return Wildcard(
+        return Scorestreak(
             id = getInt("id"),
             name = getString("name", ""),
             displayName = getString("display_name", ""),
+            description = getString("description", ""),
+            scoreCost = getInt("score_cost", 0),
             unlockLevel = getInt("unlock_level", 0),
             unlockLabel = getString("unlock_label", ""),
-            description = getString("description", ""),
+            overclock1 = getString("overclock_1", ""),
+            overclock2 = getString("overclock_2", ""),
             iconUrl = getString("icon_url", ""),
+            iconO1Url = getString("icon_o1_url", ""),
+            iconO2Url = getString("icon_o2_url", ""),
             sortOrder = getInt("sort_order", 0)
         )
     }

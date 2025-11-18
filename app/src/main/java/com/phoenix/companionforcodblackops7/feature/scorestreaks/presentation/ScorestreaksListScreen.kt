@@ -1,11 +1,13 @@
-package com.phoenix.companionforcodblackops7.feature.wildcards.presentation
+package com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,16 +25,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.phoenix.companionforcodblackops7.feature.wildcards.domain.model.Wildcard
+import com.phoenix.companionforcodblackops7.feature.scorestreaks.domain.model.Scorestreak
 
 /**
- * Wildcards list screen showing all loadout modifiers
+ * Scorestreaks list screen showing all killstreak rewards
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun WildcardsListScreen(
+fun ScorestreaksListScreen(
     onNavigateBack: () -> Unit,
-    viewModel: WildcardsViewModel = hiltViewModel()
+    onScorestreakClick: (Scorestreak) -> Unit,
+    viewModel: ScorestreaksViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -41,7 +44,7 @@ fun WildcardsListScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "WILDCARDS",
+                        text = "SCORESTREAKS",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
@@ -58,14 +61,14 @@ fun WildcardsListScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = Color(0xFFFDD835) // Yellow
+                    titleContentColor = Color(0xFF1E88E5) // Blue
                 )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         when (val state = uiState) {
-            is WildcardsUiState.Loading -> {
+            is ScorestreaksUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -76,7 +79,7 @@ fun WildcardsListScreen(
                 }
             }
 
-            is WildcardsUiState.Error -> {
+            is ScorestreaksUiState.Error -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -97,16 +100,17 @@ fun WildcardsListScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Button(onClick = { viewModel.loadWildcards() }) {
+                        Button(onClick = { viewModel.loadScorestreaks() }) {
                             Text("Retry")
                         }
                     }
                 }
             }
 
-            is WildcardsUiState.Success -> {
-                WildcardsContent(
-                    wildcards = state.wildcards,
+            is ScorestreaksUiState.Success -> {
+                ScorestreaksContent(
+                    scorestreaks = state.scorestreaks,
+                    onScorestreakClick = onScorestreakClick,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
@@ -117,11 +121,12 @@ fun WildcardsListScreen(
 }
 
 /**
- * Main content showing wildcards in beautiful cards
+ * Main content showing scorestreaks in cards
  */
 @Composable
-private fun WildcardsContent(
-    wildcards: List<Wildcard>,
+private fun ScorestreaksContent(
+    scorestreaks: List<Scorestreak>,
+    onScorestreakClick: (Scorestreak) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -133,7 +138,7 @@ private fun WildcardsContent(
                 .weight(1f)
                 .fillMaxWidth(),
             contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
             item {
@@ -145,15 +150,15 @@ private fun WildcardsContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "LOADOUT MODIFIERS",
+                        text = "KILLSTREAK REWARDS",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 2.sp
                         ),
-                        color = Color(0xFFFDD835)
+                        color = Color(0xFF1E88E5)
                     )
                     Text(
-                        text = "Break the rules and customize your loadout",
+                        text = "Earn devastating rewards through combat excellence",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -161,10 +166,11 @@ private fun WildcardsContent(
                 }
             }
 
-            // Wildcards list
-            items(wildcards) { wildcard ->
-                WildcardCard(
-                    wildcard = wildcard,
+            // Scorestreaks list
+            items(scorestreaks) { scorestreak ->
+                ScorestreakCard(
+                    scorestreak = scorestreak,
+                    onClick = { onScorestreakClick(scorestreak) },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
@@ -197,16 +203,17 @@ private fun WildcardsContent(
 }
 
 /**
- * Individual wildcard card with all information
+ * Individual scorestreak card for list view
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun WildcardCard(
-    wildcard: Wildcard,
+private fun ScorestreakCard(
+    scorestreak: Scorestreak,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Animated glow effect
-    val infiniteTransition = rememberInfiniteTransition(label = "wildcardGlow")
+    val infiniteTransition = rememberInfiniteTransition(label = "scorestreakGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
@@ -217,7 +224,7 @@ private fun WildcardCard(
         label = "glowAlpha"
     )
 
-    val accentColor = wildcard.getAccentColor()
+    val accentColor = scorestreak.getAccentColor()
 
     Card(
         modifier = modifier
@@ -225,133 +232,115 @@ private fun WildcardCard(
             .border(
                 width = 2.dp,
                 color = accentColor.copy(alpha = glowAlpha * 0.5f),
-                shape = RoundedCornerShape(20.dp)
-            ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header: Icon and Name
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Icon with glow background
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    accentColor.copy(alpha = 0.25f),
-                                    accentColor.copy(alpha = 0.05f),
-                                    Color.Transparent
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AsyncImage(
-                        model = "http://codbo7.masoombadi.top${wildcard.iconUrl}",
-                        contentDescription = wildcard.displayName,
-                        modifier = Modifier.size(85.dp)
-                    )
-                }
-
-                // Name and Unlock Info
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = wildcard.displayName.uppercase(),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.2.sp
-                        ),
-                        color = accentColor
-                    )
-
-                    // Unlock badge
-                    Surface(
-                        color = if (wildcard.isDefault()) Color(0xFF43A047) else accentColor.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = if (wildcard.isDefault()) "DEFAULT" else wildcard.unlockLabel.uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp
-                            ),
-                            color = if (wildcard.isDefault()) Color.White else accentColor,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-                }
-            }
-
-            Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-            // Description Section
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(accentColor)
-                    )
-                    Text(
-                        text = "MODIFIER EFFECT",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Text(
-                    text = wildcard.description,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        lineHeight = 24.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            // Accent bar at bottom
+            // Icon with glow background
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
-                        brush = Brush.horizontalGradient(
+                        brush = Brush.radialGradient(
                             colors = listOf(
-                                Color.Transparent,
-                                accentColor,
-                                accentColor,
+                                accentColor.copy(alpha = 0.25f),
+                                accentColor.copy(alpha = 0.05f),
                                 Color.Transparent
                             )
                         )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = "http://codbo7.masoombadi.top${scorestreak.iconUrl}",
+                    contentDescription = scorestreak.displayName,
+                    modifier = Modifier.size(70.dp)
+                )
+            }
+
+            // Info section
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Name
+                Text(
+                    text = scorestreak.displayName.uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = accentColor
+                )
+
+                // Score cost badge
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = accentColor.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = scorestreak.getFormattedScoreCost(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // Unlock badge
+                    Surface(
+                        color = if (scorestreak.isDefault()) Color(0xFF43A047) else accentColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = if (scorestreak.isDefault()) "DEFAULT" else scorestreak.unlockLabel.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = if (scorestreak.isDefault()) Color.White else accentColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                // Overclock indicator
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(accentColor.copy(alpha = 0.6f))
                     )
-            )
+                    Text(
+                        text = "2 OVERCLOCK UPGRADES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

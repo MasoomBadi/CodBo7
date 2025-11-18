@@ -37,7 +37,8 @@ fun CampaignMultiplayerHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerks: () -> Unit,
     onNavigateToCombatSpecialties: () -> Unit = {},
-    onNavigateToWildcards: () -> Unit = {}
+    onNavigateToWildcards: () -> Unit = {},
+    onNavigateToScorestreaks: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -129,6 +130,18 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
+                // Wildcards Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "WILDCARDS",
+                        subtitle = "Loadout Modifiers",
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        accentColor = Color(0xFFFDD835), // Yellow
+                        isAvailable = true,
+                        onClick = onNavigateToWildcards
+                    )
+                }
+
                 // Weapons Card - Coming Soon
                 item {
                     HubCategoryCard(
@@ -153,15 +166,15 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Scorestreaks Card - Coming Soon
+                // Scorestreaks Card - Active
                 item {
                     HubCategoryCard(
                         title = "SCORESTREAKS",
                         subtitle = "Killstreak Rewards",
                         icon = Icons.Filled.AccountBox,
                         accentColor = Color(0xFF1E88E5), // Blue
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToScorestreaks
                     )
                 }
 
@@ -174,18 +187,6 @@ fun CampaignMultiplayerHubScreen(
                         accentColor = Color(0xFF43A047), // Green
                         isAvailable = false,
                         onClick = { }
-                    )
-                }
-
-                // Wildcards Card - Active
-                item {
-                    HubCategoryCard(
-                        title = "WILDCARDS",
-                        subtitle = "Loadout Modifiers",
-                        icon = Icons.AutoMirrored.Filled.Send,
-                        accentColor = Color(0xFFFDD835), // Yellow
-                        isAvailable = true,
-                        onClick = onNavigateToWildcards
                     )
                 }
 
