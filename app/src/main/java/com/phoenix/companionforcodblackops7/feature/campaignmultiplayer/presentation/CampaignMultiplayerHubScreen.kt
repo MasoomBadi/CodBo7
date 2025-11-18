@@ -40,7 +40,8 @@ fun CampaignMultiplayerHubScreen(
     onNavigateToWildcards: () -> Unit = {},
     onNavigateToScorestreaks: () -> Unit = {},
     onNavigateToTacticals: () -> Unit = {},
-    onNavigateToLethals: () -> Unit = {}
+    onNavigateToLethals: () -> Unit = {},
+    onNavigateToFieldUpgrades: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -192,15 +193,15 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Field Upgrades Card - Coming Soon
+                // Field Upgrades Card - Active
                 item {
                     HubCategoryCard(
                         title = "FIELD UPGRADES",
                         subtitle = "Deployable Abilities",
                         icon = Icons.Filled.Build,
                         accentColor = Color(0xFF43A047), // Green
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToFieldUpgrades
                     )
                 }
 
