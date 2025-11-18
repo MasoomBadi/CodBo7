@@ -76,7 +76,7 @@ class TacticalsRepositoryImpl @Inject constructor(
             return when {
                 value == null -> default
                 value.type == RealmAny.Type.BOOL -> value.asBoolean()
-                value.type == RealmAny.Type.INT -> value.asInt() != 0L
+                value.type == RealmAny.Type.INT -> value.asInt().toInt() != 0
                 value.type == RealmAny.Type.STRING -> value.asString().equals("1", ignoreCase = true) || value.asString().equals("true", ignoreCase = true)
                 else -> default
             }
