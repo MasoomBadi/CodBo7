@@ -691,10 +691,10 @@ fun DashboardScreen(
                 )
             }
 
-            // Campaign/Multiplayer Card
+            // Multiplayer Card
             item {
                 DashboardCard(
-                    title = "CAMPAIGN/MULTIPLAYER",
+                    title = "MULTIPLAYER",
                     tagline = "Perks, combat specialty & more",
                     onClick = onNavigateToCampaignMultiplayer,
                     borderColor = Color(0xFF00BCD4), // Cyan color
