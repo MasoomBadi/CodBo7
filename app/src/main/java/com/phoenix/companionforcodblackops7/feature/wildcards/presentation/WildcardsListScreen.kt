@@ -268,10 +268,10 @@ private fun WildcardCard(
                     )
                 }
 
-                // Name
+                // Name and Unlock Info
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = wildcard.displayName.uppercase(),
@@ -281,6 +281,22 @@ private fun WildcardCard(
                         ),
                         color = accentColor
                     )
+
+                    // Unlock badge
+                    Surface(
+                        color = if (wildcard.isDefault()) Color(0xFF43A047) else accentColor.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = if (wildcard.isDefault()) "DEFAULT" else wildcard.unlockLabel.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = if (wildcard.isDefault()) Color.White else accentColor,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
 

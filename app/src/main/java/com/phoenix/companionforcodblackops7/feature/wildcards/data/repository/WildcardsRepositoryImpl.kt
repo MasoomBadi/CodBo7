@@ -63,6 +63,8 @@ class WildcardsRepositoryImpl @Inject constructor(
             id = getInt("id"),
             name = getString("name", ""),
             displayName = getString("display_name", ""),
+            unlockLevel = getInt("unlock_level", 0),
+            unlockLabel = getString("unlock_label", ""),
             description = getString("description", ""),
             iconUrl = getString("icon_url", ""),
             sortOrder = getInt("sort_order", 0)
