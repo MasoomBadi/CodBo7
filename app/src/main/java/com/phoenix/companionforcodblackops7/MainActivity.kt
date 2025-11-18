@@ -173,8 +173,13 @@ fun AppNavigation(
                     navController.navigate("maps")
                 },
                 onNavigateToGameModes = {
-                    // TODO: Navigate to game modes screen when implemented
                     navController.navigate("gameModes")
+                },
+                onNavigateToCampaignMultiplayer = {
+                    navController.navigate("campaignMultiplayer")
+                },
+                onNavigateToZombie = {
+                    navController.navigate("zombie")
                 }
             )
         }
@@ -295,6 +300,144 @@ fun AppNavigation(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
+                )
+            }
+        }
+
+        composable("campaignMultiplayer") {
+            CampaignMultiplayerScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("zombie") {
+            ZombieScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CampaignMultiplayerScreen(onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "CAMPAIGN/MULTIPLAYER",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = Color(0xFF00BCD4)
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "COMING SOON",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    ),
+                    color = Color(0xFF00BCD4)
+                )
+                Text(
+                    text = "Campaign/Multiplayer content is under development",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ZombieScreen(onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "ZOMBIE",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = Color(0xFF76FF03)
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "COMING SOON",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    ),
+                    color = Color(0xFF76FF03)
+                )
+                Text(
+                    text = "Zombie content is under development",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
         }
@@ -482,7 +625,9 @@ fun DashboardScreen(
     onNavigateToOperators: () -> Unit,
     onNavigateToChecklists: () -> Unit,
     onNavigateToMaps: () -> Unit = {},
-    onNavigateToGameModes: () -> Unit = {}
+    onNavigateToGameModes: () -> Unit = {},
+    onNavigateToCampaignMultiplayer: () -> Unit = {},
+    onNavigateToZombie: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -568,6 +713,38 @@ fun DashboardScreen(
                     buttonColor = MaterialTheme.colorScheme.errorContainer,
                     buttonTextColor = MaterialTheme.colorScheme.onErrorContainer,
                     buttonLabel = "VIEW",
+                    borderGlow = borderGlow
+                )
+            }
+
+            // Campaign/Multiplayer Card
+            item {
+                DashboardCard(
+                    title = "CAMPAIGN/MULTIPLAYER",
+                    tagline = "Perks, combat specialty & more",
+                    onClick = onNavigateToCampaignMultiplayer,
+                    borderColor = Color(0xFF00BCD4), // Cyan color
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = Color(0xFF00BCD4),
+                    buttonColor = Color(0xFF00BCD4).copy(alpha = 0.2f),
+                    buttonTextColor = Color(0xFF00BCD4),
+                    buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
+
+            // Zombie Card
+            item {
+                DashboardCard(
+                    title = "ZOMBIE",
+                    tagline = "Zombie perks, items & gear",
+                    onClick = onNavigateToZombie,
+                    borderColor = Color(0xFF76FF03), // Bright green
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = Color(0xFF76FF03),
+                    buttonColor = Color(0xFF76FF03).copy(alpha = 0.2f),
+                    buttonTextColor = Color(0xFF76FF03),
+                    buttonLabel = "EXPLORE",
                     borderGlow = borderGlow
                 )
             }
