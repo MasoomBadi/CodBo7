@@ -1,6 +1,7 @@
 package com.phoenix.companionforcodblackops7.feature.gamemodes.presentation
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
