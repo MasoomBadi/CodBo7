@@ -26,21 +26,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Hub screen for Campaign/Multiplayer content
- * Shows different categories like Perks, Weapons, Equipment, etc.
+ * Hub screen for Multiplayer content
+ * Shows different categories like Perks, Combat Specialties, Weapons, Equipment, etc.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CampaignMultiplayerHubScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToPerks: () -> Unit
+    onNavigateToPerks: () -> Unit,
+    onNavigateToCombatSpecialties: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "CAMPAIGN/MULTIPLAYER",
+                        text = "MULTIPLAYER",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.5.sp
@@ -104,6 +105,18 @@ fun CampaignMultiplayerHubScreen(
                     accentColor = Color(0xFFAB47BC), // Purple
                     isAvailable = true,
                     onClick = onNavigateToPerks
+                )
+            }
+
+            // Combat Specialties Card - Active
+            item {
+                HubCategoryCard(
+                    title = "COMBAT SPECIALTIES",
+                    subtitle = "Specialty Bonuses & Combinations",
+                    icon = Icons.Filled.Shield,
+                    accentColor = Color(0xFFEC407A), // Pink
+                    isAvailable = true,
+                    onClick = onNavigateToCombatSpecialties
                 )
             }
 

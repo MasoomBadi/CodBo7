@@ -133,75 +133,83 @@ private fun PerksContent(
 ) {
     val perksGroupedBySlot = perks.groupBy { it.slot }.toSortedMap()
 
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+    Column(
+        modifier = modifier
     ) {
-        // Header
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "COMBAT SPECIALTIES",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 2.sp
-                    ),
-                    color = Color(0xFFAB47BC)
-                )
-                Text(
-                    text = "Choose 3 perks to customize your loadout",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        // Category Legend
-        item {
-            CategoryLegend(
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-
-        // Perks grouped by slot
-        perksGroupedBySlot.forEach { (slot, slotPerks) ->
+        // Scrollable content
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // Header
             item {
-                SlotSection(
-                    slot = slot,
-                    perks = slotPerks,
-                    onPerkClick = onPerkClick
-                )
-            }
-        }
-
-        // Banner Ad Space
-        item {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .padding(horizontal = 16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Banner Ad Space (320x90)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        text = "COMBAT SPECIALTIES",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 2.sp
+                        ),
+                        color = Color(0xFFAB47BC)
+                    )
+                    Text(
+                        text = "Choose 3 perks to customize your loadout",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
                 }
+            }
+
+            // Category Legend
+            item {
+                CategoryLegend(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            // Perks grouped by slot
+            perksGroupedBySlot.forEach { (slot, slotPerks) ->
+                item {
+                    SlotSection(
+                        slot = slot,
+                        perks = slotPerks,
+                        onPerkClick = onPerkClick
+                    )
+                }
+            }
+
+            // Scroll indicator spacer
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        // Fixed Banner Ad Space at Bottom
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(90.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Banner Ad Space (320x90)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
             }
         }
     }

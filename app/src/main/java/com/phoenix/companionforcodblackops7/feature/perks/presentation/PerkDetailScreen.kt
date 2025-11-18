@@ -70,27 +70,33 @@ fun PerkDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp)
-                .padding(vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Hero section with animated icon
-            HeroSection(perk = perk, categoryColor = categoryColor)
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 20.dp)
+                    .padding(vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                // Hero section with animated icon
+                HeroSection(perk = perk, categoryColor = categoryColor)
 
-            // Info cards
-            InfoSection(perk = perk, categoryColor = categoryColor)
+                // Info cards
+                InfoSection(perk = perk, categoryColor = categoryColor)
 
-            // Description section
-            DescriptionSection(perk = perk, categoryColor = categoryColor)
+                // Description section
+                DescriptionSection(perk = perk, categoryColor = categoryColor)
+            }
 
-            // Banner Ad Space
+            // Fixed Banner Ad Space at Bottom
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shape = RoundedCornerShape(12.dp)
+                color = MaterialTheme.colorScheme.surfaceContainerLowest
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
