@@ -48,6 +48,10 @@ import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Opera
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorDetailsScreen
 import com.phoenix.companionforcodblackops7.feature.operators.presentation.OperatorsScreen
 import com.phoenix.companionforcodblackops7.feature.sync.presentation.SyncScreen
+import com.phoenix.companionforcodblackops7.feature.campaignmultiplayer.presentation.CampaignMultiplayerHubScreen
+import com.phoenix.companionforcodblackops7.feature.perks.domain.model.Perk
+import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerkDetailScreen
+import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerksListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -135,6 +139,9 @@ fun AppNavigation(
 
     // State to hold selected game mode for navigation
     var selectedGameMode by remember { mutableStateOf<GameMode?>(null) }
+
+    // State to hold selected perk for navigation
+    var selectedPerk by remember { mutableStateOf<Perk?>(null) }
 
     NavHost(
         navController = navController,
@@ -305,11 +312,37 @@ fun AppNavigation(
         }
 
         composable("campaignMultiplayer") {
-            CampaignMultiplayerScreen(
+            CampaignMultiplayerHubScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToPerks = {
+                    navController.navigate("perks")
                 }
             )
+        }
+
+        composable("perks") {
+            PerksListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onPerkClick = { perk ->
+                    selectedPerk = perk
+                    navController.navigate("perkDetail")
+                }
+            )
+        }
+
+        composable("perkDetail") {
+            selectedPerk?.let { perk ->
+                PerkDetailScreen(
+                    perk = perk,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
         composable("zombie") {
@@ -318,67 +351,6 @@ fun AppNavigation(
                     navController.popBackStack()
                 }
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CampaignMultiplayerScreen(onNavigateBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "CAMPAIGN/MULTIPLAYER",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = Color(0xFF00BCD4)
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "COMING SOON",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    ),
-                    color = Color(0xFF00BCD4)
-                )
-                Text(
-                    text = "Campaign/Multiplayer content is under development",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp)
-                )
-            }
         }
     }
 }
