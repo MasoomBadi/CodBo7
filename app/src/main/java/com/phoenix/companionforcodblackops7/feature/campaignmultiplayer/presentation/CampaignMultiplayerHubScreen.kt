@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -173,7 +175,7 @@ fun CampaignMultiplayerHubScreen(
                 HubCategoryCard(
                     title = "WILDCARDS",
                     subtitle = "Loadout Modifiers",
-                    icon = Icons.Filled.Send,
+                    icon = Icons.AutoMirrored.Filled.Send,
                     accentColor = Color(0xFFFDD835), // Yellow
                     isAvailable = false,
                     onClick = { }
@@ -328,7 +330,7 @@ private fun HubCategoryCard(
             // Arrow indicator (only for available items)
             if (isAvailable) {
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
                     tint = accentColor.copy(alpha = 0.7f)
