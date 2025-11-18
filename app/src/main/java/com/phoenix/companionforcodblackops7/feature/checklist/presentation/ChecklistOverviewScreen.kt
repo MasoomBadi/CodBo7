@@ -93,6 +93,28 @@ fun ChecklistOverviewScreen(
                             onClick = { onNavigateToCategory(categoryProgress.category) }
                         )
                     }
+
+                    // Banner Ad Space
+                    item {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Banner Ad Space (320x90)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
