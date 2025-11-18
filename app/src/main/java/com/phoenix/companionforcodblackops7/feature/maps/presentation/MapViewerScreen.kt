@@ -170,13 +170,13 @@ fun MapViewerScreen(
                             Icon(
                                 imageVector = Icons.Default.Layers,
                                 contentDescription = "Toggle Layers",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.primary
+                        titleContentColor = MaterialTheme.colorScheme.tertiary
                     )
                 )
             },
