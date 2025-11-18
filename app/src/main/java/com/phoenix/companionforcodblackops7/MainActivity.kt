@@ -67,6 +67,10 @@ import com.phoenix.companionforcodblackops7.feature.lethals.presentation.Lethals
 import com.phoenix.companionforcodblackops7.feature.fieldupgrades.domain.model.FieldUpgrade
 import com.phoenix.companionforcodblackops7.feature.fieldupgrades.presentation.FieldUpgradeDetailScreen
 import com.phoenix.companionforcodblackops7.feature.fieldupgrades.presentation.FieldUpgradesListScreen
+import com.phoenix.companionforcodblackops7.feature.perkacola.domain.model.PerkACola
+import com.phoenix.companionforcodblackops7.feature.perkacola.presentation.PerkAColaDetailScreen
+import com.phoenix.companionforcodblackops7.feature.perkacola.presentation.PerkAColaListScreen
+import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -170,6 +174,9 @@ fun AppNavigation(
 
     // State to hold selected field upgrade for navigation
     var selectedFieldUpgrade by remember { mutableStateOf<FieldUpgrade?>(null) }
+
+    // State to hold selected Perk-a-Cola for navigation
+    var selectedPerkACola by remember { mutableStateOf<PerkACola?>(null) }
 
     NavHost(
         navController = navController,
@@ -499,73 +506,38 @@ fun AppNavigation(
             }
         }
 
-        composable("zombie") {
-            ZombieScreen(
+        composable("perkAColas") {
+            PerkAColaListScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onPerkClick = { perkACola ->
+                    selectedPerkACola = perkACola
+                    navController.navigate("perkAColaDetail")
                 }
             )
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ZombieScreen(onNavigateBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "ZOMBIE",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+        composable("perkAColaDetail") {
+            selectedPerkACola?.let { perkACola ->
+                PerkAColaDetailScreen(
+                    perk = perkACola,
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = Color(0xFF76FF03)
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "COMING SOON",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    ),
-                    color = Color(0xFF76FF03)
-                )
-                Text(
-                    text = "Zombie content is under development",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
+        }
+
+        composable("zombie") {
+            ZombieHubScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPerkAColas = {
+                    navController.navigate("perkAColas")
+                }
+            )
         }
     }
 }
