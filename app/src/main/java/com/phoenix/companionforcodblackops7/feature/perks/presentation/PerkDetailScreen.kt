@@ -2,6 +2,7 @@ package com.phoenix.companionforcodblackops7.feature.perks.presentation
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -252,7 +253,7 @@ private fun InfoCard(
                 color = color,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                modifier = Modifier.basicMarquee()
             )
         }
     }
