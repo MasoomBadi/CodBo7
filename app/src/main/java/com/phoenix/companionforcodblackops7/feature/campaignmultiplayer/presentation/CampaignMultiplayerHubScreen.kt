@@ -37,7 +37,8 @@ fun CampaignMultiplayerHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerks: () -> Unit,
     onNavigateToCombatSpecialties: () -> Unit = {},
-    onNavigateToWildcards: () -> Unit = {}
+    onNavigateToWildcards: () -> Unit = {},
+    onNavigateToScorestreaks: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -165,15 +166,15 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Scorestreaks Card - Coming Soon
+                // Scorestreaks Card - Active
                 item {
                     HubCategoryCard(
                         title = "SCORESTREAKS",
                         subtitle = "Killstreak Rewards",
                         icon = Icons.Filled.AccountBox,
                         accentColor = Color(0xFF1E88E5), // Blue
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToScorestreaks
                     )
                 }
 
