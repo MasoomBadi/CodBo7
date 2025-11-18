@@ -64,6 +64,9 @@ import com.phoenix.companionforcodblackops7.feature.tacticals.presentation.Tacti
 import com.phoenix.companionforcodblackops7.feature.lethals.domain.model.Lethal
 import com.phoenix.companionforcodblackops7.feature.lethals.presentation.LethalDetailScreen
 import com.phoenix.companionforcodblackops7.feature.lethals.presentation.LethalsListScreen
+import com.phoenix.companionforcodblackops7.feature.fieldupgrades.domain.model.FieldUpgrade
+import com.phoenix.companionforcodblackops7.feature.fieldupgrades.presentation.FieldUpgradeDetailScreen
+import com.phoenix.companionforcodblackops7.feature.fieldupgrades.presentation.FieldUpgradesListScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -164,6 +167,9 @@ fun AppNavigation(
 
     // State to hold selected lethal for navigation
     var selectedLethal by remember { mutableStateOf<Lethal?>(null) }
+
+    // State to hold selected field upgrade for navigation
+    var selectedFieldUpgrade by remember { mutableStateOf<FieldUpgrade?>(null) }
 
     NavHost(
         navController = navController,
@@ -355,6 +361,9 @@ fun AppNavigation(
                 },
                 onNavigateToLethals = {
                     navController.navigate("lethals")
+                },
+                onNavigateToFieldUpgrades = {
+                    navController.navigate("fieldUpgrades")
                 }
             )
         }
@@ -460,6 +469,29 @@ fun AppNavigation(
             selectedLethal?.let { lethal ->
                 LethalDetailScreen(
                     lethal = lethal,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("fieldUpgrades") {
+            FieldUpgradesListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onFieldUpgradeClick = { fieldUpgrade ->
+                    selectedFieldUpgrade = fieldUpgrade
+                    navController.navigate("fieldUpgradeDetail")
+                }
+            )
+        }
+
+        composable("fieldUpgradeDetail") {
+            selectedFieldUpgrade?.let { fieldUpgrade ->
+                FieldUpgradeDetailScreen(
+                    fieldUpgrade = fieldUpgrade,
                     onNavigateBack = {
                         navController.popBackStack()
                     }
