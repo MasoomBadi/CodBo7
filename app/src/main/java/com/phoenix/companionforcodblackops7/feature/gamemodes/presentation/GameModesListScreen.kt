@@ -169,46 +169,33 @@ private fun GameModeCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
-            .border(
-                width = 2.dp,
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        accentColor.copy(alpha = glowAlpha),
-                        accentColor.copy(alpha = 0.2f),
-                        accentColor.copy(alpha = glowAlpha)
-                    )
-                ),
-                shape = MaterialTheme.shapes.large
-            ),
+            .height(160.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = MaterialTheme.shapes.large
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon Section
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(120.dp)
                     .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                accentColor.copy(alpha = 0.15f),
-                                Color.Transparent
-                            )
-                        ),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = CircleShape
                     )
-                    .clip(CircleShape)
-                    .border(2.dp, accentColor.copy(alpha = 0.3f), CircleShape),
+                    .border(
+                        width = 2.dp,
+                        color = accentColor.copy(alpha = 0.4f),
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -216,86 +203,100 @@ private fun GameModeCard(
                         model = "http://codbo7.masoombadi.top${gameMode.iconUrl}"
                     ),
                     contentDescription = gameMode.displayName,
-                    modifier = Modifier.size(70.dp),
+                    modifier = Modifier.size(90.dp),
                     contentScale = ContentScale.Fit
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(20.dp))
 
-            // Info Section
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Info Section with left accent bar
+            Row(
+                modifier = Modifier.weight(1f)
             ) {
-                // Title and NEW badge
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = gameMode.displayName.uppercase(),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 0.5.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 2
-                    )
+                // Accent bar
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .background(accentColor, MaterialTheme.shapes.small)
+                )
 
-                    if (gameMode.isNew) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = MaterialTheme.shapes.small
-                        ) {
-                            Text(
-                                text = "NEW",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Title and NEW badge
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = gameMode.displayName.uppercase(),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f, fill = false),
+                            maxLines = 2
+                        )
+
+                        if (gameMode.isNew) {
+                            Surface(
+                                color = accentColor,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    text = "NEW",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.2.sp
+                                    ),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
                         }
                     }
-                }
 
-                // Mode Type Chip
-                Surface(
-                    color = accentColor.copy(alpha = 0.15f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = gameMode.modeType,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = accentColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-
-                // Quick Stats Row
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Match Time
-                    if (gameMode.matchTime.isNotBlank()) {
-                        InfoChip(
-                            label = gameMode.matchTime,
-                            icon = "⏱"
+                    // Mode Type Chip
+                    Surface(
+                        color = accentColor.copy(alpha = 0.15f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = gameMode.modeType,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                         )
                     }
 
-                    // Team Size
-                    if (gameMode.teamSize.isNotBlank()) {
-                        InfoChip(
-                            label = gameMode.teamSize,
-                            icon = "👥"
-                        )
+                    // Quick Stats Row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Match Time
+                        if (gameMode.matchTime.isNotBlank()) {
+                            InfoChip(
+                                label = gameMode.matchTime,
+                                icon = "⏱"
+                            )
+                        }
+
+                        // Team Size
+                        if (gameMode.teamSize.isNotBlank()) {
+                            InfoChip(
+                                label = gameMode.teamSize,
+                                icon = "👥"
+                            )
+                        }
                     }
                 }
             }
@@ -309,19 +310,19 @@ private fun InfoChip(
     icon: String
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = icon,
-            style = MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelMedium
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.SemiBold
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
