@@ -684,7 +684,7 @@ fun DashboardScreen(
                     gradientColor = MaterialTheme.colorScheme.error,
                     buttonColor = MaterialTheme.colorScheme.errorContainer,
                     buttonTextColor = MaterialTheme.colorScheme.onErrorContainer,
-                    buttonLabel = "VIEW",
+                    buttonLabel = "EXPLORE",
                     borderGlow = borderGlow
                 )
             }
@@ -698,7 +698,7 @@ fun DashboardScreen(
                     borderColor = Color(0xFF00BCD4), // Cyan color
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     gradientColor = Color(0xFF00BCD4),
-                    buttonColor = Color(0xFF00BCD4).copy(alpha = 0.2f),
+                    buttonColor = Color(0xFF00BCD4).copy(alpha = 0.3f),
                     buttonTextColor = Color(0xFF00BCD4),
                     buttonLabel = "EXPLORE",
                     borderGlow = borderGlow
@@ -714,7 +714,7 @@ fun DashboardScreen(
                     borderColor = Color(0xFF76FF03), // Bright green
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     gradientColor = Color(0xFF76FF03),
-                    buttonColor = Color(0xFF76FF03).copy(alpha = 0.2f),
+                    buttonColor = Color(0xFF76FF03).copy(alpha = 0.3f),
                     buttonTextColor = Color(0xFF76FF03),
                     buttonLabel = "EXPLORE",
                     borderGlow = borderGlow

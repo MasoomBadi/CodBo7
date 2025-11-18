@@ -182,9 +182,27 @@ private fun PerksContent(
             }
         }
 
-        // Ad space placeholder
+        // Banner Ad Space
         item {
-            Spacer(modifier = Modifier.height(60.dp))
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .padding(horizontal = 16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Banner Ad Space (320x90)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                }
+            }
         }
     }
 }
