@@ -9,6 +9,8 @@ data class Tactical(
     val id: Int,
     val name: String,
     val displayName: String,
+    val availableMultiplayer: Boolean,
+    val availableZombies: Boolean,
     val unlockLevel: Int,
     val unlockLabel: String,
     val description: String,
@@ -48,5 +50,17 @@ data class Tactical(
         if (!overclock1.isNullOrEmpty()) count++
         if (!overclock2.isNullOrEmpty()) count++
         return count
+    }
+
+    /**
+     * Get availability modes as formatted string
+     */
+    fun getAvailabilityModes(): String {
+        return when {
+            availableMultiplayer && availableZombies -> "MP & ZOMBIES"
+            availableMultiplayer -> "MULTIPLAYER"
+            availableZombies -> "ZOMBIES"
+            else -> "UNAVAILABLE"
+        }
     }
 }

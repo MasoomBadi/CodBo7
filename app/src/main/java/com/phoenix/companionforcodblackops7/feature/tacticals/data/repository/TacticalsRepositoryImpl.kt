@@ -71,10 +71,23 @@ class TacticalsRepositoryImpl @Inject constructor(
             }
         }
 
+        fun getBoolean(key: String, default: Boolean = false): Boolean {
+            val value = data[key]
+            return when {
+                value == null -> default
+                value.type == RealmAny.Type.BOOL -> value.asBoolean()
+                value.type == RealmAny.Type.INT -> value.asInt() != 0L
+                value.type == RealmAny.Type.STRING -> value.asString().equals("1", ignoreCase = true) || value.asString().equals("true", ignoreCase = true)
+                else -> default
+            }
+        }
+
         return Tactical(
             id = getInt("id"),
             name = getString("name", ""),
             displayName = getString("display_name", ""),
+            availableMultiplayer = getBoolean("available_multiplayer", false),
+            availableZombies = getBoolean("available_zombies", false),
             unlockLevel = getInt("unlock_level", 0),
             unlockLabel = getString("unlock_label", ""),
             description = getString("description", ""),

@@ -288,8 +288,9 @@ private fun TacticalCard(
 
                 // Badges row
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     // Unlock badge
                     Surface(
@@ -303,6 +304,35 @@ private fun TacticalCard(
                                 letterSpacing = 0.5.sp
                             ),
                             color = if (tactical.isDefault()) Color.White else accentColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
+                // Second badges row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Availability badge
+                    val availabilityColor = when {
+                        tactical.availableMultiplayer && tactical.availableZombies -> Color(0xFF9C27B0) // Purple for both
+                        tactical.availableMultiplayer -> Color(0xFF2196F3) // Blue for MP
+                        tactical.availableZombies -> Color(0xFF4CAF50) // Green for Zombies
+                        else -> Color.Gray
+                    }
+                    Surface(
+                        color = availabilityColor.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = tactical.getAvailabilityModes(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = availabilityColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
