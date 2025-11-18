@@ -61,6 +61,9 @@ import com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation.Sc
 import com.phoenix.companionforcodblackops7.feature.tacticals.domain.model.Tactical
 import com.phoenix.companionforcodblackops7.feature.tacticals.presentation.TacticalDetailScreen
 import com.phoenix.companionforcodblackops7.feature.tacticals.presentation.TacticalsListScreen
+import com.phoenix.companionforcodblackops7.feature.lethals.domain.model.Lethal
+import com.phoenix.companionforcodblackops7.feature.lethals.presentation.LethalDetailScreen
+import com.phoenix.companionforcodblackops7.feature.lethals.presentation.LethalsListScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -158,6 +161,9 @@ fun AppNavigation(
 
     // State to hold selected tactical for navigation
     var selectedTactical by remember { mutableStateOf<Tactical?>(null) }
+
+    // State to hold selected lethal for navigation
+    var selectedLethal by remember { mutableStateOf<Lethal?>(null) }
 
     NavHost(
         navController = navController,
@@ -346,6 +352,9 @@ fun AppNavigation(
                 },
                 onNavigateToTacticals = {
                     navController.navigate("tacticals")
+                },
+                onNavigateToLethals = {
+                    navController.navigate("lethals")
                 }
             )
         }
@@ -428,6 +437,29 @@ fun AppNavigation(
             selectedTactical?.let { tactical ->
                 TacticalDetailScreen(
                     tactical = tactical,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("lethals") {
+            LethalsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onLethalClick = { lethal ->
+                    selectedLethal = lethal
+                    navController.navigate("lethalDetail")
+                }
+            )
+        }
+
+        composable("lethalDetail") {
+            selectedLethal?.let { lethal ->
+                LethalDetailScreen(
+                    lethal = lethal,
                     onNavigateBack = {
                         navController.popBackStack()
                     }

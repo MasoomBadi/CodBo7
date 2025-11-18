@@ -39,7 +39,8 @@ fun CampaignMultiplayerHubScreen(
     onNavigateToCombatSpecialties: () -> Unit = {},
     onNavigateToWildcards: () -> Unit = {},
     onNavigateToScorestreaks: () -> Unit = {},
-    onNavigateToTacticals: () -> Unit = {}
+    onNavigateToTacticals: () -> Unit = {},
+    onNavigateToLethals: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -164,6 +165,18 @@ fun CampaignMultiplayerHubScreen(
                         accentColor = Color(0xFF26A69A), // Teal
                         isAvailable = true,
                         onClick = onNavigateToTacticals
+                    )
+                }
+
+                // Lethals Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "LETHALS",
+                        subtitle = "Lethal Equipment",
+                        icon = Icons.Filled.Face,
+                        accentColor = Color(0xFFE53935), // Red
+                        isAvailable = true,
+                        onClick = onNavigateToLethals
                     )
                 }
 
