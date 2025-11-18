@@ -129,6 +129,18 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
+                // Wildcards Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "WILDCARDS",
+                        subtitle = "Loadout Modifiers",
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        accentColor = Color(0xFFFDD835), // Yellow
+                        isAvailable = true,
+                        onClick = onNavigateToWildcards
+                    )
+                }
+
                 // Weapons Card - Coming Soon
                 item {
                     HubCategoryCard(
@@ -174,18 +186,6 @@ fun CampaignMultiplayerHubScreen(
                         accentColor = Color(0xFF43A047), // Green
                         isAvailable = false,
                         onClick = { }
-                    )
-                }
-
-                // Wildcards Card - Active
-                item {
-                    HubCategoryCard(
-                        title = "WILDCARDS",
-                        subtitle = "Loadout Modifiers",
-                        icon = Icons.AutoMirrored.Filled.Send,
-                        accentColor = Color(0xFFFDD835), // Yellow
-                        isAvailable = true,
-                        onClick = onNavigateToWildcards
                     )
                 }
 
