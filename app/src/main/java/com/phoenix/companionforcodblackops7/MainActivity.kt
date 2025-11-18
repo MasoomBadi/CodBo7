@@ -58,6 +58,9 @@ import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerksList
 import com.phoenix.companionforcodblackops7.feature.scorestreaks.domain.model.Scorestreak
 import com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation.ScorestreakDetailScreen
 import com.phoenix.companionforcodblackops7.feature.scorestreaks.presentation.ScorestreaksListScreen
+import com.phoenix.companionforcodblackops7.feature.tacticals.domain.model.Tactical
+import com.phoenix.companionforcodblackops7.feature.tacticals.presentation.TacticalDetailScreen
+import com.phoenix.companionforcodblackops7.feature.tacticals.presentation.TacticalsListScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -152,6 +155,9 @@ fun AppNavigation(
 
     // State to hold selected scorestreak for navigation
     var selectedScorestreak by remember { mutableStateOf<Scorestreak?>(null) }
+
+    // State to hold selected tactical for navigation
+    var selectedTactical by remember { mutableStateOf<Tactical?>(null) }
 
     NavHost(
         navController = navController,
@@ -337,6 +343,9 @@ fun AppNavigation(
                 },
                 onNavigateToScorestreaks = {
                     navController.navigate("scorestreaks")
+                },
+                onNavigateToTacticals = {
+                    navController.navigate("tacticals")
                 }
             )
         }
@@ -396,6 +405,29 @@ fun AppNavigation(
             selectedScorestreak?.let { scorestreak ->
                 ScorestreakDetailScreen(
                     scorestreak = scorestreak,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("tacticals") {
+            TacticalsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onTacticalClick = { tactical ->
+                    selectedTactical = tactical
+                    navController.navigate("tacticalDetail")
+                }
+            )
+        }
+
+        composable("tacticalDetail") {
+            selectedTactical?.let { tactical ->
+                TacticalDetailScreen(
+                    tactical = tactical,
                     onNavigateBack = {
                         navController.popBackStack()
                     }
