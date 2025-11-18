@@ -102,7 +102,7 @@ fun PerksListScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        FilledButton(onClick = { viewModel.loadPerks() }) {
+                        Button(onClick = { viewModel.loadPerks() }) {
                             Text("Retry")
                         }
                     }
@@ -235,9 +235,8 @@ private fun LegendItem(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
