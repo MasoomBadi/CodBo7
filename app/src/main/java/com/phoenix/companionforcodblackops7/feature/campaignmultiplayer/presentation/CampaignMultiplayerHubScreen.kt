@@ -34,7 +34,8 @@ import androidx.compose.ui.unit.sp
 fun CampaignMultiplayerHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerks: () -> Unit,
-    onNavigateToCombatSpecialties: () -> Unit = {}
+    onNavigateToCombatSpecialties: () -> Unit = {},
+    onNavigateToWildcards: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -174,15 +175,15 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Wildcards Card - Coming Soon
+                // Wildcards Card - Active
                 item {
                     HubCategoryCard(
                         title = "WILDCARDS",
                         subtitle = "Loadout Modifiers",
                         icon = Icons.Filled.Send,
                         accentColor = Color(0xFFFDD835), // Yellow
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToWildcards
                     )
                 }
 

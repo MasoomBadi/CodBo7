@@ -55,6 +55,7 @@ import com.phoenix.companionforcodblackops7.feature.combatspecialties.presentati
 import com.phoenix.companionforcodblackops7.feature.perks.domain.model.Perk
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerkDetailScreen
 import com.phoenix.companionforcodblackops7.feature.perks.presentation.PerksListScreen
+import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -324,6 +325,9 @@ fun AppNavigation(
                 },
                 onNavigateToCombatSpecialties = {
                     navController.navigate("combatSpecialties")
+                },
+                onNavigateToWildcards = {
+                    navController.navigate("wildcards")
                 }
             )
         }
@@ -342,6 +346,14 @@ fun AppNavigation(
 
         composable("combatSpecialties") {
             CombatSpecialtiesListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("wildcards") {
+            WildcardsListScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
