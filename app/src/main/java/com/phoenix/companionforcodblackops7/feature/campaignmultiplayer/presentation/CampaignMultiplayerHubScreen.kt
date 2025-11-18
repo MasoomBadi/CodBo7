@@ -38,7 +38,8 @@ fun CampaignMultiplayerHubScreen(
     onNavigateToPerks: () -> Unit,
     onNavigateToCombatSpecialties: () -> Unit = {},
     onNavigateToWildcards: () -> Unit = {},
-    onNavigateToScorestreaks: () -> Unit = {}
+    onNavigateToScorestreaks: () -> Unit = {},
+    onNavigateToTacticals: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -154,15 +155,15 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Equipment Card - Coming Soon
+                // Tacticals Card - Active
                 item {
                     HubCategoryCard(
-                        title = "EQUIPMENT",
-                        subtitle = "Lethal & Tactical Gear",
+                        title = "TACTICALS",
+                        subtitle = "Tactical Equipment",
                         icon = Icons.Filled.Warning,
-                        accentColor = Color(0xFFE53935), // Red
-                        isAvailable = false,
-                        onClick = { }
+                        accentColor = Color(0xFF26A69A), // Teal
+                        isAvailable = true,
+                        onClick = onNavigateToTacticals
                     )
                 }
 
