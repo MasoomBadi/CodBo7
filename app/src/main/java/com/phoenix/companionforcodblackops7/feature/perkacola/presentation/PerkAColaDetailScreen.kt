@@ -699,7 +699,7 @@ private fun RecipeFlowSection(
                     model = "http://codbo7.masoombadi.top${perk.recipeUrl}",
                     contentDescription = "Recipe Flow",
                     modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FitWidth
+                    contentScale = ContentScale.FillWidth
                 )
             }
         }
