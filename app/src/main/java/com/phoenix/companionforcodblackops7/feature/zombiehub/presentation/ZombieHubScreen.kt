@@ -36,7 +36,8 @@ fun ZombieHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerkAColas: () -> Unit,
     onNavigateToAmmoMods: () -> Unit,
-    onNavigateToFieldUpgradesZM: () -> Unit
+    onNavigateToFieldUpgradesZM: () -> Unit,
+    onNavigateToPowerUps: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -161,6 +162,18 @@ fun ZombieHubScreen(
                         accentColor = Color(0xFFE91E63), // Pink
                         isAvailable = true,
                         onClick = onNavigateToAmmoMods
+                    )
+                }
+
+                // Power-Ups Card - Active
+                item {
+                    HubCategoryCard(
+                        title = "POWER-UPS",
+                        subtitle = "Instant & Duration Effects",
+                        icon = Icons.Filled.Favorite,
+                        accentColor = Color(0xFFFFC107), // Gold/Amber
+                        isAvailable = true,
+                        onClick = onNavigateToPowerUps
                     )
                 }
 

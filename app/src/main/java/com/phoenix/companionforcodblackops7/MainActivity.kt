@@ -76,6 +76,7 @@ import com.phoenix.companionforcodblackops7.feature.ammomods.presentation.AmmoMo
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model.FieldUpgradeZM
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradeZMDetailScreen
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradesZMListScreen
+import com.phoenix.companionforcodblackops7.feature.powerups.presentation.PowerUpsScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -587,6 +588,14 @@ fun AppNavigation(
             }
         }
 
+        composable("powerUps") {
+            PowerUpsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable("zombie") {
             ZombieHubScreen(
                 onNavigateBack = {
@@ -600,6 +609,9 @@ fun AppNavigation(
                 },
                 onNavigateToFieldUpgradesZM = {
                     navController.navigate("fieldUpgradesZM")
+                },
+                onNavigateToPowerUps = {
+                    navController.navigate("powerUps")
                 }
             )
         }
