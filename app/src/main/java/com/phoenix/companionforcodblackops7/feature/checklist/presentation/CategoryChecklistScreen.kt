@@ -5,18 +5,28 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -64,53 +74,78 @@ fun CategoryChecklistScreen(
                     )
                 )
 
-                // Progress bar
+                // Enhanced Progress section
                 if (uiState is CategoryChecklistUiState.Success) {
                     val state = uiState as CategoryChecklistUiState.Success
                     val progress = if (state.totalCount > 0) {
                         state.unlockedCount.toFloat() / state.totalCount
                     } else 0f
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 2.dp
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${state.unlockedCount} / ${state.totalCount} unlocked",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        LinearProgressIndicator(
-                            progress = { progress },
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            strokeCap = StrokeCap.Round
-                        )
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "PROGRESS",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 1.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                    Text(
+                                        text = "${state.unlockedCount} / ${state.totalCount} unlocked",
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontWeight = FontWeight.Medium
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    Text(
+                                        text = "${(progress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.headlineSmall.copy(
+                                            fontWeight = FontWeight.Black
+                                        ),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                            }
+
+                            LinearProgressIndicator(
+                                progress = { progress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(5.dp)),
+                                color = MaterialTheme.colorScheme.secondary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                strokeCap = StrokeCap.Round
+                            )
+                        }
                     }
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         when (val state = uiState) {
             is CategoryChecklistUiState.Loading -> {
@@ -124,43 +159,51 @@ fun CategoryChecklistScreen(
                 }
             }
             is CategoryChecklistUiState.Success -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(padding)
                 ) {
-                    items(
-                        items = state.items,
-                        key = { it.id }
-                    ) { item ->
-                        ChecklistItemCard(
-                            item = item,
-                            onToggle = { viewModel.toggleItemUnlocked(item.id) }
-                        )
+                    // Scrollable content
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(
+                            items = state.items,
+                            key = { it.id }
+                        ) { item ->
+                            EnhancedChecklistItemCard(
+                                item = item,
+                                onToggle = { viewModel.toggleItemUnlocked(item.id) }
+                            )
+                        }
+
+                        // Scroll indicator spacer
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
 
-                    // Banner Ad Space
-                    item {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                            shape = MaterialTheme.shapes.medium
+                    // Fixed Banner Ad Space at Bottom
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Banner Ad Space (320x90)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                )
-                            }
+                            Text(
+                                text = "Banner Ad Space (320x90)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
                         }
                     }
                 }
@@ -169,137 +212,256 @@ fun CategoryChecklistScreen(
     }
 }
 
+/**
+ * Enhanced checklist item card with beautiful design
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ChecklistItemCard(
+private fun EnhancedChecklistItemCard(
     item: ChecklistItem,
     onToggle: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "checkPulse")
-    val checkScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
+    // Glow animation for unlocked items
+    val infiniteTransition = rememberInfiniteTransition(label = "itemGlow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
+            animation = tween(2000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "checkScale"
+        label = "glowAlpha"
     )
+
+    val borderColor = if (item.isUnlocked) {
+        MaterialTheme.colorScheme.secondary.copy(alpha = glowAlpha * 0.8f)
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    }
+
+    val cardColor = if (item.isUnlocked) {
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     Card(
         onClick = onToggle,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 2.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.isUnlocked) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainer
-            }
+            containerColor = cardColor
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (item.isUnlocked) 6.dp else 2.dp
+            defaultElevation = if (item.isUnlocked) 6.dp else 3.dp
         ),
-        shape = MaterialTheme.shapes.large
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .heightIn(min = 100.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image
-            item.imageUrl?.let { url ->
-                Surface(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .fillMaxHeight(),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    tonalElevation = 2.dp
-                ) {
+            // Image with glow background
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush = if (item.isUnlocked) {
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f),
+                                    Color.Transparent
+                                )
+                            )
+                        } else {
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                item.imageUrl?.let { url ->
                     AsyncImage(
                         model = "$BASE_URL$url",
                         contentDescription = item.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(RoundedCornerShape(12.dp))
                     )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-
-            // Content
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = if (item.isUnlocked) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-
-                item.unlockCriteria?.let { criteria ->
-                    Text(
-                        text = criteria,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (item.isUnlocked) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                } ?: run {
+                    // Placeholder if no image
+                    Icon(
+                        imageVector = if (item.isUnlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp),
+                        tint = if (item.isUnlocked) {
+                            MaterialTheme.colorScheme.secondary
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.colorScheme.outline
                         }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Checkbox
-            AnimatedVisibility(
-                visible = item.isUnlocked,
-                enter = scaleIn(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    )
-                ),
-                exit = scaleOut()
+            // Content section
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                // Name
+                Text(
+                    text = item.name.uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = if (item.isUnlocked) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+
+                // Unlock criteria
+                item.unlockCriteria?.let { criteria ->
+                    Surface(
+                        color = if (item.isUnlocked) {
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "✓",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold
+                            text = criteria,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Medium
                             ),
-                            color = MaterialTheme.colorScheme.onPrimary
+                            color = if (item.isUnlocked) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                // Status badge
+                Surface(
+                    color = if (item.isUnlocked) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    },
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (item.isUnlocked) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSecondary
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        Text(
+                            text = if (item.isUnlocked) "UNLOCKED" else "LOCKED",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = if (item.isUnlocked) {
+                                MaterialTheme.colorScheme.onSecondary
+                            } else {
+                                MaterialTheme.colorScheme.outline
+                            }
                         )
                     }
                 }
             }
 
-            if (!item.isUnlocked) {
-                Checkbox(
-                    checked = false,
-                    onCheckedChange = { onToggle() },
-                    colors = CheckboxDefaults.colors(
-                        uncheckedColor = MaterialTheme.colorScheme.outline
+            // Checkbox/Check indicator
+            AnimatedVisibility(
+                visible = item.isUnlocked,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
                     )
-                )
+                ),
+                exit = scaleOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary,
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+                                )
+                            )
+                        )
+                        .scale(if (item.isUnlocked) glowAlpha else 1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = "Unlocked",
+                        modifier = Modifier.size(36.dp),
+                        tint = MaterialTheme.colorScheme.onSecondary
+                    )
+                }
+            }
+
+            if (!item.isUnlocked) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Lock,
+                        contentDescription = "Locked",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }
