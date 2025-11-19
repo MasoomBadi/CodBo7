@@ -129,7 +129,8 @@ private fun PerkAColaContent(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.background(MaterialTheme.colorScheme.background)
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Scrollable content
         LazyColumn(
