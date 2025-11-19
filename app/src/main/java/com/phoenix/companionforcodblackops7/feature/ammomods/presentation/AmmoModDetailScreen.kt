@@ -95,9 +95,6 @@ fun AmmoModDetailScreen(
                 // Base description
                 BaseDescriptionCard(ammoMod = ammoMod, accentColor = accentColor)
 
-                // Visual gallery (vertical layout)
-                VisualGallery(ammoMod = ammoMod, accentColor = accentColor)
-
                 // Augments tabs
                 if (ammoMod.hasAugments()) {
                     AugmentsTabs(ammoMod = ammoMod)
@@ -377,116 +374,6 @@ private fun BaseDescriptionCard(
 }
 
 /**
- * Visual gallery with vertical layout
- */
-@Composable
-private fun VisualGallery(
-    ammoMod: AmmoMod,
-    accentColor: Color
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "AMMO MOD VISUALS",
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                ),
-                color = accentColor
-            )
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Icon
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        accentColor.copy(alpha = 0.2f),
-                                        accentColor.copy(alpha = 0.05f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = "http://codbo7.masoombadi.top${ammoMod.iconUrl}",
-                            contentDescription = "Icon",
-                            modifier = Modifier.size(100.dp)
-                        )
-                    }
-                    Text(
-                        text = "ICON",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                // Box
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        accentColor.copy(alpha = 0.2f),
-                                        accentColor.copy(alpha = 0.05f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = "http://codbo7.masoombadi.top${ammoMod.boxUrl}",
-                            contentDescription = "Box",
-                            modifier = Modifier.size(100.dp)
-                        )
-                    }
-                    Text(
-                        text = "AMMO BOX",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
  * Augments tabs section
  */
 @Composable
@@ -637,7 +524,7 @@ private fun RecipeFlowSection(
                         .background(accentColor)
                 )
                 Text(
-                    text = "AUGMENT RECIPE FLOW",
+                    text = "AUGMENT FLOW",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp

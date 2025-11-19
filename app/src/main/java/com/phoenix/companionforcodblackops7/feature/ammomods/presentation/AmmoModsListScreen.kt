@@ -226,37 +226,37 @@ private fun AmmoModCard(
     val accentColor = ammoMod.getAccentColor()
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .border(
                 width = 2.dp,
-                color = accentColor.copy(alpha = glowAlpha * 0.5f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick),
+                color = accentColor.copy(alpha = glowAlpha * 0.7f),
+                shape = RoundedCornerShape(20.dp)
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Ammo box image with glow background
+            // Icon image with glow background
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                accentColor.copy(alpha = 0.25f),
-                                accentColor.copy(alpha = 0.05f),
+                                accentColor.copy(alpha = 0.3f),
+                                accentColor.copy(alpha = 0.1f),
                                 Color.Transparent
                             )
                         )
@@ -264,9 +264,9 @@ private fun AmmoModCard(
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = "http://codbo7.masoombadi.top${ammoMod.boxUrl}",
+                    model = "http://codbo7.masoombadi.top${ammoMod.iconUrl}",
                     contentDescription = ammoMod.name,
-                    modifier = Modifier.size(90.dp)
+                    modifier = Modifier.size(110.dp)
                 )
             }
 

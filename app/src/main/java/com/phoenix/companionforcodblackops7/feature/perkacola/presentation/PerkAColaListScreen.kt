@@ -128,23 +128,24 @@ private fun PerkAColaContent(
     onPerkClick: (PerkACola) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
+    Box(
+        modifier = modifier.background(MaterialTheme.colorScheme.background)
     ) {
         // Scrollable content
         LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(vertical = 16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 106.dp // 90dp ad + 16dp spacing
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
             item {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -169,23 +170,20 @@ private fun PerkAColaContent(
             items(perkAColas) { perk ->
                 PerkAColaCard(
                     perk = perk,
-                    onClick = { onPerkClick(perk) },
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    onClick = { onPerkClick(perk) }
                 )
-            }
-
-            // Scroll indicator spacer
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
         // Fixed Banner Ad Space at Bottom
         Surface(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
+                .height(90.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            shadowElevation = 8.dp
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -226,37 +224,37 @@ private fun PerkAColaCard(
     val accentColor = perk.getAccentColor()
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .border(
                 width = 2.dp,
-                color = accentColor.copy(alpha = glowAlpha * 0.5f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick),
+                color = accentColor.copy(alpha = glowAlpha * 0.7f),
+                shape = RoundedCornerShape(20.dp)
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Bottle image with glow background
+            // Icon image with glow background
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                accentColor.copy(alpha = 0.25f),
-                                accentColor.copy(alpha = 0.05f),
+                                accentColor.copy(alpha = 0.3f),
+                                accentColor.copy(alpha = 0.1f),
                                 Color.Transparent
                             )
                         )
@@ -264,9 +262,9 @@ private fun PerkAColaCard(
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = "http://codbo7.masoombadi.top${perk.bottleUrl}",
+                    model = "http://codbo7.masoombadi.top${perk.iconUrl}",
                     contentDescription = perk.displayName,
-                    modifier = Modifier.size(90.dp)
+                    modifier = Modifier.size(110.dp)
                 )
             }
 

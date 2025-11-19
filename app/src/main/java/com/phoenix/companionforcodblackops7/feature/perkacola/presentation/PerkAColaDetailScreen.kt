@@ -95,9 +95,6 @@ fun PerkAColaDetailScreen(
                 // Stats row
                 StatsRow(perk = perk, accentColor = accentColor)
 
-                // Image gallery (icon + bottle)
-                ImageGallery(perk = perk, accentColor = accentColor)
-
                 // Base effect
                 BaseEffectCard(perk = perk, accentColor = accentColor)
 
@@ -314,117 +311,6 @@ private fun StatsRow(
                     ),
                     color = Color(0xFFFFB300)
                 )
-            }
-        }
-    }
-}
-
-/**
- * Image gallery showing icon and bottle
- */
-@Composable
-private fun ImageGallery(
-    perk: PerkACola,
-    accentColor: Color
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "PERK GALLERY",
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                ),
-                color = accentColor
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Icon
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        accentColor.copy(alpha = 0.2f),
-                                        accentColor.copy(alpha = 0.05f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = "http://codbo7.masoombadi.top${perk.iconUrl}",
-                            contentDescription = "Icon",
-                            modifier = Modifier.fillMaxSize(0.8f)
-                        )
-                    }
-                    Text(
-                        text = "ICON",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Bottle
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        accentColor.copy(alpha = 0.2f),
-                                        accentColor.copy(alpha = 0.05f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = "http://codbo7.masoombadi.top${perk.bottleUrl}",
-                            contentDescription = "Bottle",
-                            modifier = Modifier.fillMaxSize(0.8f)
-                        )
-                    }
-                    Text(
-                        text = "BOTTLE",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
     }
@@ -677,7 +563,7 @@ private fun RecipeFlowSection(
                         .background(accentColor)
                 )
                 Text(
-                    text = "AUGMENT RECIPE FLOW",
+                    text = "AUGMENT FLOW",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp

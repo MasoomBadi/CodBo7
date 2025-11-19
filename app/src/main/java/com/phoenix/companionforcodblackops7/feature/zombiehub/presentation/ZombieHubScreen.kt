@@ -35,7 +35,8 @@ import androidx.compose.ui.unit.sp
 fun ZombieHubScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPerkAColas: () -> Unit,
-    onNavigateToAmmoMods: () -> Unit
+    onNavigateToAmmoMods: () -> Unit,
+    onNavigateToFieldUpgradesZM: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -139,15 +140,15 @@ fun ZombieHubScreen(
                     )
                 }
 
-                // Field Upgrades (Zombies) Card - Coming Soon
+                // Field Upgrades (Zombies) Card - Active
                 item {
                     HubCategoryCard(
                         title = "FIELD UPGRADES",
                         subtitle = "Special Zombie Abilities",
                         icon = Icons.Filled.Build,
                         accentColor = Color(0xFF00BCD4), // Cyan
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToFieldUpgradesZM
                     )
                 }
 
