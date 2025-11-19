@@ -73,6 +73,9 @@ import com.phoenix.companionforcodblackops7.feature.perkacola.presentation.PerkA
 import com.phoenix.companionforcodblackops7.feature.ammomods.domain.model.AmmoMod
 import com.phoenix.companionforcodblackops7.feature.ammomods.presentation.AmmoModDetailScreen
 import com.phoenix.companionforcodblackops7.feature.ammomods.presentation.AmmoModsListScreen
+import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model.FieldUpgradeZM
+import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradeZMDetailScreen
+import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradesZMListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -183,6 +186,9 @@ fun AppNavigation(
 
     // State to hold selected Ammo Mod for navigation
     var selectedAmmoMod by remember { mutableStateOf<AmmoMod?>(null) }
+
+    // State to hold selected Field Upgrade (ZM) for navigation
+    var selectedFieldUpgradeZM by remember { mutableStateOf<FieldUpgradeZM?>(null) }
 
     NavHost(
         navController = navController,
@@ -558,6 +564,29 @@ fun AppNavigation(
             }
         }
 
+        composable("fieldUpgradesZM") {
+            FieldUpgradesZMListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onFieldUpgradeClick = { fieldUpgrade ->
+                    selectedFieldUpgradeZM = fieldUpgrade
+                    navController.navigate("fieldUpgradeZMDetail")
+                }
+            )
+        }
+
+        composable("fieldUpgradeZMDetail") {
+            selectedFieldUpgradeZM?.let { fieldUpgrade ->
+                FieldUpgradeZMDetailScreen(
+                    fieldUpgrade = fieldUpgrade,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
         composable("zombie") {
             ZombieHubScreen(
                 onNavigateBack = {
@@ -568,6 +597,9 @@ fun AppNavigation(
                 },
                 onNavigateToAmmoMods = {
                     navController.navigate("ammoMods")
+                },
+                onNavigateToFieldUpgradesZM = {
+                    navController.navigate("fieldUpgradesZM")
                 }
             )
         }
