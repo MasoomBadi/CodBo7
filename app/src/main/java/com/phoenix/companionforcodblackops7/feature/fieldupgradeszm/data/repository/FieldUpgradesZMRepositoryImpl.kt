@@ -1,6 +1,6 @@
 package com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.data.repository
 
-import com.phoenix.companionforcodblackops7.core.data.local.DynamicEntity
+import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model.FieldUpgradeZM
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model.FieldUpgradeZMAugment
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.repository.FieldUpgradesZMRepository

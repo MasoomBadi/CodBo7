@@ -4,7 +4,6 @@ import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.tacticals.domain.model.Tactical
 import com.phoenix.companionforcodblackops7.feature.tacticals.domain.repository.TacticalsRepository
 import io.realm.kotlin.Realm
-import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +64,7 @@ class TacticalsRepositoryImpl @Inject constructor(
             val value = data[key]
             return when {
                 value == null -> default
-                value.type == RealmAny.Type.INT -> value.asInt().toInt()
+                value.type == RealmAny.Type.INT -> value.asInt()
                 value.type == RealmAny.Type.STRING -> value.asString().toIntOrNull() ?: default
                 else -> default
             }
@@ -76,7 +75,7 @@ class TacticalsRepositoryImpl @Inject constructor(
             return when {
                 value == null -> default
                 value.type == RealmAny.Type.BOOL -> value.asBoolean()
-                value.type == RealmAny.Type.INT -> value.asInt().toInt() != 0
+                value.type == RealmAny.Type.INT -> value.asInt() != 0
                 value.type == RealmAny.Type.STRING -> value.asString().equals("1", ignoreCase = true) || value.asString().equals("true", ignoreCase = true)
                 else -> default
             }
