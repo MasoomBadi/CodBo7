@@ -162,13 +162,12 @@ fun CategoryChecklistScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(padding)
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     // Scrollable content
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
