@@ -6,16 +6,21 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,50 +74,127 @@ fun ChecklistOverviewScreen(
                 }
             }
             is ChecklistOverviewUiState.Success -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(padding)
                 ) {
-                    // Overall Progress Card
-                    item {
-                        OverallProgressCard(
-                            totalItems = state.progress.totalItems,
-                            unlockedItems = state.progress.unlockedItems,
-                            percentage = state.progress.overallPercentage
-                        )
+                    // Scrollable content
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Overall Progress Hero Card
+                        item {
+                            OverallProgressHeroCard(
+                                totalItems = state.progress.totalItems,
+                                unlockedItems = state.progress.unlockedItems,
+                                percentage = state.progress.overallPercentage
+                            )
+                        }
+
+                        // Section Header
+                        item {
+                            Text(
+                                text = "COLLECTION CATEGORIES",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                            )
+                        }
+
+                        // Active Category Cards
+                        items(state.progress.categoryProgress.values.toList()) { categoryProgress ->
+                            EnhancedCategoryCard(
+                                categoryProgress = categoryProgress,
+                                onClick = { onNavigateToCategory(categoryProgress.category) },
+                                isAvailable = true
+                            )
+                        }
+
+                        // Future Categories (Coming Soon)
+                        item {
+                            Text(
+                                text = "COMING SOON",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                            )
+                        }
+
+                        // Future categories
+                        item {
+                            FutureCategoryCard(
+                                title = "CAMOS - MULTIPLAYER",
+                                subtitle = "Track multiplayer camo progress",
+                                icon = Icons.Filled.Star,
+                                accentColor = Color(0xFF00BCD4) // Cyan
+                            )
+                        }
+
+                        item {
+                            FutureCategoryCard(
+                                title = "CAMOS - ZOMBIE",
+                                subtitle = "Track zombie camo progress",
+                                icon = Icons.Filled.Star,
+                                accentColor = Color(0xFF76FF03) // Green
+                            )
+                        }
+
+                        item {
+                            FutureCategoryCard(
+                                title = "CAMOS - WARZONE",
+                                subtitle = "Track warzone camo progress",
+                                icon = Icons.Filled.Star,
+                                accentColor = Color(0xFFFF6F00) // Orange
+                            )
+                        }
+
+                        item {
+                            FutureCategoryCard(
+                                title = "PRESTIGE",
+                                subtitle = "Track prestige levels & unlocks",
+                                icon = Icons.Filled.EmojiEvents,
+                                accentColor = Color(0xFFFFD700) // Gold
+                            )
+                        }
+
+                        item {
+                            FutureCategoryCard(
+                                title = "ACHIEVEMENTS",
+                                subtitle = "Track achievements & challenges",
+                                icon = Icons.Filled.CheckCircle,
+                                accentColor = Color(0xFF9C27B0) // Purple
+                            )
+                        }
                     }
 
-                    // Category Cards
-                    items(state.progress.categoryProgress.values.toList()) { categoryProgress ->
-                        CategoryProgressCard(
-                            categoryProgress = categoryProgress,
-                            onClick = { onNavigateToCategory(categoryProgress.category) }
-                        )
-                    }
-
-                    // Banner Ad Space
-                    item {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                            shape = MaterialTheme.shapes.medium
+                    // Fixed Banner Ad Space at Bottom
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Banner Ad Space (320x90)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                )
-                            }
+                            Text(
+                                text = "Banner Ad Space (320x90)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
                         }
                     }
                 }
@@ -123,7 +205,7 @@ fun ChecklistOverviewScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OverallProgressCard(
+private fun OverallProgressHeroCard(
     totalItems: Int,
     unlockedItems: Int,
     percentage: Float
@@ -292,83 +374,264 @@ private fun StatItem(label: String, value: String, color: androidx.compose.ui.gr
     }
 }
 
+/**
+ * Get icon and color for category
+ */
+private fun getCategoryIcon(category: ChecklistCategory): ImageVector {
+    return when (category) {
+        ChecklistCategory.OPERATORS -> Icons.Filled.Person
+        ChecklistCategory.WEAPONS -> Icons.Filled.LocalFireDepartment
+        ChecklistCategory.MAPS -> Icons.Filled.Place
+        ChecklistCategory.EQUIPMENT -> Icons.Filled.Build
+    }
+}
+
+private fun getCategoryAccentColor(category: ChecklistCategory): Color {
+    return when (category) {
+        ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
+        ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
+        ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
+        ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun CategoryProgressCard(
+private fun EnhancedCategoryCard(
     categoryProgress: CategoryProgress,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isAvailable: Boolean
 ) {
-    val scale = remember { Animatable(1f) }
+    val infiniteTransition = rememberInfiniteTransition(label = "categoryGlow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    val accentColor = getCategoryAccentColor(categoryProgress.category)
+    val icon = getCategoryIcon(categoryProgress.category)
 
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .scale(scale.value),
+            .border(
+                width = 2.dp,
+                color = accentColor.copy(alpha = glowAlpha * 0.6f),
+                shape = RoundedCornerShape(20.dp)
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = MaterialTheme.shapes.large
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Icon with glow background
+            Box(
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                accentColor.copy(alpha = 0.3f),
+                                accentColor.copy(alpha = 0.1f),
+                                Color.Transparent
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = accentColor
+                )
+            }
+
+            // Progress info
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = categoryProgress.category.displayName.uppercase(),
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = categoryProgress.category.displayName.uppercase(),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp
+                        ),
+                        color = accentColor
+                    )
 
-                Text(
-                    text = "${categoryProgress.unlockedItems} / ${categoryProgress.totalItems} unlocked",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    // Percentage badge
+                    Surface(
+                        shape = CircleShape,
+                        color = accentColor.copy(alpha = 0.2f)
+                    ) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${categoryProgress.percentage.toInt()}%",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = accentColor
+                            )
+                        }
+                    }
+                }
 
-                // Linear progress
+                // Stats row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "${categoryProgress.unlockedItems} unlocked",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Text(
+                        text = "•",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+
+                    Text(
+                        text = "${categoryProgress.totalItems} total",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Linear progress bar
                 LinearProgressIndicator(
                     progress = { categoryProgress.percentage / 100f },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp)),
+                    color = accentColor,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     strokeCap = StrokeCap.Round
                 )
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Percentage badge
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(64.dp)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FutureCategoryCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(16.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        text = "${categoryProgress.percentage.toInt()}%",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = accentColor.copy(alpha = 0.6f)
+                )
+            }
+
+            // Text content
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            // Coming Soon badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Text(
+                    text = "SOON",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                )
             }
         }
     }
