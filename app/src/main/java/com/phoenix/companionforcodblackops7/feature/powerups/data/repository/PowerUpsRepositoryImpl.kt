@@ -1,6 +1,6 @@
 package com.phoenix.companionforcodblackops7.feature.powerups.data.repository
 
-import com.phoenix.companionforcodblackops7.core.data.local.model.DynamicEntity
+import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.powerups.domain.model.PowerUp
 import com.phoenix.companionforcodblackops7.feature.powerups.domain.repository.PowerUpsRepository
 import io.realm.kotlin.Realm
