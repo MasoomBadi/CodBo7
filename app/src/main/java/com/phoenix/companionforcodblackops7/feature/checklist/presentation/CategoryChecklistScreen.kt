@@ -213,7 +213,7 @@ fun CategoryChecklistScreen(
 }
 
 /**
- * Enhanced checklist item card with beautiful design
+ * Modern checklist item card with beautiful, clean design
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -224,7 +224,7 @@ private fun EnhancedChecklistItemCard(
     // Glow animation for unlocked items
     val infiniteTransition = rememberInfiniteTransition(label = "itemGlow")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
+        initialValue = 0.5f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = LinearEasing),
@@ -233,16 +233,17 @@ private fun EnhancedChecklistItemCard(
         label = "glowAlpha"
     )
 
+    val accentColor = MaterialTheme.colorScheme.secondary
     val borderColor = if (item.isUnlocked) {
-        MaterialTheme.colorScheme.secondary.copy(alpha = glowAlpha * 0.8f)
+        accentColor.copy(alpha = glowAlpha * 0.7f)
     } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     }
 
     val cardColor = if (item.isUnlocked) {
-        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-    } else {
         MaterialTheme.colorScheme.surface
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f)
     }
 
     Card(
@@ -250,71 +251,110 @@ private fun EnhancedChecklistItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .border(
-                width = 2.dp,
+                width = if (item.isUnlocked) 2.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(20.dp)
             ),
         colors = CardDefaults.cardColors(
             containerColor = cardColor
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (item.isUnlocked) 6.dp else 3.dp
+            defaultElevation = if (item.isUnlocked) 8.dp else 2.dp
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image with glow background
+            // Image section with status overlay
             Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        brush = if (item.isUnlocked) {
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f),
-                                    Color.Transparent
-                                )
-                            )
-                        } else {
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.colorScheme.surface
-                                )
-                            )
-                        }
-                    ),
+                modifier = Modifier.size(90.dp),
                 contentAlignment = Alignment.Center
             ) {
-                item.imageUrl?.let { url ->
-                    AsyncImage(
-                        model = "$BASE_URL$url",
-                        contentDescription = item.name,
-                        contentScale = ContentScale.Fit,
+                // Background glow for unlocked items
+                if (item.isUnlocked) {
+                    Box(
                         modifier = Modifier
-                            .size(110.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(90.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        accentColor.copy(alpha = 0.3f * glowAlpha),
+                                        accentColor.copy(alpha = 0.1f * glowAlpha),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
                     )
-                } ?: run {
-                    // Placeholder if no image
-                    Icon(
-                        imageVector = if (item.isUnlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(60.dp),
-                        tint = if (item.isUnlocked) {
-                            MaterialTheme.colorScheme.secondary
-                        } else {
-                            MaterialTheme.colorScheme.outline
+                }
+
+                // Image container
+                Box(
+                    modifier = Modifier
+                        .size(90.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            if (item.isUnlocked) {
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    item.imageUrl?.let { url ->
+                        AsyncImage(
+                            model = "$BASE_URL$url",
+                            contentDescription = item.name,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .size(85.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                        )
+                    } ?: run {
+                        // Placeholder if no image
+                        Icon(
+                            imageVector = if (item.isUnlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(45.dp),
+                            tint = if (item.isUnlocked) accentColor else MaterialTheme.colorScheme.outline
+                        )
+                    }
+
+                    // Status badge overlay on image
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (item.isUnlocked) {
+                                accentColor
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            shadowElevation = 4.dp
+                        ) {
+                            Icon(
+                                imageVector = if (item.isUnlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(4.dp),
+                                tint = if (item.isUnlocked) {
+                                    MaterialTheme.colorScheme.onSecondary
+                                } else {
+                                    MaterialTheme.colorScheme.outline
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
 
@@ -323,91 +363,104 @@ private fun EnhancedChecklistItemCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Name
-                Text(
-                    text = item.name.uppercase(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.8.sp
-                    ),
-                    color = if (item.isUnlocked) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
+                // Name with status indicator
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = item.name.uppercase(),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = if (item.isUnlocked) {
+                            accentColor
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        },
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
 
-                // Unlock criteria
+                // Unlock criteria chip
                 item.unlockCriteria?.let { criteria ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (item.isUnlocked) accentColor else MaterialTheme.colorScheme.outline
+                                )
+                        )
+                        Text(
+                            text = criteria,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium,
+                                lineHeight = 18.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Status row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Surface(
                         color = if (item.isUnlocked) {
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                            accentColor.copy(alpha = 0.15f)
                         } else {
                             MaterialTheme.colorScheme.surfaceVariant
                         },
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(
-                            text = criteria,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = if (item.isUnlocked) {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-                }
-
-                // Status badge
-                Surface(
-                    color = if (item.isUnlocked) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    },
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (item.isUnlocked) {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSecondary
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (item.isUnlocked) accentColor else MaterialTheme.colorScheme.outline
+                                    )
                             )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Filled.Lock,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.outline
+                            Text(
+                                text = if (item.isUnlocked) "UNLOCKED" else "LOCKED",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.6.sp
+                                ),
+                                color = if (item.isUnlocked) {
+                                    accentColor
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
                             )
                         }
+                    }
+
+                    // Tap to toggle hint (only for locked items)
+                    if (!item.isUnlocked) {
                         Text(
-                            text = if (item.isUnlocked) "UNLOCKED" else "LOCKED",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.8.sp
-                            ),
-                            color = if (item.isUnlocked) {
-                                MaterialTheme.colorScheme.onSecondary
-                            } else {
-                                MaterialTheme.colorScheme.outline
-                            }
+                            text = "• Tap to unlock",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     }
                 }
             }
 
-            // Checkbox/Check indicator
+            // Toggle button (simplified)
             AnimatedVisibility(
                 visible = item.isUnlocked,
                 enter = scaleIn(
@@ -420,46 +473,23 @@ private fun EnhancedChecklistItemCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.secondary,
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+                                    accentColor.copy(alpha = glowAlpha),
+                                    accentColor.copy(alpha = 0.85f)
                                 )
                             )
-                        )
-                        .scale(if (item.isUnlocked) glowAlpha else 1f),
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
                         contentDescription = "Unlocked",
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(28.dp),
                         tint = MaterialTheme.colorScheme.onSecondary
-                    )
-                }
-            }
-
-            if (!item.isUnlocked) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = "Locked",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.outline
                     )
                 }
             }
