@@ -159,20 +159,21 @@ fun CategoryChecklistScreen(
                 }
             }
             is CategoryChecklistUiState.Success -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .background(MaterialTheme.colorScheme.background)
                 ) {
                     // Scrollable content
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
                             top = 16.dp,
-                            bottom = 106.dp // 90dp ad + 16dp spacing
+                            bottom = 16.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -190,12 +191,9 @@ fun CategoryChecklistScreen(
                     // Fixed Banner Ad Space at Bottom
                     Surface(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .height(90.dp)
-                            .windowInsetsPadding(WindowInsets.navigationBars),
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        shadowElevation = 8.dp
+                            .height(90.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),

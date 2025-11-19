@@ -93,21 +93,17 @@ fun FieldUpgradesZMListScreen(
                 }
             }
             is FieldUpgradesZMUiState.Success -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
-                        .background(MaterialTheme.colorScheme.background)
                 ) {
                     // Scrollable content
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 16.dp,
-                            bottom = 106.dp // 90dp ad + 16dp spacing
-                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
@@ -116,20 +112,23 @@ fun FieldUpgradesZMListScreen(
                         ) { fieldUpgrade ->
                             FieldUpgradeCard(
                                 fieldUpgrade = fieldUpgrade,
-                                onClick = { onFieldUpgradeClick(fieldUpgrade) }
+                                onClick = { onFieldUpgradeClick(fieldUpgrade) },
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
+                        }
+
+                        // Scroll indicator spacer
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
 
                     // Fixed Banner Ad Space at Bottom
                     Surface(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .height(90.dp)
-                            .windowInsetsPadding(WindowInsets.navigationBars),
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        shadowElevation = 8.dp
+                            .height(90.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -155,7 +154,8 @@ fun FieldUpgradesZMListScreen(
 @Composable
 private fun FieldUpgradeCard(
     fieldUpgrade: FieldUpgradeZM,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "cardGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -172,7 +172,7 @@ private fun FieldUpgradeCard(
 
     Card(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .border(
                 width = 2.dp,

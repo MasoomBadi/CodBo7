@@ -128,25 +128,23 @@ private fun PerkAColaContent(
     onPerkClick: (PerkACola) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
     ) {
         // Scrollable content
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = 106.dp // 90dp ad + 16dp spacing
-            ),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
             item {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -171,20 +169,23 @@ private fun PerkAColaContent(
             items(perkAColas) { perk ->
                 PerkAColaCard(
                     perk = perk,
-                    onClick = { onPerkClick(perk) }
+                    onClick = { onPerkClick(perk) },
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
+            }
+
+            // Scroll indicator spacer
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
         // Fixed Banner Ad Space at Bottom
         Surface(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(90.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            shadowElevation = 8.dp
+                .height(90.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
