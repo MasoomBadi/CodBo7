@@ -70,6 +70,9 @@ import com.phoenix.companionforcodblackops7.feature.fieldupgrades.presentation.F
 import com.phoenix.companionforcodblackops7.feature.perkacola.domain.model.PerkACola
 import com.phoenix.companionforcodblackops7.feature.perkacola.presentation.PerkAColaDetailScreen
 import com.phoenix.companionforcodblackops7.feature.perkacola.presentation.PerkAColaListScreen
+import com.phoenix.companionforcodblackops7.feature.ammomods.domain.model.AmmoMod
+import com.phoenix.companionforcodblackops7.feature.ammomods.presentation.AmmoModDetailScreen
+import com.phoenix.companionforcodblackops7.feature.ammomods.presentation.AmmoModsListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -177,6 +180,9 @@ fun AppNavigation(
 
     // State to hold selected Perk-a-Cola for navigation
     var selectedPerkACola by remember { mutableStateOf<PerkACola?>(null) }
+
+    // State to hold selected Ammo Mod for navigation
+    var selectedAmmoMod by remember { mutableStateOf<AmmoMod?>(null) }
 
     NavHost(
         navController = navController,
@@ -529,6 +535,29 @@ fun AppNavigation(
             }
         }
 
+        composable("ammoMods") {
+            AmmoModsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onAmmoModClick = { ammoMod ->
+                    selectedAmmoMod = ammoMod
+                    navController.navigate("ammoModDetail")
+                }
+            )
+        }
+
+        composable("ammoModDetail") {
+            selectedAmmoMod?.let { ammoMod ->
+                AmmoModDetailScreen(
+                    ammoMod = ammoMod,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
         composable("zombie") {
             ZombieHubScreen(
                 onNavigateBack = {
@@ -536,6 +565,9 @@ fun AppNavigation(
                 },
                 onNavigateToPerkAColas = {
                     navController.navigate("perkAColas")
+                },
+                onNavigateToAmmoMods = {
+                    navController.navigate("ammoMods")
                 }
             )
         }

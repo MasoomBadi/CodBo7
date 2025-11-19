@@ -34,7 +34,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ZombieHubScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToPerkAColas: () -> Unit
+    onNavigateToPerkAColas: () -> Unit,
+    onNavigateToAmmoMods: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -150,15 +151,15 @@ fun ZombieHubScreen(
                     )
                 }
 
-                // Ammo Mods Card - Coming Soon
+                // Ammo Mods Card - Active
                 item {
                     HubCategoryCard(
                         title = "AMMO MODS",
                         subtitle = "Weapon Ammunition Types",
                         icon = Icons.Filled.Warning,
                         accentColor = Color(0xFFE91E63), // Pink
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToAmmoMods
                     )
                 }
 
