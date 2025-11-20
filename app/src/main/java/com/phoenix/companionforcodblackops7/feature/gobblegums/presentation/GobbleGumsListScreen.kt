@@ -99,28 +99,38 @@ fun GobbleGumsListScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // Tag filter chips
-                    if (state.allTags.isNotEmpty()) {
-                        TagFilterSection(
-                            tags = state.allTags,
-                            selectedTag = state.selectedTag,
-                            onTagSelected = { tag ->
-                                if (state.selectedTag == tag) {
-                                    viewModel.clearFilter()
-                                } else {
-                                    viewModel.filterByTag(tag)
-                                }
-                            },
-                            onClearFilter = { viewModel.clearFilter() }
-                        )
-                    }
+                    // Filter section
+                    FilterSection(
+                        selectedRarity = state.selectedRarity,
+                        selectedPattern = state.selectedPattern,
+                        onRaritySelected = { rarity ->
+                            if (state.selectedRarity == rarity) {
+                                viewModel.filterByRarity(null)
+                            } else {
+                                viewModel.filterByRarity(rarity)
+                            }
+                        },
+                        onPatternSelected = { pattern ->
+                            if (state.selectedPattern == pattern) {
+                                viewModel.filterByPattern(null)
+                            } else {
+                                viewModel.filterByPattern(pattern)
+                            }
+                        },
+                        onClearFilters = { viewModel.clearFilters() }
+                    )
 
                     // Scrollable content
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 16.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
@@ -193,16 +203,20 @@ fun GobbleGumsListScreen(
 }
 
 /**
- * Tag filter section with horizontal scrollable chips
+ * Filter section with rarity and pattern filters
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TagFilterSection(
-    tags: List<String>,
-    selectedTag: String?,
-    onTagSelected: (String) -> Unit,
-    onClearFilter: () -> Unit
+private fun FilterSection(
+    selectedRarity: String?,
+    selectedPattern: String?,
+    onRaritySelected: (String) -> Unit,
+    onPatternSelected: (String) -> Unit,
+    onClearFilters: () -> Unit
 ) {
+    val rarities = listOf("Rare", "Epic", "Legendary", "Ultra", "Whimsical")
+    val patterns = listOf("Instant", "Timed", "Conditional")
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -231,7 +245,7 @@ private fun TagFilterSection(
                         tint = Color(0xFF9C27B0)
                     )
                     Text(
-                        text = "FILTER BY TAG",
+                        text = "FILTERS",
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
@@ -240,10 +254,10 @@ private fun TagFilterSection(
                     )
                 }
 
-                if (selectedTag != null) {
-                    TextButton(onClick = onClearFilter) {
+                if (selectedRarity != null || selectedPattern != null) {
+                    TextButton(onClick = onClearFilters) {
                         Text(
-                            text = "CLEAR",
+                            text = "CLEAR ALL",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Bold
                             )
@@ -252,31 +266,87 @@ private fun TagFilterSection(
                 }
             }
 
-            FlowRow(
+            // Rarity filters
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                tags.forEach { tag ->
-                    val isSelected = selectedTag == tag
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onTagSelected(tag) },
-                        label = {
-                            Text(
-                                text = tag,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Medium
+                Text(
+                    text = "RARITY",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rarities.forEach { rarity ->
+                        val isSelected = selectedRarity == rarity
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onRaritySelected(rarity) },
+                            label = {
+                                Text(
+                                    text = rarity,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF9C27B0).copy(alpha = 0.2f),
+                                selectedLabelColor = Color(0xFF9C27B0)
                             )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF9C27B0).copy(alpha = 0.2f),
-                            selectedLabelColor = Color(0xFF9C27B0)
                         )
-                    )
+                    }
+                }
+            }
+
+            // Pattern filters
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "PATTERN",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    patterns.forEach { pattern ->
+                        val isSelected = selectedPattern == pattern
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { onPatternSelected(pattern) },
+                            label = {
+                                Text(
+                                    text = pattern,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF9C27B0).copy(alpha = 0.2f),
+                                selectedLabelColor = Color(0xFF9C27B0)
+                            )
+                        )
+                    }
                 }
             }
         }
