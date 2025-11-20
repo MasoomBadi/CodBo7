@@ -166,7 +166,6 @@ private fun WeaponsContent(
 /**
  * Horizontal scrolling category filter chips
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CategoryFilterRow(
     categories: List<WeaponCategory>,
@@ -194,21 +193,10 @@ private fun CategoryFilterRow(
                     )
                 )
             },
-            enabled = true,
             colors = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = accentColor.copy(alpha = 0.3f),
                 selectedLabelColor = accentColor
-            ),
-            border = if (selectedCategory == null) {
-                FilterChipDefaults.filterChipBorder(
-                    borderColor = accentColor,
-                    selectedBorderColor = accentColor,
-                    borderWidth = 2.dp,
-                    selectedBorderWidth = 2.dp
-                )
-            } else {
-                FilterChipDefaults.filterChipBorder(borderColor = MaterialTheme.colorScheme.outline)
-            }
+            )
         )
 
         // Category filter chips
@@ -225,21 +213,10 @@ private fun CategoryFilterRow(
                         )
                     )
                 },
-                enabled = true,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = accentColor.copy(alpha = 0.3f),
                     selectedLabelColor = accentColor
-                ),
-                border = if (selectedCategory == category) {
-                    FilterChipDefaults.filterChipBorder(
-                        borderColor = accentColor,
-                        selectedBorderColor = accentColor,
-                        borderWidth = 2.dp,
-                        selectedBorderWidth = 2.dp
-                    )
-                } else {
-                    FilterChipDefaults.filterChipBorder(borderColor = MaterialTheme.colorScheme.outline)
-                }
+                )
             )
         }
     }
