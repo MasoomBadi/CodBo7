@@ -20,20 +20,23 @@ class PrestigeRepositoryImpl @Inject constructor() : PrestigeRepository {
                     name = "Military Rank $level",
                     type = PrestigeType.MILITARY,
                     level = level,
-                    description = "Reach Military Rank $level"
+                    description = "Reach Level $level",
+                    iconPath = "/assets/classic_prestige/military_$level.webp"
                 )
             )
         }
 
         // Prestige 1-10
         for (prestige in 1..10) {
+            val unlockLevel = if (prestige == 1) 55 else prestige * 55
             items.add(
                 PrestigeItem(
                     id = "prestige_$prestige",
                     name = "Prestige $prestige",
                     type = PrestigeType.PRESTIGE,
                     level = prestige,
-                    description = "Complete Prestige $prestige"
+                    description = "Reach Level $unlockLevel",
+                    iconPath = "/assets/classic_prestige/prestige$prestige.webp"
                 )
             )
         }
@@ -47,7 +50,8 @@ class PrestigeRepositoryImpl @Inject constructor() : PrestigeRepository {
                     name = "Prestige Master $milestone",
                     type = PrestigeType.PRESTIGE_MASTER,
                     level = milestone,
-                    description = "Reach Prestige Master Level $milestone"
+                    description = "Reach Prestige Master Level $milestone",
+                    iconPath = "/assets/classic_prestige/master_$milestone.webp"
                 )
             )
         }

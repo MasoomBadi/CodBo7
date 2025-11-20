@@ -5,7 +5,8 @@ data class PrestigeItem(
     val name: String,
     val type: PrestigeType,
     val level: Int,
-    val description: String
+    val description: String,
+    val iconPath: String
 )
 
 enum class PrestigeType(val displayName: String) {
