@@ -302,7 +302,7 @@ private fun EnhancedChecklistItemCard(
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             if (item.isUnlocked) {
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                Color.Transparent
                             } else {
                                 MaterialTheme.colorScheme.surfaceVariant
                             }
