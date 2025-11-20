@@ -1,14 +1,20 @@
 package com.phoenix.companionforcodblackops7.feature.weapons.presentation
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,7 +35,7 @@ import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.WeaponC
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
 /**
- * Weapons List Screen - Displays all multiplayer weapons grouped by category
+ * Weapons List Screen - Displays all multiplayer weapons with category filters
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,6 +44,8 @@ fun WeaponsListScreen(
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
+    var selectedCategory by remember { mutableStateOf<WeaponCategory?>(null) }
+    var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
     Scaffold(
@@ -69,6 +78,12 @@ fun WeaponsListScreen(
     ) { paddingValues ->
         WeaponsContent(
             weaponsByCategory = weaponsByCategory,
+            selectedCategory = selectedCategory,
+            onCategorySelected = { selectedCategory = it },
+            expandedWeaponId = expandedWeaponId,
+            onToggleExpanded = { weaponId ->
+                expandedWeaponId = if (expandedWeaponId == weaponId) null else weaponId
+            },
             accentColor = accentColor,
             modifier = Modifier
                 .fillMaxSize()
@@ -78,65 +93,52 @@ fun WeaponsListScreen(
 }
 
 /**
- * Main content showing weapons grouped by category
+ * Main content with category filters and weapon cards
  */
 @Composable
 private fun WeaponsContent(
     weaponsByCategory: Map<WeaponCategory, List<Weapon>>,
+    selectedCategory: WeaponCategory?,
+    onCategorySelected: (WeaponCategory?) -> Unit,
+    expandedWeaponId: Int?,
+    onToggleExpanded: (Int) -> Unit,
     accentColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-    ) {
-        // Scrollable content
+    Column(modifier = modifier) {
+        // Category filter chips
+        CategoryFilterRow(
+            categories = weaponsByCategory.keys.toList(),
+            selectedCategory = selectedCategory,
+            onCategorySelected = onCategorySelected,
+            accentColor = accentColor
+        )
+
+        // Filtered weapons list
+        val filteredWeapons = if (selectedCategory == null) {
+            weaponsByCategory.values.flatten()
+        } else {
+            weaponsByCategory[selectedCategory] ?: emptyList()
+        }
+
+        // Weapon cards
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "WEAPON ARSENAL",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 2.sp
-                        ),
-                        color = accentColor
-                    )
-                    Text(
-                        text = "Complete weapon database with unlock requirements and stats",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            // Weapons grouped by category
-            weaponsByCategory.forEach { (category, weapons) ->
-                item {
-                    WeaponCategorySection(
-                        category = category,
-                        weapons = weapons,
-                        accentColor = accentColor
-                    )
-                }
-            }
-
-            // Scroll indicator spacer
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
+            items(
+                items = filteredWeapons,
+                key = { it.id }
+            ) { weapon ->
+                ExpandableWeaponCard(
+                    weapon = weapon,
+                    isExpanded = expandedWeaponId == weapon.id,
+                    onToggleExpanded = { onToggleExpanded(weapon.id) },
+                    accentColor = accentColor
+                )
             }
         }
 
@@ -162,57 +164,100 @@ private fun WeaponsContent(
 }
 
 /**
- * Category section with header and weapon cards
+ * Horizontal scrolling category filter chips
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun WeaponCategorySection(
-    category: WeaponCategory,
-    weapons: List<Weapon>,
+private fun CategoryFilterRow(
+    categories: List<WeaponCategory>,
+    selectedCategory: WeaponCategory?,
+    onCategorySelected: (WeaponCategory?) -> Unit,
     accentColor: Color
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Category header
-        Text(
-            text = category.displayName.uppercase(),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.5.sp
+        // "All" filter chip
+        FilterChip(
+            selected = selectedCategory == null,
+            onClick = { onCategorySelected(null) },
+            label = {
+                Text(
+                    text = "ALL",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+                )
+            },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = accentColor.copy(alpha = 0.3f),
+                selectedLabelColor = accentColor
             ),
-            color = accentColor,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            border = if (selectedCategory == null) {
+                FilterChipDefaults.filterChipBorder(
+                    borderColor = accentColor,
+                    selectedBorderColor = accentColor,
+                    borderWidth = 2.dp,
+                    selectedBorderWidth = 2.dp
+                )
+            } else {
+                FilterChipDefaults.filterChipBorder(borderColor = MaterialTheme.colorScheme.outline)
+            }
         )
 
-        // Weapon cards
-        weapons.forEach { weapon ->
-            WeaponCard(
-                weapon = weapon,
-                accentColor = accentColor,
-                onClick = { },
-                modifier = Modifier.padding(horizontal = 16.dp)
+        // Category filter chips
+        categories.forEach { category ->
+            FilterChip(
+                selected = selectedCategory == category,
+                onClick = { onCategorySelected(category) },
+                label = {
+                    Text(
+                        text = category.displayName.uppercase(),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = accentColor.copy(alpha = 0.3f),
+                    selectedLabelColor = accentColor
+                ),
+                border = if (selectedCategory == category) {
+                    FilterChipDefaults.filterChipBorder(
+                        borderColor = accentColor,
+                        selectedBorderColor = accentColor,
+                        borderWidth = 2.dp,
+                        selectedBorderWidth = 2.dp
+                    )
+                } else {
+                    FilterChipDefaults.filterChipBorder(borderColor = MaterialTheme.colorScheme.outline)
+                }
             )
         }
     }
 }
 
 /**
- * Individual weapon card
+ * Expandable weapon card with big image
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun WeaponCard(
+private fun ExpandableWeaponCard(
     weapon: Weapon,
-    accentColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    accentColor: Color
 ) {
-    // Animated glow effect
     val infiniteTransition = rememberInfiniteTransition(label = "weaponGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
-        targetValue = 1f,
+        targetValue = 0.9f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
@@ -221,8 +266,8 @@ private fun WeaponCard(
     )
 
     Card(
-        onClick = onClick,
-        modifier = modifier
+        onClick = onToggleExpanded,
+        modifier = Modifier
             .fillMaxWidth()
             .border(
                 width = 2.dp,
@@ -232,106 +277,192 @@ private fun WeaponCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Icon image with glow background
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                accentColor.copy(alpha = 0.3f),
-                                accentColor.copy(alpha = 0.1f),
-                                Color.Transparent
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = "$BASE_URL${weapon.iconUrl}",
-                    contentDescription = weapon.displayName,
-                    modifier = Modifier.size(110.dp)
-                )
-            }
-
-            // Info section
+            // Header with big weapon image
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Weapon name
-                Text(
-                    text = weapon.displayName.uppercase(),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = accentColor
-                )
-
-                // Weapon type badge
-                Surface(
-                    color = accentColor.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = weapon.weaponType.displayName,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
+                // Big weapon image
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    accentColor.copy(alpha = 0.2f),
+                                    accentColor.copy(alpha = 0.05f),
+                                    Color.Transparent
+                                ),
+                                radius = 800f
+                            )
                         ),
-                        color = accentColor,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = "$BASE_URL${weapon.iconUrl}",
+                        contentDescription = weapon.displayName,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
                     )
                 }
 
-                // Stats row
+                // Weapon name and expand icon
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Max level
-                    InfoChip(
-                        label = "Max Lvl",
-                        value = weapon.maxLevel.toString(),
-                        accentColor = accentColor
+                    Text(
+                        text = weapon.displayName.uppercase(),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.2.sp
+                        ),
+                        color = accentColor,
+                        modifier = Modifier.weight(1f)
                     )
 
-                    // Fire modes
-                    if (weapon.fireModes.isNotEmpty()) {
-                        InfoChip(
-                            label = "Modes",
-                            value = weapon.fireModes,
-                            accentColor = accentColor
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = accentColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            // Category and Type badges
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Category badge
+                Surface(
+                    color = accentColor.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(accentColor)
+                        )
+                        Text(
+                            text = weapon.category.displayName.uppercase(),
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = accentColor
                         )
                     }
                 }
 
-                // Unlock requirement badge
+                // Weapon type badge
                 Surface(
-                    color = accentColor.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(6.dp)
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = weapon.unlockLabel,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
+                        text = weapon.weaponType.displayName,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Medium
                         ),
-                        color = accentColor,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )
+                }
+            }
+
+            // Expandable details
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    HorizontalDivider(
+                        thickness = 2.dp,
+                        color = accentColor.copy(alpha = 0.3f)
+                    )
+
+                    // Stats section
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "STATS",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = accentColor
+                            )
+
+                            // Max Level
+                            WeaponStatRow(
+                                label = "Max Level",
+                                value = weapon.maxLevel.toString(),
+                                accentColor = accentColor
+                            )
+
+                            if (weapon.fireModes.isNotEmpty()) {
+                                HorizontalDivider(
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                )
+                                // Fire Modes
+                                WeaponStatRow(
+                                    label = "Fire Modes",
+                                    value = weapon.fireModes,
+                                    accentColor = accentColor
+                                )
+                            }
+
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
+
+                            // Unlock criteria
+                            WeaponStatRow(
+                                label = "Unlock",
+                                value = weapon.unlockLabel,
+                                accentColor = accentColor
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -339,26 +470,29 @@ private fun WeaponCard(
 }
 
 /**
- * Small info chip for weapon stats
+ * Weapon stat row for expandable section
  */
 @Composable
-private fun InfoChip(
+private fun WeaponStatRow(
     label: String,
     value: String,
     accentColor: Color
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "$label:",
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Medium
+            ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.labelSmall.copy(
+            style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Bold
             ),
             color = accentColor
