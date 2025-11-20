@@ -32,11 +32,11 @@ class GobbleGumsRepositoryImpl @Inject constructor(
                     try {
                         val data = entity.data
                         GobbleGum(
-                            id = data["id"]?.asInt() ?: 0,
+                            id = data["id"]?.asInt() ?: data["id"]?.asString()?.toIntOrNull() ?: 0,
                             name = data["name"]?.asString() ?: "",
                             rarity = GobbleGumRarity.fromString(data["rarity"]?.asString() ?: "Rare"),
                             color = data["color"]?.asString() ?: "",
-                            essenceValue = data["essence_value"]?.asInt() ?: 0,
+                            essenceValue = data["essence_value"]?.asInt() ?: data["essence_value"]?.asString()?.toIntOrNull() ?: 0,
                             pattern = GobbleGumPattern.fromString(data["pattern"]?.asString() ?: "Instant"),
                             activationType = data["activation_type"]?.asString() ?: "",
                             zombiesEffect = data["zombies_effect"]?.asString() ?: "",
@@ -45,10 +45,10 @@ class GobbleGumsRepositoryImpl @Inject constructor(
                             shortDescription = data["short_description"]?.asString() ?: "",
                             gumType = GumType.fromString(data["gum_type"]?.asString() ?: "New"),
                             iconUrl = data["icon_url"]?.asString() ?: "",
-                            recyclable = (data["recyclable"]?.asInt() ?: 1) == 1,
+                            recyclable = (data["recyclable"]?.asInt() ?: data["recyclable"]?.asString()?.toIntOrNull() ?: 1) == 1,
                             synergy = data["synergy"]?.asString(),
                             tags = data["tags"]?.asString(),
-                            sortOrder = data["sort_order"]?.asInt() ?: 0,
+                            sortOrder = data["sort_order"]?.asInt() ?: data["sort_order"]?.asString()?.toIntOrNull() ?: 0,
                             tips = emptyList() // Will be filled by combine
                         )
                     } catch (e: Exception) {
@@ -65,10 +65,10 @@ class GobbleGumsRepositoryImpl @Inject constructor(
                     try {
                         val data = entity.data
                         GobbleGumTip(
-                            id = data["id"]?.asInt() ?: 0,
-                            gobblegumId = data["gobblegum_id"]?.asInt() ?: 0,
+                            id = data["id"]?.asInt() ?: data["id"]?.asString()?.toIntOrNull() ?: 0,
+                            gobblegumId = data["gobblegum_id"]?.asInt() ?: data["gobblegum_id"]?.asString()?.toIntOrNull() ?: 0,
                             tip = data["tip"]?.asString() ?: "",
-                            sortOrder = data["sort_order"]?.asInt() ?: 0
+                            sortOrder = data["sort_order"]?.asInt() ?: data["sort_order"]?.asString()?.toIntOrNull() ?: 0
                         )
                     } catch (e: Exception) {
                         Timber.e(e, "Error mapping GobbleGumTip entity")
