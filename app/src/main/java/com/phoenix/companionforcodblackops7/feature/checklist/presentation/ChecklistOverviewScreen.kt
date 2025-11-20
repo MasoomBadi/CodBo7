@@ -162,15 +162,6 @@ fun ChecklistOverviewScreen(
 
                         item {
                             FutureCategoryCard(
-                                title = "PRESTIGE",
-                                subtitle = "Track prestige levels & unlocks",
-                                icon = Icons.Filled.EmojiEvents,
-                                accentColor = Color(0xFFFFD700) // Gold
-                            )
-                        }
-
-                        item {
-                            FutureCategoryCard(
                                 title = "ACHIEVEMENTS",
                                 subtitle = "Track achievements & challenges",
                                 icon = Icons.Filled.CheckCircle,
@@ -383,6 +374,7 @@ private fun getCategoryIcon(category: ChecklistCategory): ImageVector {
         ChecklistCategory.WEAPONS -> Icons.Filled.LocalFireDepartment
         ChecklistCategory.MAPS -> Icons.Filled.Place
         ChecklistCategory.EQUIPMENT -> Icons.Filled.Build
+        ChecklistCategory.PRESTIGE -> Icons.Filled.EmojiEvents
     }
 }
 
@@ -392,6 +384,7 @@ private fun getCategoryAccentColor(category: ChecklistCategory): Color {
         ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
         ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
         ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
+        ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
     }
 }
 
