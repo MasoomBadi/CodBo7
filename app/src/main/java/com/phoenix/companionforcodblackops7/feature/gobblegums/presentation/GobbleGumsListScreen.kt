@@ -270,6 +270,7 @@ private fun TagFilterSection(
                                 )
                             )
                         },
+                        enabled = true,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Color(0xFF9C27B0).copy(alpha = 0.2f),
                             selectedLabelColor = Color(0xFF9C27B0)
