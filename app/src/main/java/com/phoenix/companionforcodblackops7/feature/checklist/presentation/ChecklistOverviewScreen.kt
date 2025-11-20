@@ -462,7 +462,7 @@ private fun EnhancedCategoryCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -471,7 +471,9 @@ private fun EnhancedCategoryCard(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.sp
                         ),
-                        color = accentColor
+                        color = accentColor,
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1
                     )
 
                     // Percentage badge
