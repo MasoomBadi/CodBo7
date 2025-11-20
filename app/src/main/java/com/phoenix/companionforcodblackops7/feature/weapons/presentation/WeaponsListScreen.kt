@@ -194,6 +194,7 @@ private fun CategoryFilterRow(
                     )
                 )
             },
+            enabled = true,
             colors = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = accentColor.copy(alpha = 0.3f),
                 selectedLabelColor = accentColor
@@ -224,6 +225,7 @@ private fun CategoryFilterRow(
                         )
                     )
                 },
+                enabled = true,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = accentColor.copy(alpha = 0.3f),
                     selectedLabelColor = accentColor
