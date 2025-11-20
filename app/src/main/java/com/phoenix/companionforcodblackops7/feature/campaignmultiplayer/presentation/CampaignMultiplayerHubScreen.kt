@@ -145,18 +145,6 @@ fun CampaignMultiplayerHubScreen(
                     )
                 }
 
-                // Weapons Card - Coming Soon
-                item {
-                    HubCategoryCard(
-                        title = "WEAPONS",
-                        subtitle = "Arsenal & Attachments",
-                        icon = Icons.Filled.Info,
-                        accentColor = Color(0xFFFF6F00), // Deep Orange
-                        isAvailable = false,
-                        onClick = { }
-                    )
-                }
-
                 // Tacticals Card - Active
                 item {
                     HubCategoryCard(

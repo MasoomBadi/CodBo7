@@ -118,18 +118,6 @@ fun ZombieHubScreen(
                     )
                 }
 
-                // Wonder Weapons Card - Coming Soon
-                item {
-                    HubCategoryCard(
-                        title = "WONDER WEAPONS",
-                        subtitle = "Legendary Zombie Weapons",
-                        icon = Icons.Filled.Star,
-                        accentColor = Color(0xFFFF6F00), // Orange
-                        isAvailable = false,
-                        onClick = { }
-                    )
-                }
-
                 // GobbleGums Card - Active
                 item {
                     HubCategoryCard(

@@ -83,6 +83,7 @@ import com.phoenix.companionforcodblackops7.feature.gobblegums.presentation.Gobb
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import com.phoenix.companionforcodblackops7.feature.prestige.presentation.PrestigeInfoScreen
+import com.phoenix.companionforcodblackops7.feature.weapons.presentation.WeaponsListScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -245,6 +246,9 @@ fun AppNavigation(
                 },
                 onNavigateToPrestige = {
                     navController.navigate("prestige")
+                },
+                onNavigateToWeapons = {
+                    navController.navigate("weapons")
                 }
             )
         }
@@ -659,6 +663,14 @@ fun AppNavigation(
                 }
             )
         }
+
+        composable("weapons") {
+            WeaponsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 
@@ -846,7 +858,8 @@ fun DashboardScreen(
     onNavigateToGameModes: () -> Unit = {},
     onNavigateToCampaignMultiplayer: () -> Unit = {},
     onNavigateToZombie: () -> Unit = {},
-    onNavigateToPrestige: () -> Unit = {}
+    onNavigateToPrestige: () -> Unit = {},
+    onNavigateToWeapons: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -936,17 +949,33 @@ fun DashboardScreen(
                 )
             }
 
+            // Weapons Card
+            item {
+                DashboardCard(
+                    title = "WEAPONS",
+                    tagline = "Complete weapon database",
+                    onClick = onNavigateToWeapons,
+                    borderColor = Color(0xFF00BCD4), // Cyan color
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = Color(0xFF00BCD4),
+                    buttonColor = Color(0xFF00BCD4).copy(alpha = 0.3f),
+                    buttonTextColor = Color(0xFF00BCD4),
+                    buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
+
             // Multiplayer Card
             item {
                 DashboardCard(
                     title = "MULTIPLAYER",
                     tagline = "Perks, combat specialty & more",
                     onClick = onNavigateToCampaignMultiplayer,
-                    borderColor = Color(0xFF00BCD4), // Cyan color
+                    borderColor = Color(0xFFE91E63), // Pink color
                     backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    gradientColor = Color(0xFF00BCD4),
-                    buttonColor = Color(0xFF00BCD4).copy(alpha = 0.3f),
-                    buttonTextColor = Color(0xFF00BCD4),
+                    gradientColor = Color(0xFFE91E63),
+                    buttonColor = Color(0xFFE91E63).copy(alpha = 0.3f),
+                    buttonTextColor = Color(0xFFE91E63),
                     buttonLabel = "EXPLORE",
                     borderGlow = borderGlow
                 )
