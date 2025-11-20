@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,7 +31,7 @@ import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.Presti
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
 /**
- * Classic Prestige Screen - Displays prestige data from database
+ * Classic Prestige Screen - Simple list displaying prestige data from database
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -42,6 +41,17 @@ fun PrestigeInfoScreen(
 ) {
     val prestigeData by viewModel.prestigeData.collectAsState()
     val accentColor = Color(0xFFFFB300) // Gold
+
+    val infiniteTransition = rememberInfiniteTransition(label = "glowAnimation")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
 
     Scaffold(
         topBar = {
@@ -84,11 +94,6 @@ fun PrestigeInfoScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Compact header with stats
-                item {
-                    CompactHeaderSection(accentColor, prestigeData.size)
-                }
-
                 // Collapsible info sections
                 item {
                     CollapsibleInfoSections(accentColor)
@@ -96,7 +101,7 @@ fun PrestigeInfoScreen(
 
                 // Display actual prestige data from database
                 items(prestigeData) { item ->
-                    PrestigeDataCard(item = item, accentColor = accentColor)
+                    PrestigeDataCard(item = item, accentColor = accentColor, glowAlpha = glowAlpha)
                 }
             }
 
@@ -115,52 +120,6 @@ fun PrestigeInfoScreen(
                         text = "Banner Ad Space (320x90)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactHeaderSection(accentColor: Color, totalItems: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Title row
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.EmojiEvents,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = accentColor
-                )
-                Column {
-                    Text(
-                        text = "PRESTIGE SYSTEM",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "$totalItems prestige levels",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -357,99 +316,102 @@ private fun CollapsibleSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PrestigeDataCard(
     item: PrestigeData,
-    accentColor: Color
+    accentColor: Color,
+    glowAlpha: Float
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "itemGlow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowAlpha"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = accentColor.copy(alpha = glowAlpha * 0.5f),
-                shape = RoundedCornerShape(12.dp)
-            ),
+            .height(120.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.large
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon with glow background
+            // Icon Section with glow
             Box(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier
+                    .size(90.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = accentColor.copy(alpha = 0.4f * glowAlpha),
+                        shape = CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    accentColor.copy(alpha = 0.25f * glowAlpha),
-                                    accentColor.copy(alpha = 0.1f * glowAlpha),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
                 AsyncImage(
                     model = "$BASE_URL${item.icon}",
                     contentDescription = item.title,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                    modifier = Modifier.size(70.dp),
+                    contentScale = ContentScale.Fit
                 )
             }
 
-            // Item info
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Info Section with left accent bar
+            Row(
+                modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = item.title.uppercase(),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
+                // Accent bar
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .background(accentColor, MaterialTheme.shapes.small)
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = accentColor
-                    )
                     Text(
-                        text = item.unlockBy,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = item.title.uppercase(),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2
                     )
+
+                    // Unlock requirement
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(accentColor)
+                        )
+                        Text(
+                            text = item.unlockBy,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
