@@ -7,6 +7,7 @@ import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.Check
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.repository.ChecklistRepository
 import com.phoenix.companionforcodblackops7.feature.operators.domain.repository.OperatorsRepository
+import com.phoenix.companionforcodblackops7.feature.prestige.domain.repository.PrestigeRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import kotlinx.coroutines.flow.Flow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 class ChecklistRepositoryImpl @Inject constructor(
     private val realm: Realm,
-    private val operatorsRepository: OperatorsRepository
+    private val operatorsRepository: OperatorsRepository,
+    private val prestigeRepository: PrestigeRepository
 ) : ChecklistRepository {
 
     override fun getChecklistItems(category: ChecklistCategory): Flow<List<ChecklistItem>> {
@@ -46,6 +48,31 @@ class ChecklistRepositoryImpl @Inject constructor(
                     }.sortedBy { it.name }
                 }
             }
+            ChecklistCategory.PRESTIGE -> {
+                // Get prestige items from repository
+                val prestigeFlow = prestigeRepository.getAllPrestigeItems()
+
+                // Get checklist state from realm
+                val checklistFlow = realm.query<ChecklistItemEntity>(
+                    "category == $0", category.name
+                ).asFlow().map { results ->
+                    results.list.associate { it.id to it.isUnlocked }
+                }
+
+                // Combine both flows
+                combine(prestigeFlow, checklistFlow) { prestigeItems, checklistMap ->
+                    prestigeItems.map { item ->
+                        ChecklistItem(
+                            id = item.id,
+                            name = item.name,
+                            category = category,
+                            isUnlocked = checklistMap[item.id] ?: false,
+                            imageUrl = null,
+                            unlockCriteria = item.description
+                        )
+                    }
+                }
+            }
             else -> {
                 // For other categories, return empty list for now
                 kotlinx.coroutines.flow.flowOf(emptyList())
@@ -54,13 +81,14 @@ class ChecklistRepositoryImpl @Inject constructor(
     }
 
     override fun getProgress(): Flow<ChecklistProgress> {
-        // Combine operators data with checklist state
+        // Combine operators and prestige data with checklist state
         val operatorsFlow = operatorsRepository.getAllOperators()
+        val prestigeFlow = prestigeRepository.getAllPrestigeItems()
         val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { results ->
             results.list
         }
 
-        return combine(operatorsFlow, checklistFlow) { operators, checklistItems ->
+        return combine(operatorsFlow, prestigeFlow, checklistFlow) { operators, prestigeItems, checklistItems ->
             val categoryProgressMap = mutableMapOf<ChecklistCategory, CategoryProgress>()
 
             // Calculate operators progress
@@ -76,6 +104,23 @@ class ChecklistRepositoryImpl @Inject constructor(
                 categoryProgressMap[ChecklistCategory.OPERATORS] = CategoryProgress(
                     category = ChecklistCategory.OPERATORS,
                     totalItems = operators.size,
+                    unlockedItems = unlockedCount
+                )
+            }
+
+            // Calculate prestige progress
+            if (prestigeItems.isNotEmpty()) {
+                val prestigeChecklistMap = checklistItems
+                    .filter { it.category == ChecklistCategory.PRESTIGE.name }
+                    .associate { it.id to it.isUnlocked }
+
+                val unlockedCount = prestigeItems.count { item ->
+                    prestigeChecklistMap[item.id] == true
+                }
+
+                categoryProgressMap[ChecklistCategory.PRESTIGE] = CategoryProgress(
+                    category = ChecklistCategory.PRESTIGE,
+                    totalItems = prestigeItems.size,
                     unlockedItems = unlockedCount
                 )
             }
