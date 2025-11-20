@@ -1,0 +1,567 @@
+# Black Ops 7 Companion - Codebase Standards & Patterns
+
+## CRITICAL PATTERNS - READ THIS FIRST
+
+### 1. THE GOLDEN RULE: Ad Space Pattern
+**EVERY screen with scrollable content MUST follow this exact structure:**
+
+```kotlin
+Column(
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues)  // From Scaffold
+) {
+    // SCROLLABLE CONTENT - Uses .weight(1f)
+    LazyColumn(
+        modifier = Modifier
+            .weight(1f)  // ← CRITICAL! Takes remaining space
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = 16.dp,
+            bottom = 16.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Items here
+    }
+
+    // FIXED AD SPACE - Always at bottom
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(90.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Banner Ad Space (320x90)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        }
+    }
+}
+```
+
+**Reference**: CategoryChecklistScreen.kt (lines 162-209)
+
+---
+
+## 2. Screen Structure Pattern
+
+### Standard Scaffold Setup
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun FeatureScreen(
+    onNavigateBack: () -> Unit,
+    viewModel: FeatureViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "SCREEN TITLE",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = accentColor
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is UiState.Loading -> LoadingContent()
+            is UiState.Success -> SuccessContent(state, paddingValues)
+            is UiState.Error -> ErrorContent(state.message)
+        }
+    }
+}
+```
+
+---
+
+## 3. ViewModel Patterns
+
+### Pattern 1: Flow-based (Preferred)
+```kotlin
+sealed interface FeatureUiState {
+    data object Loading : FeatureUiState
+    data class Success(
+        val items: List<Item>,
+        val selectedFilter: String? = null,
+        val filteredItems: List<Item> = items
+    ) : FeatureUiState
+}
+
+@HiltViewModel
+class FeatureViewModel @Inject constructor(
+    private val repository: FeatureRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val categoryId: String = savedStateHandle.get<String>("categoryId") ?: ""
+
+    val uiState: StateFlow<FeatureUiState> = repository.getData(categoryId)
+        .map { data -> FeatureUiState.Success(items = data) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = FeatureUiState.Loading
+        )
+}
+```
+
+### Pattern 2: MutableStateFlow (For error handling)
+```kotlin
+sealed class FeatureUiState {
+    data object Loading : FeatureUiState()
+    data class Success(val items: List<Item>) : FeatureUiState()
+    data class Error(val message: String) : FeatureUiState()
+}
+
+@HiltViewModel
+class FeatureViewModel @Inject constructor(
+    private val repository: FeatureRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<FeatureUiState>(FeatureUiState.Loading)
+    val uiState: StateFlow<FeatureUiState> = _uiState.asStateFlow()
+
+    init {
+        loadData()
+    }
+
+    private fun loadData() {
+        viewModelScope.launch {
+            repository.getData()
+                .catch { e ->
+                    Timber.e(e, "Error loading data")
+                    _uiState.value = FeatureUiState.Error(e.message ?: "Failed to load")
+                }
+                .collect { data ->
+                    _uiState.value = FeatureUiState.Success(data)
+                }
+        }
+    }
+}
+```
+
+---
+
+## 4. Repository Patterns
+
+### Realm Dynamic Entity Deserialization
+```kotlin
+class FeatureRepositoryImpl @Inject constructor(
+    private val realm: Realm
+) : FeatureRepository {
+
+    override fun getAllItems(): Flow<List<Item>> {
+        return realm.query<DynamicEntity>("tableName == $0", "table_name")
+            .asFlow()
+            .map { results ->
+                results.list.mapNotNull { entity ->
+                    try {
+                        deserializeItem(entity)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to deserialize: ${entity.id}")
+                        null
+                    }
+                }
+            }
+    }
+
+    private fun deserializeItem(entity: DynamicEntity): Item {
+        val data = entity.data
+
+        fun getString(key: String, default: String = ""): String {
+            return data[key]?.asString() ?: default
+        }
+
+        fun getInt(key: String, default: Int = 0): Int {
+            val value = data[key]
+            return value?.asInt() ?: value?.asString()?.toIntOrNull() ?: default
+        }
+
+        fun getBoolean(key: String, default: Boolean = false): Boolean {
+            val value = data[key]
+            return value?.asBoolean() ?: (value?.asInt() ?: 0) != 0
+        }
+
+        return Item(
+            id = getString("id", entity.id),
+            name = getString("name"),
+            value = getInt("value"),
+            isActive = getBoolean("is_active")
+        )
+    }
+}
+```
+
+---
+
+## 5. UI Component Patterns
+
+### Animated Glow Border
+```kotlin
+val infiniteTransition = rememberInfiniteTransition(label = "borderGlow")
+val glowAlpha by infiniteTransition.animateFloat(
+    initialValue = 0.3f,
+    targetValue = 1f,
+    animationSpec = infiniteRepeatable(
+        animation = tween(2500, easing = FastOutSlowInEasing),
+        repeatMode = RepeatMode.Reverse
+    ),
+    label = "glowAlpha"
+)
+
+Card(
+    modifier = Modifier
+        .border(
+            width = 2.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    accentColor.copy(alpha = glowAlpha),
+                    accentColor.copy(alpha = 0.3f)
+                )
+            ),
+            shape = RoundedCornerShape(20.dp)
+        )
+)
+```
+
+### List Item Card Pattern
+```kotlin
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ItemCard(
+    item: Item,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Icon section
+            Box(modifier = Modifier.size(80.dp)) {
+                AsyncImage(
+                    model = "$BASE_URL${item.iconUrl}",
+                    contentDescription = item.name
+                )
+            }
+
+            // Content section
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = item.name.uppercase(),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.ExtraBold
+                    ),
+                    color = accentColor
+                )
+                // More content...
+            }
+        }
+    }
+}
+```
+
+### Filter Section Pattern
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterSection(
+    selectedFilter: String?,
+    onFilterSelected: (String) -> Unit,
+    onClearFilters: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp)
+        ) {
+            // Header with Clear button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.FilterList,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = accentColor
+                    )
+                    Text(
+                        text = "FILTERS",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                }
+
+                if (selectedFilter != null) {
+                    TextButton(onClick = onClearFilters) {
+                        Text("CLEAR ALL")
+                    }
+                }
+            }
+
+            // Filter chips with FlowRow
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "CATEGORY",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    filters.forEach { filter ->
+                        FilterChip(
+                            selected = selectedFilter == filter,
+                            onClick = { onFilterSelected(filter) },
+                            label = { Text(filter) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = accentColor.copy(alpha = 0.2f),
+                                selectedLabelColor = accentColor
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
+## 6. Spacing Standards
+
+```kotlin
+// Card padding
+.padding(16.dp)  // Standard
+.padding(20.dp)  // Large cards
+.padding(12.dp)  // Compact
+
+// Vertical spacing
+Arrangement.spacedBy(24.dp)  // Between major sections
+Arrangement.spacedBy(16.dp)  // Between list items
+Arrangement.spacedBy(12.dp)  // Within cards
+Arrangement.spacedBy(8.dp)   // Between related items
+
+// LazyColumn contentPadding
+contentPadding = PaddingValues(
+    start = 16.dp,
+    end = 16.dp,
+    top = 16.dp,
+    bottom = 16.dp
+)
+
+// Card corner radius
+RoundedCornerShape(20.dp)  // Large cards
+RoundedCornerShape(16.dp)  // Medium cards
+RoundedCornerShape(12.dp)  // Small cards
+RoundedCornerShape(8.dp)   // Chips/badges
+```
+
+---
+
+## 7. Typography Patterns
+
+```kotlin
+// Screen titles
+MaterialTheme.typography.titleLarge.copy(
+    fontWeight = FontWeight.Bold,
+    letterSpacing = 1.5.sp
+)
+
+// Section headers
+MaterialTheme.typography.titleMedium.copy(
+    fontWeight = FontWeight.Bold,
+    letterSpacing = 1.2.sp
+)
+
+// Card titles
+MaterialTheme.typography.titleLarge.copy(
+    fontWeight = FontWeight.ExtraBold,
+    letterSpacing = 0.5.sp
+)
+
+// Labels/Chips
+MaterialTheme.typography.labelSmall.copy(
+    fontWeight = FontWeight.Bold,
+    letterSpacing = 0.8.sp
+)
+
+// Body text
+MaterialTheme.typography.bodyLarge.copy(
+    lineHeight = 24.sp
+)
+```
+
+---
+
+## 8. Color Patterns
+
+### Feature Accent Colors
+```kotlin
+val perksPurple = Color(0xFFAB47BC)
+val gobblegumsPurple = Color(0xFF9C27B0)
+val multiplayerCyan = Color(0xFF00BCD4)
+val zombieGreen = Color(0xFF76FF03)
+val mapsBronze = MaterialTheme.colorScheme.tertiary
+val gameModesRed = MaterialTheme.colorScheme.error
+```
+
+### Standard Color Usage
+```kotlin
+// Backgrounds
+MaterialTheme.colorScheme.background  // Main background
+MaterialTheme.colorScheme.surface     // Cards, elevated surfaces
+MaterialTheme.colorScheme.surfaceContainer  // Slightly elevated
+MaterialTheme.colorScheme.surfaceContainerLowest  // Ad space
+
+// Text
+MaterialTheme.colorScheme.onSurface           // Primary text
+MaterialTheme.colorScheme.onSurfaceVariant    // Secondary text
+accentColor                                    // Feature-specific highlights
+```
+
+---
+
+## 9. Reference Files
+
+### Must-Read Screens
+- `feature/checklist/presentation/CategoryChecklistScreen.kt` - Perfect list screen
+- `feature/gamemodes/presentation/GameModeDetailScreen.kt` - Perfect detail screen
+- `feature/perks/presentation/PerksListScreen.kt` - Grouping & horizontal scrolling
+- `feature/maps/presentation/MapCategoriesScreen.kt` - Hub/navigation pattern
+
+### Must-Read ViewModels
+- `feature/checklist/presentation/CategoryChecklistViewModel.kt` - Flow-based pattern
+- `feature/gamemodes/presentation/GameModesViewModel.kt` - Error handling pattern
+
+### Must-Read Repositories
+- `feature/checklist/data/repository/ChecklistRepositoryImpl.kt` - Combined flows
+- `feature/gamemodes/data/repository/GameModesRepositoryImpl.kt` - Realm deserialization
+
+---
+
+## 10. Common Mistakes to Avoid
+
+### ❌ DON'T: Put ad space inside scrollable content
+```kotlin
+LazyColumn {
+    items(list) { item -> ItemCard(item) }
+    item { AdSpace() }  // ← Will scroll away!
+}
+```
+
+### ✅ DO: Put ad space outside with .weight(1f)
+```kotlin
+Column {
+    LazyColumn(modifier = Modifier.weight(1f)) {
+        items(list) { item -> ItemCard(item) }
+    }
+    AdSpace()  // ← Stays fixed at bottom
+}
+```
+
+### ❌ DON'T: Use .value for StateFlow
+```kotlin
+val state = viewModel.uiState.value  // Won't recompose
+```
+
+### ✅ DO: Use collectAsState()
+```kotlin
+val state by viewModel.uiState.collectAsState()
+```
+
+### ❌ DON'T: Nest redundant padding
+```kotlin
+Box(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier.padding(16.dp)) { }
+}
+```
+
+### ✅ DO: Apply padding once
+```kotlin
+Box {
+    Column(modifier = Modifier.padding(16.dp)) { }
+}
+```
+
+---
+
+## Quick Checklist for New Screens
+
+- [ ] Uses `@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)`
+- [ ] Scaffold with topBar and containerColor
+- [ ] Column with paddingValues from Scaffold
+- [ ] LazyColumn/scrollable content with `.weight(1f)`
+- [ ] Fixed ad space at bottom (90.dp height)
+- [ ] ViewModel with sealed UI state
+- [ ] Repository returning Flow
+- [ ] Accent color defined for feature
+- [ ] Animated glow on important elements
+- [ ] Proper spacing (16.dp standard)
+- [ ] Typography with proper letter spacing
+- [ ] Navigation callbacks as parameters
+- [ ] collectAsState() for state collection

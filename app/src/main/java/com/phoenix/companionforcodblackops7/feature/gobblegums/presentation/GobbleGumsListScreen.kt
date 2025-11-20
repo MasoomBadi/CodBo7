@@ -29,7 +29,7 @@ import com.phoenix.companionforcodblackops7.feature.gobblegums.domain.model.Gobb
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
 /**
- * GobbleGums list screen with tag-based filtering
+ * GobbleGums list screen with rarity and pattern filtering
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -168,7 +168,7 @@ fun GobbleGumsListScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
-                                            text = "Try a different tag filter",
+                                            text = "Try a different filter",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                         )
