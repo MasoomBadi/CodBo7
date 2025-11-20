@@ -20,8 +20,8 @@ sealed class GobbleGumsUiState {
     data object Loading : GobbleGumsUiState()
     data class Success(
         val gobblegums: List<GobbleGum>,
-        val allTags: List<String>,
-        val selectedTag: String? = null,
+        val selectedRarity: String? = null,
+        val selectedPattern: String? = null,
         val filteredGobblegums: List<GobbleGum> = gobblegums
     ) : GobbleGumsUiState()
     data class Error(val message: String) : GobbleGumsUiState()
@@ -52,11 +52,10 @@ class GobbleGumsViewModel @Inject constructor(
                     )
                 }
                 .collect { gobblegums ->
-                    val allTags = extractAllTags(gobblegums)
                     _uiState.value = GobbleGumsUiState.Success(
                         gobblegums = gobblegums,
-                        allTags = allTags,
-                        selectedTag = null,
+                        selectedRarity = null,
+                        selectedPattern = null,
                         filteredGobblegums = gobblegums
                     )
                 }
@@ -64,38 +63,75 @@ class GobbleGumsViewModel @Inject constructor(
     }
 
     /**
-     * Extract all unique tags from gobblegums
+     * Filter gobblegums by rarity
      */
-    private fun extractAllTags(gobblegums: List<GobbleGum>): List<String> {
-        return gobblegums
-            .flatMap { it.getTagsList() }
-            .distinct()
-            .sorted()
-    }
-
-    /**
-     * Filter gobblegums by tag
-     */
-    fun filterByTag(tag: String?) {
+    fun filterByRarity(rarity: String?) {
         val currentState = _uiState.value
         if (currentState is GobbleGumsUiState.Success) {
-            val filtered = if (tag == null) {
-                currentState.gobblegums
-            } else {
-                currentState.gobblegums.filter { it.matchesTag(tag) }
-            }
+            val filtered = applyFilters(
+                currentState.gobblegums,
+                rarity,
+                currentState.selectedPattern
+            )
 
             _uiState.value = currentState.copy(
-                selectedTag = tag,
+                selectedRarity = rarity,
                 filteredGobblegums = filtered
             )
         }
     }
 
     /**
-     * Clear tag filter
+     * Filter gobblegums by pattern
      */
-    fun clearFilter() {
-        filterByTag(null)
+    fun filterByPattern(pattern: String?) {
+        val currentState = _uiState.value
+        if (currentState is GobbleGumsUiState.Success) {
+            val filtered = applyFilters(
+                currentState.gobblegums,
+                currentState.selectedRarity,
+                pattern
+            )
+
+            _uiState.value = currentState.copy(
+                selectedPattern = pattern,
+                filteredGobblegums = filtered
+            )
+        }
+    }
+
+    /**
+     * Apply both rarity and pattern filters
+     */
+    private fun applyFilters(
+        gobblegums: List<GobbleGum>,
+        rarity: String?,
+        pattern: String?
+    ): List<GobbleGum> {
+        var filtered = gobblegums
+
+        if (rarity != null) {
+            filtered = filtered.filter { it.rarity.displayName.equals(rarity, ignoreCase = true) }
+        }
+
+        if (pattern != null) {
+            filtered = filtered.filter { it.pattern.displayName.equals(pattern, ignoreCase = true) }
+        }
+
+        return filtered
+    }
+
+    /**
+     * Clear all filters
+     */
+    fun clearFilters() {
+        val currentState = _uiState.value
+        if (currentState is GobbleGumsUiState.Success) {
+            _uiState.value = currentState.copy(
+                selectedRarity = null,
+                selectedPattern = null,
+                filteredGobblegums = currentState.gobblegums
+            )
+        }
     }
 }
