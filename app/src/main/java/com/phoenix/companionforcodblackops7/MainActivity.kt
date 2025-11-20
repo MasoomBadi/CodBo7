@@ -82,6 +82,7 @@ import com.phoenix.companionforcodblackops7.feature.gobblegums.presentation.Gobb
 import com.phoenix.companionforcodblackops7.feature.gobblegums.presentation.GobbleGumsListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
+import com.phoenix.companionforcodblackops7.feature.prestige.presentation.PrestigeInfoScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -241,6 +242,9 @@ fun AppNavigation(
                 },
                 onNavigateToZombie = {
                     navController.navigate("zombie")
+                },
+                onNavigateToPrestige = {
+                    navController.navigate("prestige")
                 }
             )
         }
@@ -647,6 +651,14 @@ fun AppNavigation(
                 }
             )
         }
+
+        composable("prestige") {
+            PrestigeInfoScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 
@@ -833,7 +845,8 @@ fun DashboardScreen(
     onNavigateToMaps: () -> Unit = {},
     onNavigateToGameModes: () -> Unit = {},
     onNavigateToCampaignMultiplayer: () -> Unit = {},
-    onNavigateToZombie: () -> Unit = {}
+    onNavigateToZombie: () -> Unit = {},
+    onNavigateToPrestige: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "dashboardBorder")
     val borderGlow by infiniteTransition.animateFloat(
@@ -951,6 +964,22 @@ fun DashboardScreen(
                     buttonColor = Color(0xFF76FF03).copy(alpha = 0.3f),
                     buttonTextColor = Color(0xFF76FF03),
                     buttonLabel = "EXPLORE",
+                    borderGlow = borderGlow
+                )
+            }
+
+            // Classic Prestige Card
+            item {
+                DashboardCard(
+                    title = "CLASSIC PRESTIGE",
+                    tagline = "Prestige system & rewards",
+                    onClick = onNavigateToPrestige,
+                    borderColor = Color(0xFFFFB300), // Gold color
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    gradientColor = Color(0xFFFFB300),
+                    buttonColor = Color(0xFFFFB300).copy(alpha = 0.3f),
+                    buttonTextColor = Color(0xFFFFB300),
+                    buttonLabel = "VIEW INFO",
                     borderGlow = borderGlow
                 )
             }
