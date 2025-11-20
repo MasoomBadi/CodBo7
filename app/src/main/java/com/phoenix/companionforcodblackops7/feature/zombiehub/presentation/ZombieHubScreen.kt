@@ -37,7 +37,8 @@ fun ZombieHubScreen(
     onNavigateToPerkAColas: () -> Unit,
     onNavigateToAmmoMods: () -> Unit,
     onNavigateToFieldUpgradesZM: () -> Unit,
-    onNavigateToPowerUps: () -> Unit
+    onNavigateToPowerUps: () -> Unit,
+    onNavigateToGobbleGums: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -129,15 +130,15 @@ fun ZombieHubScreen(
                     )
                 }
 
-                // GobbleGums Card - Coming Soon
+                // GobbleGums Card - Active
                 item {
                     HubCategoryCard(
                         title = "GOBBLEGUMS",
                         subtitle = "Consumable Power-Ups",
                         icon = Icons.Filled.ShoppingCart,
                         accentColor = Color(0xFF9C27B0), // Purple
-                        isAvailable = false,
-                        onClick = { }
+                        isAvailable = true,
+                        onClick = onNavigateToGobbleGums
                     )
                 }
 

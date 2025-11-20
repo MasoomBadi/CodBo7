@@ -77,6 +77,9 @@ import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradeZMDetailScreen
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.presentation.FieldUpgradesZMListScreen
 import com.phoenix.companionforcodblackops7.feature.powerups.presentation.PowerUpsScreen
+import com.phoenix.companionforcodblackops7.feature.gobblegums.domain.model.GobbleGum
+import com.phoenix.companionforcodblackops7.feature.gobblegums.presentation.GobbleGumDetailScreen
+import com.phoenix.companionforcodblackops7.feature.gobblegums.presentation.GobbleGumsListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -190,6 +193,9 @@ fun AppNavigation(
 
     // State to hold selected Field Upgrade (ZM) for navigation
     var selectedFieldUpgradeZM by remember { mutableStateOf<FieldUpgradeZM?>(null) }
+
+    // State to hold selected GobbleGum for navigation
+    var selectedGobbleGum by remember { mutableStateOf<GobbleGum?>(null) }
 
     NavHost(
         navController = navController,
@@ -596,6 +602,29 @@ fun AppNavigation(
             )
         }
 
+        composable("gobblegums") {
+            GobbleGumsListScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onGobbleGumClick = { gobblegum ->
+                    selectedGobbleGum = gobblegum
+                    navController.navigate("gobblegumDetail")
+                }
+            )
+        }
+
+        composable("gobblegumDetail") {
+            selectedGobbleGum?.let { gobblegum ->
+                GobbleGumDetailScreen(
+                    gobblegum = gobblegum,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
         composable("zombie") {
             ZombieHubScreen(
                 onNavigateBack = {
@@ -612,6 +641,9 @@ fun AppNavigation(
                 },
                 onNavigateToPowerUps = {
                     navController.navigate("powerUps")
+                },
+                onNavigateToGobbleGums = {
+                    navController.navigate("gobblegums")
                 }
             )
         }
