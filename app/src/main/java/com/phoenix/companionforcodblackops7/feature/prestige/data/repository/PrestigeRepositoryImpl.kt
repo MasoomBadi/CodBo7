@@ -12,30 +12,20 @@ class PrestigeRepositoryImpl @Inject constructor() : PrestigeRepository {
     override fun getAllPrestigeItems(): Flow<List<PrestigeItem>> {
         val items = mutableListOf<PrestigeItem>()
 
-        // Military Levels 1-55
-        for (level in 1..55) {
-            items.add(
-                PrestigeItem(
-                    id = "military_$level",
-                    name = "Military Rank $level",
-                    type = PrestigeType.MILITARY,
-                    level = level,
-                    description = "Reach Level $level",
-                    iconPath = "/assets/classic_prestige/military_$level.webp"
-                )
-            )
-        }
-
         // Prestige 1-10
         for (prestige in 1..10) {
-            val unlockLevel = if (prestige == 1) 55 else prestige * 55
+            val unlockDescription = if (prestige == 1) {
+                "Military Level 55"
+            } else {
+                "Prestige ${prestige - 1} Level 55"
+            }
             items.add(
                 PrestigeItem(
                     id = "prestige_$prestige",
                     name = "Prestige $prestige",
                     type = PrestigeType.PRESTIGE,
                     level = prestige,
-                    description = "Reach Level $unlockLevel",
+                    description = unlockDescription,
                     iconPath = "/assets/classic_prestige/prestige$prestige.webp"
                 )
             )

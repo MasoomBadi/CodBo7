@@ -23,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -314,7 +316,10 @@ private fun EnhancedChecklistItemCard(
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .size(85.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(16.dp)),
+                            colorFilter = if (!item.isUnlocked) {
+                                ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                            } else null
                         )
                     } ?: run {
                         // Placeholder if no image
