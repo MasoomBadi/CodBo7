@@ -35,9 +35,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistItem
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
+
+private fun getCategoryAccentColor(category: ChecklistCategory): Color {
+    return when (category) {
+        ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
+        ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
+        ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
+        ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
+        ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -53,6 +64,12 @@ fun CategoryChecklistScreen(
         viewModel.toastMessage.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    // Get category accent color
+    val categoryAccentColor = when (val state = uiState) {
+        is CategoryChecklistUiState.Success -> getCategoryAccentColor(state.category)
+        else -> MaterialTheme.colorScheme.secondary
     }
 
     Scaffold(
@@ -82,7 +99,7 @@ fun CategoryChecklistScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.secondary
+                        titleContentColor = categoryAccentColor
                     )
                 )
 
@@ -195,6 +212,7 @@ fun CategoryChecklistScreen(
                         ) { item ->
                             EnhancedChecklistItemCard(
                                 item = item,
+                                accentColor = categoryAccentColor,
                                 onToggle = { viewModel.toggleItemUnlocked(item.id) }
                             )
                         }
@@ -231,6 +249,7 @@ fun CategoryChecklistScreen(
 @Composable
 private fun EnhancedChecklistItemCard(
     item: ChecklistItem,
+    accentColor: Color,
     onToggle: () -> Unit
 ) {
     // Glow animation for unlocked items
@@ -244,8 +263,6 @@ private fun EnhancedChecklistItemCard(
         ),
         label = "glowAlpha"
     )
-
-    val accentColor = MaterialTheme.colorScheme.secondary
     val borderColor = if (item.isUnlocked) {
         accentColor.copy(alpha = glowAlpha * 0.7f)
     } else {
