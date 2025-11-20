@@ -299,96 +299,280 @@ private fun ItemCard(
 }
 ```
 
-### Filter Section Pattern
+### Collapsible Filter Section Pattern
 ```kotlin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterSection(
-    selectedFilter: String?,
-    onFilterSelected: (String) -> Unit,
+    selectedRarity: String?,
+    selectedPattern: String?,
+    onRaritySelected: (String) -> Unit,
+    onPatternSelected: (String) -> Unit,
     onClearFilters: () -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val activeFiltersCount = listOfNotNull(selectedRarity, selectedPattern).size
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-        ) {
-            // Header with Clear button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Collapsible header
+            Surface(
+                onClick = { isExpanded = !isExpanded },
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.Transparent
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterList,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = accentColor
-                    )
-                    Text(
-                        text = "FILTERS",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.FilterList,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = accentColor
                         )
-                    )
-                }
+                        Text(
+                            text = "FILTERS",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                        )
 
-                if (selectedFilter != null) {
-                    TextButton(onClick = onClearFilters) {
-                        Text("CLEAR ALL")
+                        // Active filter count badge
+                        if (activeFiltersCount > 0) {
+                            Surface(
+                                color = accentColor,
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = activeFiltersCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (activeFiltersCount > 0) {
+                            TextButton(onClick = {
+                                onClearFilters()
+                                isExpanded = false
+                            }) {
+                                Text("CLEAR")
+                            }
+                        }
+
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
 
-            // Filter chips with FlowRow
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Expandable filter content
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Text(
-                    text = "CATEGORY",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
                 ) {
-                    filters.forEach { filter ->
-                        FilterChip(
-                            selected = selectedFilter == filter,
-                            onClick = { onFilterSelected(filter) },
-                            label = { Text(filter) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = accentColor.copy(alpha = 0.2f),
-                                selectedLabelColor = accentColor
-                            )
+                    // Rarity filters
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "RARITY",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rarities.forEach { rarity ->
+                                FilterChip(
+                                    selected = selectedRarity == rarity,
+                                    onClick = { onRaritySelected(rarity) },
+                                    label = { Text(rarity) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = accentColor.copy(alpha = 0.2f),
+                                        selectedLabelColor = accentColor
+                                    )
+                                )
+                            }
+                        }
                     }
+
+                    // Pattern filters (similar structure)
+                    // ... more filter groups as needed
                 }
             }
         }
     }
 }
 ```
+**Reference**: GobbleGumsListScreen.kt (lines 215-415)
+
+### Image with Glow Background Pattern
+```kotlin
+Box(modifier = Modifier.size(80.dp), contentAlignment = Alignment.Center) {
+    // Glow background
+    Box(
+        modifier = Modifier
+            .size(80.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        accentColor.copy(alpha = 0.3f * glowAlpha),
+                        accentColor.copy(alpha = 0.1f * glowAlpha),
+                        Color.Transparent
+                    )
+                )
+            )
+    )
+
+    // Icon
+    AsyncImage(
+        model = "$BASE_URL${item.iconUrl}",
+        contentDescription = item.name,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+            .size(75.dp)
+            .clip(RoundedCornerShape(16.dp))
+    )
+}
+```
+**Reference**: GobbleGumsListScreen.kt (lines 467-500)
+
+### Badge/Chip Pattern
+```kotlin
+// Simple badge
+Surface(
+    color = accentColor.copy(alpha = 0.2f),
+    shape = RoundedCornerShape(8.dp)
+) {
+    Text(
+        text = "BADGE TEXT",
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp
+        ),
+        color = accentColor,
+        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+    )
+}
+
+// Badge with icon/dot indicator
+Row(
+    horizontalArrangement = Arrangement.spacedBy(4.dp),
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Box(
+        modifier = Modifier
+            .size(6.dp)
+            .clip(CircleShape)
+            .background(accentColor)
+    )
+    Text(
+        text = "UNLOCKED",
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.6.sp
+        ),
+        color = accentColor
+    )
+}
+
+// Counter badge (circular)
+Surface(
+    color = accentColor,
+    shape = CircleShape
+) {
+    Text(
+        text = count.toString(),
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Bold
+        ),
+        color = Color.White,
+        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+```
+**Reference**: CategoryChecklistScreen.kt, GobbleGumsListScreen.kt
+
+### Status Badge Overlay on Images
+```kotlin
+Box(modifier = Modifier.size(90.dp)) {
+    // Main image
+    AsyncImage(
+        model = "$BASE_URL${item.iconUrl}",
+        contentDescription = item.name,
+        modifier = Modifier
+            .size(90.dp)
+            .clip(RoundedCornerShape(16.dp))
+    )
+
+    // Status badge overlay (top-end corner)
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(4.dp)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = if (item.isUnlocked) accentColor else MaterialTheme.colorScheme.surfaceVariant,
+            shadowElevation = 4.dp
+        ) {
+            Icon(
+                imageVector = if (item.isUnlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(4.dp),
+                tint = if (item.isUnlocked) {
+                    MaterialTheme.colorScheme.onSecondary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                }
+            )
+        }
+    }
+}
+```
+**Reference**: CategoryChecklistScreen.kt (lines 330-358)
 
 ---
 
@@ -423,7 +607,548 @@ RoundedCornerShape(8.dp)   // Chips/badges
 
 ---
 
-## 7. Typography Patterns
+## 7. Advanced Screen Patterns
+
+### Hub/Navigation Card Pattern
+```kotlin
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun HubCategoryCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    isAvailable: Boolean,
+    onClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    val borderColor = if (isAvailable) accentColor.copy(alpha = glowAlpha) else Color.Gray.copy(alpha = 0.3f)
+    val contentAlpha = if (isAvailable) 1f else 0.5f
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(2.dp, borderColor, RoundedCornerShape(16.dp))
+            .then(if (isAvailable) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon with glow
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                accentColor.copy(alpha = 0.3f * contentAlpha),
+                                accentColor.copy(alpha = 0.1f * contentAlpha)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = accentColor.copy(alpha = contentAlpha)
+                )
+            }
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 20.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.2.sp
+                    ),
+                    color = accentColor.copy(alpha = contentAlpha)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
+                )
+                if (!isAvailable) {
+                    Text(
+                        text = "COMING SOON",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            // Arrow (if available)
+            if (isAvailable) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = accentColor.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+```
+**Reference**: ZombieHubScreen.kt (lines 212-339)
+
+### Detail Screen Hero Section Pattern
+```kotlin
+@Composable
+private fun HeroSection(
+    item: Item,
+    accentColor: Color,
+    glowAlpha: Float
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        accentColor.copy(alpha = glowAlpha * 0.7f),
+                        accentColor.copy(alpha = glowAlpha * 0.7f)
+                    )
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Large icon with glow (150.dp)
+            Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    accentColor.copy(alpha = 0.35f * glowAlpha),
+                                    accentColor.copy(alpha = 0.15f * glowAlpha),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+                AsyncImage(
+                    model = "$BASE_URL${item.iconUrl}",
+                    contentDescription = item.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(140.dp).clip(RoundedCornerShape(24.dp))
+                )
+            }
+
+            // Badge
+            Surface(
+                color = accentColor.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "BADGE TEXT",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.2.sp
+                    ),
+                    color = accentColor,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
+            }
+
+            // Description
+            Text(
+                text = item.description,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+```
+**Reference**: GobbleGumDetailScreen.kt (lines 157-251)
+
+### Info Cards Grid Pattern
+```kotlin
+@Composable
+private fun InfoCardsSection(item: Item, accentColor: Color) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "DETAILS",
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            ),
+            color = accentColor
+        )
+
+        // 2-column grid
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            InfoCard(
+                title = "LABEL 1",
+                value = "Value 1",
+                icon = Icons.Filled.Star,
+                modifier = Modifier.weight(1f)
+            )
+            InfoCard(
+                title = "LABEL 2",
+                value = "Value 2",
+                icon = Icons.Filled.Info,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoCard(
+    title: String,
+    value: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 0.8.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+```
+**Reference**: GobbleGumDetailScreen.kt (lines 253-383)
+
+### Empty State Pattern
+```kotlin
+item {
+    if (state.filteredItems.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.FilterList,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "No items found",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Try a different filter",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+```
+**Reference**: GobbleGumsListScreen.kt (lines 154-185)
+
+### Progress Tracking Pattern
+```kotlin
+// In TopAppBar Column
+Surface(
+    modifier = Modifier.fillMaxWidth(),
+    color = MaterialTheme.colorScheme.surface,
+    tonalElevation = 2.dp
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "PROGRESS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = accentColor
+                )
+                Text(
+                    text = "${unlockedCount} / ${totalCount} unlocked",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Text(
+                    text = "${percentage}%",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Black
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+        }
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(5.dp)),
+            color = accentColor,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            strokeCap = StrokeCap.Round
+        )
+    }
+}
+```
+**Reference**: CategoryChecklistScreen.kt (lines 78-144)
+
+### Horizontal Scrolling Pattern
+```kotlin
+// Group items by category
+val itemsGroupedByCategory = items.groupBy { it.category }
+
+itemsGroupedByCategory.forEach { (category, categoryItems) ->
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Category label
+        Text(
+            text = category.uppercase(),
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.8.sp
+            ),
+            color = accentColor,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+
+        // Horizontal scrolling list
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(categoryItems) { item ->
+                ItemCard(
+                    item = item,
+                    onClick = { onItemClick(item) }
+                )
+            }
+        }
+    }
+}
+```
+**Reference**: PerksListScreen.kt (lines 337-367)
+
+### Section Header Patterns
+
+**With Icon:**
+```kotlin
+Row(
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Icon(
+        imageVector = Icons.Filled.Star,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp),
+        tint = accentColor
+    )
+    Text(
+        text = "SECTION TITLE",
+        style = MaterialTheme.typography.labelLarge.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        ),
+        color = accentColor
+    )
+}
+```
+
+**With Accent Bar:**
+```kotlin
+Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+) {
+    Box(
+        modifier = Modifier
+            .width(4.dp)
+            .height(24.dp)
+            .background(accentColor, MaterialTheme.shapes.small)
+    )
+    Text(
+        text = "SECTION TITLE",
+        style = MaterialTheme.typography.titleMedium.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.2.sp
+        ),
+        color = accentColor
+    )
+}
+```
+**Reference**: GameModeDetailScreen.kt (lines 275-293, 323-341)
+
+### Loading & Error State Patterns
+
+**Loading:**
+```kotlin
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LoadingContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            LoadingIndicator(
+                modifier = Modifier.size(64.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Loading...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+```
+
+**Error:**
+```kotlin
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Error Loading Data",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
+    }
+}
+```
+**Reference**: MapCategoriesScreen.kt (lines 305-370)
+
+---
+
+## 8. Typography Patterns
 
 ```kotlin
 // Screen titles
@@ -458,7 +1183,22 @@ MaterialTheme.typography.bodyLarge.copy(
 
 ---
 
-## 8. Color Patterns
+## 9. Color Patterns & Constants
+
+### BASE_URL Constant
+**ALWAYS define this constant at the top of screen files:**
+```kotlin
+private const val BASE_URL = "http://codbo7.masoombadi.top"
+```
+
+**Usage in AsyncImage:**
+```kotlin
+AsyncImage(
+    model = "$BASE_URL${item.iconUrl}",
+    contentDescription = item.name,
+    contentScale = ContentScale.Fit
+)
+```
 
 ### Feature Accent Colors
 ```kotlin
@@ -466,6 +1206,10 @@ val perksPurple = Color(0xFFAB47BC)
 val gobblegumsPurple = Color(0xFF9C27B0)
 val multiplayerCyan = Color(0xFF00BCD4)
 val zombieGreen = Color(0xFF76FF03)
+val ammoModsPink = Color(0xFFE91E63)
+val powerUpsGold = Color(0xFFFFC107)
+val fieldUpgradesCyan = Color(0xFF00BCD4)
+val wonderWeaponsOrange = Color(0xFFFF6F00)
 val mapsBronze = MaterialTheme.colorScheme.tertiary
 val gameModesRed = MaterialTheme.colorScheme.error
 ```
@@ -476,35 +1220,53 @@ val gameModesRed = MaterialTheme.colorScheme.error
 MaterialTheme.colorScheme.background  // Main background
 MaterialTheme.colorScheme.surface     // Cards, elevated surfaces
 MaterialTheme.colorScheme.surfaceContainer  // Slightly elevated
+MaterialTheme.colorScheme.surfaceContainerHigh  // Info cards
 MaterialTheme.colorScheme.surfaceContainerLowest  // Ad space
 
 // Text
 MaterialTheme.colorScheme.onSurface           // Primary text
 MaterialTheme.colorScheme.onSurfaceVariant    // Secondary text
 accentColor                                    // Feature-specific highlights
+
+// Alpha values for consistency
+accentColor.copy(alpha = 0.2f)   // Badge/chip backgrounds
+accentColor.copy(alpha = 0.15f)  // Subtle highlights
+accentColor.copy(alpha = 0.7f)   // Glow borders
+accentColor.copy(alpha = 0.5f)   // Disabled states
 ```
 
 ---
 
-## 9. Reference Files
+## 10. Reference Files
 
 ### Must-Read Screens
-- `feature/checklist/presentation/CategoryChecklistScreen.kt` - Perfect list screen
-- `feature/gamemodes/presentation/GameModeDetailScreen.kt` - Perfect detail screen
-- `feature/perks/presentation/PerksListScreen.kt` - Grouping & horizontal scrolling
-- `feature/maps/presentation/MapCategoriesScreen.kt` - Hub/navigation pattern
+
+**List Screens:**
+- `feature/checklist/presentation/CategoryChecklistScreen.kt` - Perfect list screen with progress tracking
+- `feature/gobblegums/presentation/GobbleGumsListScreen.kt` - Collapsible filters & empty states
+- `feature/perks/presentation/PerksListScreen.kt` - Horizontal scrolling & category grouping
+
+**Detail Screens:**
+- `feature/gamemodes/presentation/GameModeDetailScreen.kt` - Perfect detail screen with sections
+- `feature/gobblegums/presentation/GobbleGumDetailScreen.kt` - Hero section & info cards grid
+
+**Hub/Navigation Screens:**
+- `feature/zombiehub/presentation/ZombieHubScreen.kt` - Hub pattern with category cards
+- `feature/maps/presentation/MapCategoriesScreen.kt` - Navigation cards with error/loading states
 
 ### Must-Read ViewModels
 - `feature/checklist/presentation/CategoryChecklistViewModel.kt` - Flow-based pattern
 - `feature/gamemodes/presentation/GameModesViewModel.kt` - Error handling pattern
+- `feature/gobblegums/presentation/GobbleGumsViewModel.kt` - Filter state management
 
 ### Must-Read Repositories
 - `feature/checklist/data/repository/ChecklistRepositoryImpl.kt` - Combined flows
 - `feature/gamemodes/data/repository/GameModesRepositoryImpl.kt` - Realm deserialization
+- `feature/gobblegums/data/repository/GobbleGumsRepositoryImpl.kt` - Complex data mapping
 
 ---
 
-## 10. Common Mistakes to Avoid
+## 11. Common Mistakes to Avoid
 
 ### ❌ DON'T: Put ad space inside scrollable content
 ```kotlin
@@ -550,18 +1312,112 @@ Box {
 
 ---
 
+## 12. Common Imports
+
+### Standard Screen Imports
+```kotlin
+// Animation
+import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+
+// Foundation
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+
+// Material Icons
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+
+// Material 3
+import androidx.compose.material3.*
+
+// Runtime
+import androidx.compose.runtime.*
+
+// UI
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+// Hilt
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+
+// Coil for images
+import coil.compose.AsyncImage
+```
+
+### BASE_URL Constant
+```kotlin
+private const val BASE_URL = "http://codbo7.masoombadi.top"
+```
+
+---
+
 ## Quick Checklist for New Screens
 
+### Essential Requirements
 - [ ] Uses `@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)`
 - [ ] Scaffold with topBar and containerColor
 - [ ] Column with paddingValues from Scaffold
 - [ ] LazyColumn/scrollable content with `.weight(1f)`
-- [ ] Fixed ad space at bottom (90.dp height)
-- [ ] ViewModel with sealed UI state
+- [ ] Fixed ad space at bottom (90.dp height, surfaceContainerLowest)
+- [ ] ViewModel with sealed UI state (Loading, Success, Error)
 - [ ] Repository returning Flow
+- [ ] BASE_URL constant defined at top
 - [ ] Accent color defined for feature
-- [ ] Animated glow on important elements
-- [ ] Proper spacing (16.dp standard)
-- [ ] Typography with proper letter spacing
 - [ ] Navigation callbacks as parameters
 - [ ] collectAsState() for state collection
+
+### Visual Elements
+- [ ] Animated glow on borders/important elements (glowAlpha pattern)
+- [ ] Proper spacing (16.dp standard, 24.dp between sections)
+- [ ] Typography with proper letter spacing (1.5.sp titles, 0.8.sp badges)
+- [ ] All text UPPERCASE for titles, labels, and section headers
+- [ ] Image icons with radial gradient glow background
+- [ ] Cards with 6-8.dp elevation and 16-20.dp corner radius
+
+### Screen Type Specific
+
+**List Screens:**
+- [ ] Filter section (collapsible if multiple filter types)
+- [ ] Empty state for no results
+- [ ] Active filter count badge
+- [ ] Items grouped by category/slot if applicable
+
+**Detail Screens:**
+- [ ] Hero section with large icon (150.dp)
+- [ ] Info cards grid (2-column layout)
+- [ ] Section headers with icon or accent bar
+- [ ] Multiple content sections (Details, Effects, Features, etc.)
+
+**Hub Screens:**
+- [ ] Category cards with icon + title + subtitle
+- [ ] "Coming soon" state for unavailable items
+- [ ] Arrow indicators for available items
+- [ ] Consistent card height (140.dp)
+
+### States & Error Handling
+- [ ] Loading state with LoadingIndicator
+- [ ] Error state with retry button
+- [ ] Empty state for filtered results
+- [ ] Progress tracking (if applicable)
