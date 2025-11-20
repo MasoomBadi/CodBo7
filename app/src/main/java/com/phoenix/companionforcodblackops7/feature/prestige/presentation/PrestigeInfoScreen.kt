@@ -27,14 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeItem
-import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeType
+import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeData
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
 /**
- * Classic Prestige Screen - Compact data-focused list
- * Displays all prestige items with unlock criteria
+ * Classic Prestige Screen - Displays prestige data from database
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -42,7 +40,7 @@ fun PrestigeInfoScreen(
     onNavigateBack: () -> Unit,
     viewModel: PrestigeViewModel = hiltViewModel()
 ) {
-    val prestigeItems by viewModel.prestigeItems.collectAsState()
+    val prestigeData by viewModel.prestigeData.collectAsState()
     val accentColor = Color(0xFFFFB300) // Gold
 
     Scaffold(
@@ -88,7 +86,7 @@ fun PrestigeInfoScreen(
             ) {
                 // Compact header with stats
                 item {
-                    CompactHeaderSection(accentColor)
+                    CompactHeaderSection(accentColor, prestigeData.size)
                 }
 
                 // Collapsible info sections
@@ -96,56 +94,9 @@ fun PrestigeInfoScreen(
                     CollapsibleInfoSections(accentColor)
                 }
 
-                // Group items by type
-                val militaryItems = prestigeItems.filter { it.type == PrestigeType.MILITARY }
-                val prestigeLevels = prestigeItems.filter { it.type == PrestigeType.PRESTIGE }
-                val masterMilestones = prestigeItems.filter { it.type == PrestigeType.PRESTIGE_MASTER }
-
-                // Military Ranks Section
-                if (militaryItems.isNotEmpty()) {
-                    item {
-                        SectionHeader(
-                            title = "MILITARY RANKS",
-                            subtitle = "Levels 1-55",
-                            icon = Icons.Filled.Star,
-                            color = accentColor
-                        )
-                    }
-                    items(militaryItems) { item ->
-                        PrestigeItemCard(item = item, accentColor = accentColor)
-                    }
-                }
-
-                // Prestige Levels Section
-                if (prestigeLevels.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(
-                            title = "PRESTIGE LEVELS",
-                            subtitle = "Prestige 1-10",
-                            icon = Icons.Filled.WorkspacePremium,
-                            color = accentColor
-                        )
-                    }
-                    items(prestigeLevels) { item ->
-                        PrestigeItemCard(item = item, accentColor = accentColor)
-                    }
-                }
-
-                // Prestige Master Section
-                if (masterMilestones.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SectionHeader(
-                            title = "PRESTIGE MASTER",
-                            subtitle = "Milestones to Level 1000",
-                            icon = Icons.Filled.MilitaryTech,
-                            color = Color(0xFF9C27B0)
-                        )
-                    }
-                    items(masterMilestones) { item ->
-                        PrestigeItemCard(item = item, accentColor = Color(0xFF9C27B0))
-                    }
+                // Display actual prestige data from database
+                items(prestigeData) { item ->
+                    PrestigeDataCard(item = item, accentColor = accentColor)
                 }
             }
 
@@ -172,7 +123,7 @@ fun PrestigeInfoScreen(
 }
 
 @Composable
-private fun CompactHeaderSection(accentColor: Color) {
+private fun CompactHeaderSection(accentColor: Color, totalItems: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -207,66 +158,12 @@ private fun CompactHeaderSection(accentColor: Color) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Track your progression",
+                        text = "$totalItems prestige levels",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-            )
-
-            // Stats chips
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                StatChip(
-                    label = "55 Military",
-                    color = accentColor,
-                    modifier = Modifier.weight(1f)
-                )
-                StatChip(
-                    label = "10 Prestige",
-                    color = accentColor,
-                    modifier = Modifier.weight(1f)
-                )
-                StatChip(
-                    label = "1000 Master",
-                    color = Color(0xFF9C27B0),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatChip(
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        color = color.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Box(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                ),
-                color = color,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
@@ -461,43 +358,8 @@ private fun CollapsibleSection(
 }
 
 @Composable
-private fun SectionHeader(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    color: Color
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = color
-        )
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp
-                ),
-                color = color
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun PrestigeItemCard(
-    item: PrestigeItem,
+private fun PrestigeDataCard(
+    item: PrestigeData,
     accentColor: Color
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "itemGlow")
@@ -551,8 +413,8 @@ private fun PrestigeItemCard(
                         )
                 )
                 AsyncImage(
-                    model = "$BASE_URL${item.iconPath}",
-                    contentDescription = item.name,
+                    model = "$BASE_URL${item.icon}",
+                    contentDescription = item.title,
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape),
@@ -566,7 +428,7 @@ private fun PrestigeItemCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = item.name.uppercase(),
+                    text = item.title.uppercase(),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.8.sp
@@ -584,7 +446,7 @@ private fun PrestigeItemCard(
                         tint = accentColor
                     )
                     Text(
-                        text = item.description,
+                        text = item.unlockBy,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
