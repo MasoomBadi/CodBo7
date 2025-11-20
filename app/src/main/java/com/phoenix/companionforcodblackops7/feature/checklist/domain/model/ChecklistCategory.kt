@@ -5,5 +5,5 @@ enum class ChecklistCategory(val displayName: String) {
     MAPS("Maps"),
     WEAPONS("Weapons"),
     EQUIPMENT("Equipment"),
-    PRESTIGE("Prestige")
+    PRESTIGE("Classic Prestige")
 }
