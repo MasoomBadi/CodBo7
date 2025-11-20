@@ -259,8 +259,9 @@ private fun TagFilterSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(tags) { tag ->
+                    val isSelected = selectedTag == tag
                     FilterChip(
-                        selected = selectedTag == tag,
+                        selected = isSelected,
                         onClick = { onTagSelected(tag) },
                         label = {
                             Text(
@@ -270,14 +271,9 @@ private fun TagFilterSection(
                                 )
                             )
                         },
-                        enabled = true,
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Color(0xFF9C27B0).copy(alpha = 0.2f),
                             selectedLabelColor = Color(0xFF9C27B0)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            selectedBorderColor = Color(0xFF9C27B0),
-                            borderWidth = 1.dp
                         )
                     )
                 }
