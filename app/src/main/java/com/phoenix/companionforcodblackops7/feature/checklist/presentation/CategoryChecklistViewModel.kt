@@ -7,9 +7,12 @@ import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.Check
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistItem
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.repository.ChecklistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,6 +36,9 @@ class CategoryChecklistViewModel @Inject constructor(
     private val categoryName: String = savedStateHandle.get<String>("category") ?: "OPERATORS"
     private val category: ChecklistCategory = ChecklistCategory.valueOf(categoryName)
 
+    private val _toastMessage = Channel<String>()
+    val toastMessage = _toastMessage.receiveAsFlow()
+
     val uiState: StateFlow<CategoryChecklistUiState> = checklistRepository.getChecklistItems(category)
         .map { items ->
             CategoryChecklistUiState.Success(
@@ -50,6 +56,28 @@ class CategoryChecklistViewModel @Inject constructor(
 
     fun toggleItemUnlocked(itemId: String) {
         viewModelScope.launch {
+            // For Classic Prestige, validate sequential unlock
+            if (category == ChecklistCategory.PRESTIGE) {
+                val items = checklistRepository.getChecklistItems(category).first()
+                val currentItem = items.find { it.id == itemId }
+
+                if (currentItem != null && !currentItem.isUnlocked) {
+                    // Extract prestige number from id (e.g., "prestige_2" -> 2)
+                    val currentPrestigeNum = itemId.removePrefix("prestige_").toIntOrNull()
+
+                    if (currentPrestigeNum != null && currentPrestigeNum > 1) {
+                        // Check if previous prestige is unlocked
+                        val previousPrestigeId = "prestige_${currentPrestigeNum - 1}"
+                        val previousPrestige = items.find { it.id == previousPrestigeId }
+
+                        if (previousPrestige?.isUnlocked == false) {
+                            _toastMessage.send("You must unlock Prestige ${currentPrestigeNum - 1} first!")
+                            return@launch
+                        }
+                    }
+                }
+            }
+
             checklistRepository.toggleItemUnlocked(itemId, category)
         }
     }
