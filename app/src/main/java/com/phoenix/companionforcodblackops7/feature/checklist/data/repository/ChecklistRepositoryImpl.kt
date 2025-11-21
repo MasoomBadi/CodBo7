@@ -1,5 +1,9 @@
 package com.phoenix.companionforcodblackops7.feature.checklist.data.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.CategoryProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
@@ -18,7 +22,8 @@ import javax.inject.Inject
 class ChecklistRepositoryImpl @Inject constructor(
     private val realm: Realm,
     private val operatorsRepository: OperatorsRepository,
-    private val prestigeRepository: PrestigeRepository
+    private val prestigeRepository: PrestigeRepository,
+    private val dataStore: DataStore<Preferences>
 ) : ChecklistRepository {
 
     override fun getChecklistItems(category: ChecklistCategory): Flow<List<ChecklistItem>> {
@@ -69,6 +74,45 @@ class ChecklistRepositoryImpl @Inject constructor(
                             isUnlocked = checklistMap[item.id] ?: false,
                             imageUrl = null,
                             unlockCriteria = item.description
+                        )
+                    }
+                }
+            }
+            ChecklistCategory.WEAPONS -> {
+                // Get all weapons from weapons_mp table
+                val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
+                    .asFlow()
+                    .map { results ->
+                        results.list.mapNotNull { entity ->
+                            try {
+                                val data = entity.data
+                                Triple(
+                                    data["id"]?.asInt() ?: 0,
+                                    data["display_name"]?.asString() ?: "",
+                                    data["icon_url"]?.asString() ?: ""
+                                )
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }.sortedBy { it.second } // Sort by display_name
+                    }
+
+                // Combine with DataStore to calculate camo progress
+                combine(weaponsFlow, dataStore.data) { weapons, prefs ->
+                    weapons.map { (weaponId, weaponName, iconUrl) ->
+                        // Calculate unlocked camos for this weapon (out of ~54 total)
+                        val unlockedCount = (1..54).count { camoId ->
+                            val key = booleanPreferencesKey("weapon_camo_${weaponId}_$camoId")
+                            prefs[key] ?: false
+                        }
+
+                        ChecklistItem(
+                            id = weaponId.toString(),
+                            name = weaponName,
+                            category = category,
+                            isUnlocked = false, // Not used for weapons - we track camos instead
+                            imageUrl = iconUrl,
+                            unlockCriteria = "$unlockedCount/54 camos unlocked"
                         )
                     }
                 }
