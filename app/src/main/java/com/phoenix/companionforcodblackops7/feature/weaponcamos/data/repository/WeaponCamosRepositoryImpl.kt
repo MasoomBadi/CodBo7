@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.Camo
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoCategory
+import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoCriteria
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoMode
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.WeaponCamoProgress
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.repository.WeaponCamosRepository
@@ -87,23 +88,80 @@ class WeaponCamosRepositoryImpl @Inject constructor(
         ) { camosByMode, prefs ->
             val allCamos = camosByMode.values.flatten()
 
-            // Check unlock status from DataStore
-            val camosWithUnlockStatus = allCamos.map { camo ->
-                val key = booleanPreferencesKey("weapon_camo_${weaponId}_${camo.id}")
-                val isUnlocked = prefs[key] ?: false
-                camo.copy(isUnlocked = isUnlocked)
+            // Fetch criteria for all camos and check completion status
+            val camosWithCriteria = allCamos.map { camo ->
+                val criteria = fetchCamoCriteria(camo.id, weaponId, prefs)
+
+                // Camo is unlocked if all criteria are completed
+                val isUnlocked = criteria.isNotEmpty() && criteria.all { it.isCompleted }
+
+                camo.copy(
+                    criteria = criteria,
+                    isUnlocked = isUnlocked
+                )
             }
 
-            val unlockedCount = camosWithUnlockStatus.count { it.isUnlocked }
+            val unlockedCount = camosWithCriteria.count { it.isUnlocked }
 
             WeaponCamoProgress(
                 weaponId = weaponId,
                 weaponName = weaponName,
-                camosByMode = camosWithUnlockStatus.groupBy { it.mode },
-                totalCamos = camosWithUnlockStatus.size,
+                camosByMode = camosWithCriteria.groupBy { it.mode },
+                totalCamos = camosWithCriteria.size,
                 unlockedCount = unlockedCount
             )
         }
+    }
+
+    private fun fetchCamoCriteria(camoId: Int, weaponId: Int, prefs: Preferences): List<CamoCriteria> {
+        // Fetch criteria from camo_criteria table
+        val criteriaEntities = realm.query<DynamicEntity>(
+            "tableName == $0 AND data['camo_id'] == $1",
+            "camo_criteria", camoId
+        ).find()
+
+        return criteriaEntities.mapNotNull { entity ->
+            try {
+                val data = entity.data
+                val criterionId = data["id"]?.asInt() ?: 0
+                val criteriaOrder = data["criteria_order"]?.asInt() ?: 1
+
+                // Check if this criterion is completed from DataStore
+                val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
+                val isCompleted = prefs[key] ?: false
+
+                // Determine if this criterion is locked (depends on previous criterion)
+                val isLocked = if (criteriaOrder > 1) {
+                    // Find previous criterion
+                    val previousCriterion = criteriaEntities.find { prevEntity ->
+                        prevEntity.data["criteria_order"]?.asInt() == (criteriaOrder - 1)
+                    }
+
+                    if (previousCriterion != null) {
+                        val prevId = previousCriterion.data["id"]?.asInt() ?: 0
+                        val prevKey = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${prevId}")
+                        val prevCompleted = prefs[prevKey] ?: false
+                        !prevCompleted // Locked if previous is not completed
+                    } else {
+                        false
+                    }
+                } else {
+                    false // First criterion is never locked
+                }
+
+                CamoCriteria(
+                    id = criterionId,
+                    camoId = camoId,
+                    criteriaOrder = criteriaOrder,
+                    criteriaText = data["criteria_text"]?.asString() ?: "",
+                    isCompleted = isCompleted,
+                    isLocked = isLocked
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "Error mapping camo criteria entity")
+                null
+            }
+        }.sortedBy { it.criteriaOrder }
     }
 
     private fun mapEntityToCamo(entity: DynamicEntity): Camo {

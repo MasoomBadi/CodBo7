@@ -47,4 +47,19 @@ class WeaponCamosViewModel @Inject constructor(
             preferencesManager.toggleWeaponCamoUnlock(weaponId, camoId)
         }
     }
+
+    /**
+     * Toggle the completion status of a specific criterion
+     * Validates that previous criteria are completed before allowing toggle
+     */
+    fun toggleCriterionCompletion(camoId: Int, criterionId: Int, isLocked: Boolean) {
+        if (isLocked) {
+            // Don't allow toggling locked criteria
+            return
+        }
+
+        viewModelScope.launch {
+            preferencesManager.toggleCriterionCompletion(weaponId, camoId, criterionId)
+        }
+    }
 }

@@ -26,4 +26,25 @@ class WeaponCamoPreferencesManager @Inject constructor(
             prefs[key] = unlocked
         }
     }
+
+    /**
+     * Toggle the completion status of a specific criterion for a camo
+     */
+    suspend fun toggleCriterionCompletion(weaponId: Int, camoId: Int, criterionId: Int) {
+        val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
+        dataStore.edit { prefs ->
+            val currentValue = prefs[key] ?: false
+            prefs[key] = !currentValue
+        }
+    }
+
+    /**
+     * Set the completion status of a specific criterion for a camo
+     */
+    suspend fun setCriterionCompleted(weaponId: Int, camoId: Int, criterionId: Int, completed: Boolean) {
+        val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
+        dataStore.edit { prefs ->
+            prefs[key] = completed
+        }
+    }
 }
