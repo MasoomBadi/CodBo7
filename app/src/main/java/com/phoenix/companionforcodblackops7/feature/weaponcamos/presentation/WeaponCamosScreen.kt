@@ -1,17 +1,22 @@
 package com.phoenix.companionforcodblackops7.feature.weaponcamos.presentation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,6 +48,7 @@ fun WeaponCamosScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedMode by remember { mutableStateOf(CamoMode.CAMPAIGN) }
+    var expandedCamoId by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -170,23 +176,27 @@ fun WeaponCamosScreen(
                         .fillMaxSize()
                         .padding(padding)
                 ) {
-                    // Camos grid
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(3),
+                    // Camos list with expandable cards
+                    LazyColumn(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
                         contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(
                             items = camosForMode,
                             key = { it.id }
                         ) { camo ->
-                            CamoCard(
+                            ExpandableCamoCard(
                                 camo = camo,
-                                onToggle = { viewModel.toggleCamoUnlock(camo.id) }
+                                isExpanded = expandedCamoId == camo.id,
+                                onToggleExpand = {
+                                    expandedCamoId = if (expandedCamoId == camo.id) null else camo.id
+                                },
+                                onCriterionToggle = { criterionId, isLocked ->
+                                    viewModel.toggleCriterionCompletion(camo.id, criterionId, isLocked)
+                                }
                             )
                         }
                     }
@@ -261,12 +271,18 @@ private fun ModeTabRow(
     }
 }
 
+/**
+ * Expandable camo card showing camo name, image, and criteria with checkboxes
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun CamoCard(
+private fun ExpandableCamoCard(
     camo: Camo,
-    onToggle: () -> Unit
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onCriterionToggle: (criterionId: Int, isLocked: Boolean) -> Unit
 ) {
+    val accentColor = Color(0xFF00BCD4)
     val infiniteTransition = rememberInfiniteTransition(label = "camoGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.5f,
@@ -279,75 +295,313 @@ private fun CamoCard(
     )
 
     val borderColor = if (camo.isUnlocked) {
-        Color(0xFF00BCD4).copy(alpha = glowAlpha * 0.7f)
+        accentColor.copy(alpha = glowAlpha * 0.7f)
     } else {
-        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     }
 
     Card(
         modifier = Modifier
-            .aspectRatio(1f)
+            .fillMaxWidth()
             .border(
-                width = 2.dp,
+                width = if (camo.isUnlocked) 2.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable { onToggle() },
+                shape = RoundedCornerShape(16.dp)
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (camo.isUnlocked) {
                 MaterialTheme.colorScheme.surface
             } else {
-                MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.6f)
+                MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f)
             }
         ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (camo.isUnlocked) 4.dp else 0.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (camo.isUnlocked) 6.dp else 2.dp)
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Camo image
-            AsyncImage(
-                model = "$BASE_URL${camo.camoUrl}",
-                contentDescription = camo.displayName,
-                contentScale = ContentScale.Crop,
+            // Header (always visible)
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(12.dp))
-            )
-
-            // Lock overlay
-            if (!camo.isUnlocked) {
+                    .fillMaxWidth()
+                    .clickable { onToggleExpand() }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Camo image thumbnail
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = "Locked",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.size(32.dp)
+                    AsyncImage(
+                        model = "$BASE_URL${camo.camoUrl}",
+                        contentDescription = camo.displayName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
+
+                    // Unlock status overlay
+                    if (camo.isUnlocked) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(6.dp),
+                            contentAlignment = Alignment.TopEnd
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = accentColor
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = "Unlocked",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .padding(4.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
                 }
-            } else {
-                // Check mark for unlocked
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    contentAlignment = Alignment.TopEnd
+
+                // Camo info
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Camo name
+                    Text(
+                        text = camo.displayName.uppercase(),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp
+                        ),
+                        color = if (camo.isUnlocked) accentColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+
+                    // Category badge
+                    Surface(
+                        color = accentColor.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = camo.category.displayName.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.6.sp
+                            ),
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // Progress indicator
+                    if (camo.totalCriteriaCount > 0) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            LinearProgressIndicator(
+                                progress = { camo.completedCriteriaCount.toFloat() / camo.totalCriteriaCount },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                color = accentColor,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                            Text(
+                                text = "${camo.completedCriteriaCount}/${camo.totalCriteriaCount}",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // Expand icon
+                Icon(
+                    imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = accentColor
+                )
+            }
+
+            // Expanded criteria section
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    if (camo.criteria.isNotEmpty()) {
+                        Text(
+                            text = "UNLOCK CRITERIA",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        // Criteria checkboxes
+                        camo.criteria.forEach { criterion ->
+                            CriterionRow(
+                                criterion = criterion,
+                                onToggle = { onCriterionToggle(criterion.id, criterion.isLocked) },
+                                accentColor = accentColor
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "No criteria defined for this camo.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Individual criterion row with checkbox
+ */
+@Composable
+private fun CriterionRow(
+    criterion: com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoCriteria,
+    onToggle: () -> Unit,
+    accentColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (criterion.isCompleted) {
+                    accentColor.copy(alpha = 0.1f)
+                } else if (criterion.isLocked) {
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                } else {
+                    MaterialTheme.colorScheme.surface
+                }
+            )
+            .clickable(enabled = !criterion.isLocked) { onToggle() }
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Order badge
+        Surface(
+            shape = CircleShape,
+            color = if (criterion.isCompleted) {
+                accentColor
+            } else if (criterion.isLocked) {
+                MaterialTheme.colorScheme.surfaceVariant
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (criterion.isCompleted) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = "Unlocked",
-                        tint = Color(0xFF00BCD4),
+                        contentDescription = "Completed",
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    Text(
+                        text = "${criterion.criteriaOrder}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = if (criterion.isLocked) {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        } else {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        }
                     )
                 }
             }
+        }
+
+        // Criteria text
+        Text(
+            text = criterion.criteriaText,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = if (criterion.isCompleted) FontWeight.Bold else FontWeight.Normal
+            ),
+            color = if (criterion.isLocked) {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            } else if (criterion.isCompleted) {
+                accentColor
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            modifier = Modifier.weight(1f)
+        )
+
+        // Checkbox
+        Checkbox(
+            checked = criterion.isCompleted,
+            onCheckedChange = { if (!criterion.isLocked) onToggle() },
+            enabled = !criterion.isLocked,
+            colors = CheckboxDefaults.colors(
+                checkedColor = accentColor,
+                uncheckedColor = if (criterion.isLocked) {
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                } else {
+                    accentColor.copy(alpha = 0.6f)
+                }
+            )
+        )
+
+        // Lock icon for locked criteria
+        if (criterion.isLocked) {
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = "Locked",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

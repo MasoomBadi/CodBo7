@@ -8,7 +8,26 @@ data class Camo(
     val mode: CamoMode,
     val camoUrl: String,
     val sortOrder: Int,
+    val criteria: List<CamoCriteria> = emptyList(),
     val isUnlocked: Boolean = false
+) {
+    val completedCriteriaCount: Int
+        get() = criteria.count { it.isCompleted }
+
+    val totalCriteriaCount: Int
+        get() = criteria.size
+
+    val canUnlock: Boolean
+        get() = criteria.isNotEmpty() && criteria.all { it.isCompleted }
+}
+
+data class CamoCriteria(
+    val id: Int,
+    val camoId: Int,
+    val criteriaOrder: Int,
+    val criteriaText: String,
+    val isCompleted: Boolean = false,
+    val isLocked: Boolean = false
 )
 
 enum class CamoCategory(val displayName: String) {
