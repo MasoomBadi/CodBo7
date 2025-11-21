@@ -125,14 +125,23 @@ class ChecklistRepositoryImpl @Inject constructor(
     }
 
     override fun getProgress(): Flow<ChecklistProgress> {
-        // Combine operators and prestige data with checklist state
+        // Combine operators, prestige, weapons, and checklist state
         val operatorsFlow = operatorsRepository.getAllOperators()
         val prestigeFlow = prestigeRepository.getAllPrestigeItems()
         val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { results ->
             results.list
         }
+        val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
+            .asFlow()
+            .map { results -> results.list.size }
 
-        return combine(operatorsFlow, prestigeFlow, checklistFlow) { operators, prestigeItems, checklistItems ->
+        return combine(
+            operatorsFlow,
+            prestigeFlow,
+            checklistFlow,
+            weaponsFlow,
+            dataStore.data
+        ) { operators, prestigeItems, checklistItems, weaponCount, prefs ->
             val categoryProgressMap = mutableMapOf<ChecklistCategory, CategoryProgress>()
 
             // Calculate operators progress
@@ -166,6 +175,29 @@ class ChecklistRepositoryImpl @Inject constructor(
                     category = ChecklistCategory.PRESTIGE,
                     totalItems = prestigeItems.size,
                     unlockedItems = unlockedCount
+                )
+            }
+
+            // Calculate weapon camos progress
+            if (weaponCount > 0) {
+                // Approximate 54 camos per weapon
+                val totalCamos = weaponCount * 54
+
+                // Count unlocked camos across all weapons (1-29) and all camos (1-54)
+                var unlockedCamos = 0
+                for (weaponId in 1..weaponCount) {
+                    for (camoId in 1..54) {
+                        val key = booleanPreferencesKey("weapon_camo_${weaponId}_$camoId")
+                        if (prefs[key] == true) {
+                            unlockedCamos++
+                        }
+                    }
+                }
+
+                categoryProgressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
+                    category = ChecklistCategory.WEAPONS,
+                    totalItems = totalCamos,
+                    unlockedItems = unlockedCamos
                 )
             }
 
