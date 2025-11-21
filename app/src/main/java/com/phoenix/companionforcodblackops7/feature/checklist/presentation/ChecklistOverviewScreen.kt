@@ -118,56 +118,6 @@ fun ChecklistOverviewScreen(
                                 isAvailable = true
                             )
                         }
-
-                        // Future Categories (Coming Soon)
-                        item {
-                            Text(
-                                text = "COMING SOON",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.5.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
-                            )
-                        }
-
-                        // Future categories
-                        item {
-                            FutureCategoryCard(
-                                title = "CAMOS - MULTIPLAYER",
-                                subtitle = "Track multiplayer camo progress",
-                                icon = Icons.Filled.Star,
-                                accentColor = Color(0xFF00BCD4) // Cyan
-                            )
-                        }
-
-                        item {
-                            FutureCategoryCard(
-                                title = "CAMOS - ZOMBIE",
-                                subtitle = "Track zombie camo progress",
-                                icon = Icons.Filled.Star,
-                                accentColor = Color(0xFF76FF03) // Green
-                            )
-                        }
-
-                        item {
-                            FutureCategoryCard(
-                                title = "CAMOS - WARZONE",
-                                subtitle = "Track warzone camo progress",
-                                icon = Icons.Filled.Star,
-                                accentColor = Color(0xFFFF6F00) // Orange
-                            )
-                        }
-
-                        item {
-                            FutureCategoryCard(
-                                title = "ACHIEVEMENTS",
-                                subtitle = "Track achievements & challenges",
-                                icon = Icons.Filled.CheckCircle,
-                                accentColor = Color(0xFF9C27B0) // Purple
-                            )
-                        }
                     }
 
                     // Fixed Banner Ad Space at Bottom
