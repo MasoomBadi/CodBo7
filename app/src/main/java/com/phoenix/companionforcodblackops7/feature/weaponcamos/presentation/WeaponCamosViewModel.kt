@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 sealed interface WeaponCamosUiState {
     data object Loading : WeaponCamosUiState
-    data class Success(val progress: WeaponCamoProgress) : WeaponCamosUiState
+    data class Success(val progress: WeaponCamoProgress, val weaponCategory: String) : WeaponCamosUiState
     data class Error(val message: String) : WeaponCamosUiState
 }
 
@@ -29,11 +29,12 @@ class WeaponCamosViewModel @Inject constructor(
 
     private val weaponId: Int = checkNotNull(savedStateHandle.get<String>("weaponId")).toInt()
     private val weaponName: String = checkNotNull(savedStateHandle.get<String>("weaponName"))
+    private val weaponCategory: String = checkNotNull(savedStateHandle.get<String>("weaponCategory"))
 
     val uiState: StateFlow<WeaponCamosUiState> = repository
         .getWeaponCamoProgress(weaponId, weaponName)
         .map<WeaponCamoProgress, WeaponCamosUiState> { progress ->
-            WeaponCamosUiState.Success(progress)
+            WeaponCamosUiState.Success(progress, weaponCategory)
         }
         .stateIn(
             scope = viewModelScope,

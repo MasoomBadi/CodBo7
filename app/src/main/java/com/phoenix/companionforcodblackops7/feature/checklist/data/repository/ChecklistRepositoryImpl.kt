@@ -79,27 +79,34 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
             }
             ChecklistCategory.WEAPONS -> {
-                // Get all weapons from weapons_mp table
+                // Get all weapons from weapons_mp table with category
                 val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
                     .asFlow()
                     .map { results ->
                         results.list.mapNotNull { entity ->
                             try {
                                 val data = entity.data
-                                Triple(
+                                // Quadruple: id, name, iconUrl, weaponCategory
+                                listOf(
                                     data["id"]?.asInt() ?: 0,
                                     data["display_name"]?.asString() ?: "",
-                                    data["icon_url"]?.asString() ?: ""
+                                    data["icon_url"]?.asString() ?: "",
+                                    data["category"]?.asString() ?: "Assault Rifle"
                                 )
                             } catch (e: Exception) {
                                 null
                             }
-                        }.sortedBy { it.second } // Sort by display_name
+                        }.sortedBy { it[1] as String } // Sort by display_name
                     }
 
                 // Combine with DataStore to calculate camo progress
                 combine(weaponsFlow, dataStore.data) { weapons, prefs ->
-                    weapons.map { (weaponId, weaponName, iconUrl) ->
+                    weapons.map { weaponData ->
+                        val weaponId = weaponData[0] as Int
+                        val weaponName = weaponData[1] as String
+                        val iconUrl = weaponData[2] as String
+                        val weaponCategory = weaponData[3] as String
+
                         // Calculate unlocked camos for this weapon (out of ~54 total)
                         val unlockedCount = (1..54).count { camoId ->
                             val key = booleanPreferencesKey("weapon_camo_${weaponId}_$camoId")
@@ -107,7 +114,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                         }
 
                         ChecklistItem(
-                            id = weaponId.toString(),
+                            id = "$weaponId|$weaponCategory", // Store category in ID
                             name = weaponName,
                             category = category,
                             isUnlocked = false, // Not used for weapons - we track camos instead
