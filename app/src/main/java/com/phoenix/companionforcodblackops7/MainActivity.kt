@@ -295,13 +295,13 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onWeaponClick = { weaponId, weaponName ->
-                    navController.navigate("weaponCamos/$weaponId/$weaponName")
+                onWeaponClick = { weaponId, weaponName, weaponCategory ->
+                    navController.navigate("weaponCamos/$weaponId/$weaponName/$weaponCategory")
                 }
             )
         }
 
-        composable("weaponCamos/{weaponId}/{weaponName}") {
+        composable("weaponCamos/{weaponId}/{weaponName}/{weaponCategory}") {
             WeaponCamosScreen(
                 onNavigateBack = {
                     navController.popBackStack()
