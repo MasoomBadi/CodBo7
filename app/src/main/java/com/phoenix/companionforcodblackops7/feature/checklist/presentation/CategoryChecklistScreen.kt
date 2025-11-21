@@ -7,9 +7,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,6 +61,9 @@ fun CategoryChecklistScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    // Weapon category filter state
+    var selectedWeaponCategory by remember { mutableStateOf<String?>(null) }
 
     // Observe toast messages
     LaunchedEffect(Unit) {
@@ -189,11 +194,37 @@ fun CategoryChecklistScreen(
                 }
             }
             is CategoryChecklistUiState.Success -> {
+                // Extract unique weapon categories and filter items
+                val weaponCategories = if (state.category == ChecklistCategory.WEAPONS) {
+                    state.items.mapNotNull { item ->
+                        item.id.split("|").getOrNull(1)
+                    }.distinct().sorted()
+                } else emptyList()
+
+                val filteredItems = if (state.category == ChecklistCategory.WEAPONS && selectedWeaponCategory != null) {
+                    state.items.filter { item ->
+                        val category = item.id.split("|").getOrNull(1)
+                        category == selectedWeaponCategory
+                    }
+                } else {
+                    state.items
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                 ) {
+                    // Weapon category filters (only for WEAPONS category)
+                    if (state.category == ChecklistCategory.WEAPONS && weaponCategories.isNotEmpty()) {
+                        WeaponCategoryFilterRow(
+                            categories = weaponCategories,
+                            selectedCategory = selectedWeaponCategory,
+                            onCategorySelected = { selectedWeaponCategory = it },
+                            accentColor = categoryAccentColor
+                        )
+                    }
+
                     // Scrollable content
                     LazyColumn(
                         modifier = Modifier
@@ -208,12 +239,13 @@ fun CategoryChecklistScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
-                            items = state.items,
+                            items = filteredItems,
                             key = { it.id }
                         ) { item ->
                             EnhancedChecklistItemCard(
                                 item = item,
                                 accentColor = categoryAccentColor,
+                                category = state.category,
                                 onToggle = {
                                     if (state.category == ChecklistCategory.WEAPONS) {
                                         // Parse ID: "weaponId|weaponCategory"
@@ -255,6 +287,65 @@ fun CategoryChecklistScreen(
 }
 
 /**
+ * Weapon category filter row (horizontal scrolling chips)
+ */
+@Composable
+private fun WeaponCategoryFilterRow(
+    categories: List<String>,
+    selectedCategory: String?,
+    onCategorySelected: (String?) -> Unit,
+    accentColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // "All" filter chip
+        FilterChip(
+            selected = selectedCategory == null,
+            onClick = { onCategorySelected(null) },
+            label = {
+                Text(
+                    text = "ALL",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+                )
+            },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = accentColor.copy(alpha = 0.3f),
+                selectedLabelColor = accentColor
+            )
+        )
+
+        // Category filter chips
+        categories.forEach { category ->
+            FilterChip(
+                selected = selectedCategory == category,
+                onClick = { onCategorySelected(category) },
+                label = {
+                    Text(
+                        text = category.uppercase(),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = accentColor.copy(alpha = 0.3f),
+                    selectedLabelColor = accentColor
+                )
+            )
+        }
+    }
+}
+
+/**
  * Modern checklist item card with beautiful, clean design
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -262,6 +353,7 @@ fun CategoryChecklistScreen(
 private fun EnhancedChecklistItemCard(
     item: ChecklistItem,
     accentColor: Color,
+    category: ChecklistCategory,
     onToggle: () -> Unit
 ) {
     // Glow animation for unlocked items
@@ -425,6 +517,25 @@ private fun EnhancedChecklistItemCard(
                         },
                         modifier = Modifier.weight(1f, fill = false)
                     )
+                }
+
+                // Weapon category badge (only for WEAPONS category)
+                if (category == ChecklistCategory.WEAPONS) {
+                    val weaponCategory = item.id.split("|").getOrNull(1) ?: "Unknown"
+                    Surface(
+                        color = accentColor.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = weaponCategory.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.6.sp
+                            ),
+                            color = accentColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
 
                 // Unlock criteria chip
