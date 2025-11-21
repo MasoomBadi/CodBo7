@@ -54,6 +54,7 @@ private fun getCategoryAccentColor(category: ChecklistCategory): Color {
 @Composable
 fun CategoryChecklistScreen(
     onNavigateBack: () -> Unit,
+    onWeaponClick: (weaponId: String, weaponName: String) -> Unit = { _, _ -> },
     viewModel: CategoryChecklistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -213,7 +214,15 @@ fun CategoryChecklistScreen(
                             EnhancedChecklistItemCard(
                                 item = item,
                                 accentColor = categoryAccentColor,
-                                onToggle = { viewModel.toggleItemUnlocked(item.id) }
+                                onToggle = {
+                                    if (state.category == ChecklistCategory.WEAPONS) {
+                                        // Navigate to weapon camos screen
+                                        onWeaponClick(item.id, item.name)
+                                    } else {
+                                        // Toggle unlock status
+                                        viewModel.toggleItemUnlocked(item.id)
+                                    }
+                                }
                             )
                         }
                     }
