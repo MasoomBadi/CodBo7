@@ -94,14 +94,18 @@ class CategoryChecklistViewModel @Inject constructor(
     /**
      * Extract prestige level number from ID or name
      * Handles multiple formats: "prestige_2", "2", "Prestige 2"
+     * Fully dynamic - works with any numeric ID format from database
      */
     private fun extractPrestigeLevel(id: String, name: String): Int? {
-        // Try parsing from ID (e.g., "prestige_2" or just "2")
-        id.removePrefix("prestige_").toIntOrNull()?.let { return it }
+        // Try parsing ID directly as number (e.g., "1", "2", "3")
+        id.toIntOrNull()?.let { return it }
+
+        // Try parsing from ID with prefix (e.g., "prestige_2" or "prestige-2")
+        val idNumberRegex = "\\d+".toRegex()
+        idNumberRegex.find(id)?.value?.toIntOrNull()?.let { return it }
 
         // Try parsing from name (e.g., "Prestige 2" or "Prestige Level 2")
-        val numberRegex = "\\d+".toRegex()
-        numberRegex.find(name)?.value?.toIntOrNull()?.let { return it }
+        idNumberRegex.find(name)?.value?.toIntOrNull()?.let { return it }
 
         return null
     }
