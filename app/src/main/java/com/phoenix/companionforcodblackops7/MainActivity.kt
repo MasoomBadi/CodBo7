@@ -85,6 +85,9 @@ import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.Wildc
 import com.phoenix.companionforcodblackops7.feature.prestige.presentation.PrestigeInfoScreen
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.WeaponsListScreen
 import com.phoenix.companionforcodblackops7.feature.masterybadge.presentation.WeaponMasteryScreen
+import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponslist.WeaponsListScreen as WeaponCamosListScreen
+import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponcamo.WeaponCamoScreen
+import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.camodetail.CamoDetailScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -297,12 +300,37 @@ fun AppNavigation(
                 },
                 onMasteryBadgeClick = { weaponId, weaponName, weaponCategory ->
                     navController.navigate("weaponMastery/$weaponId/$weaponName/$weaponCategory")
+                },
+                onWeaponCamoClick = { weaponId ->
+                    navController.navigate("weaponCamo/$weaponId")
                 }
             )
         }
 
         composable("weaponMastery/{weaponId}/{weaponName}/{weaponCategory}") {
             WeaponMasteryScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("weaponCamo/{weaponId}") { backStackEntry ->
+            val weaponId = backStackEntry.arguments?.getString("weaponId")?.toIntOrNull() ?: 0
+            WeaponCamoScreen(
+                onCamoClick = { _, camoId ->
+                    navController.navigate("camoDetail/$weaponId/$camoId")
+                },
+                padding = PaddingValues(),
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("camoDetail/{weaponId}/{camoId}") { backStackEntry ->
+            CamoDetailScreen(
+                padding = PaddingValues(),
                 onNavigateBack = {
                     navController.popBackStack()
                 }
