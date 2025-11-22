@@ -6,11 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.MasteryBadge
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.repository.MasteryBadgeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -34,6 +36,10 @@ class WeaponMasteryViewModel @Inject constructor(
     // Selected mode tab
     private val _selectedMode = MutableStateFlow("multiplayer")
     val selectedMode: StateFlow<String> = _selectedMode.asStateFlow()
+
+    // Toast messages channel
+    private val _toastMessage = Channel<String>()
+    val toastMessage = _toastMessage.receiveAsFlow()
 
     // All badges from database with completion status
     private val badgesFlow = repository.getBadgesForWeapon(weaponId)
@@ -86,13 +92,15 @@ class WeaponMasteryViewModel @Inject constructor(
      * Only allows toggling if badge is not locked (previous badges are completed)
      */
     fun toggleBadge(badge: MasteryBadge) {
-        // Prevent toggling locked badges
-        if (badge.isLocked) {
-            Timber.d("Cannot toggle locked badge: ${badge.badgeLevel} / ${badge.mode}")
-            return
-        }
-
         viewModelScope.launch {
+            // Prevent toggling locked badges and show toast
+            if (badge.isLocked) {
+                val previousBadge = getPreviousBadgeName(badge.badgeLevel)
+                _toastMessage.send("Complete $previousBadge first to unlock ${badge.badgeLevel}!")
+                Timber.d("Cannot toggle locked badge: ${badge.badgeLevel} / ${badge.mode}")
+                return@launch
+            }
+
             try {
                 repository.toggleBadgeCompletion(
                     weaponId = badge.weaponId,
@@ -102,7 +110,23 @@ class WeaponMasteryViewModel @Inject constructor(
                 Timber.d("Toggled badge: ${badge.badgeLevel} / ${badge.mode}")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to toggle badge")
+                _toastMessage.send("Failed to toggle badge. Please try again.")
             }
+        }
+    }
+
+    /**
+     * Get the previous badge name for display in error messages
+     */
+    private fun getPreviousBadgeName(currentBadge: String): String {
+        return when (currentBadge.lowercase()) {
+            "bronze" -> "Starting"
+            "silver" -> "Bronze"
+            "gold" -> "Silver"
+            "diamond" -> "Gold"
+            "dark_spine", "dark spine" -> "Diamond"
+            "dark_matter", "dark matter" -> "Dark Spine"
+            else -> "previous badge"
         }
     }
 }
