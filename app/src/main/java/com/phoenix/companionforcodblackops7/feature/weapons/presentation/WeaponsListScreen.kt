@@ -50,7 +50,12 @@ fun WeaponsListScreen(
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
-    // Refresh badge counts when screen becomes visible
+    // Refresh badge counts when screen appears (catches both system back and app bar back)
+    LaunchedEffect(Unit) {
+        viewModel.refreshBadgeCounts()
+    }
+
+    // Also refresh on lifecycle resume
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
