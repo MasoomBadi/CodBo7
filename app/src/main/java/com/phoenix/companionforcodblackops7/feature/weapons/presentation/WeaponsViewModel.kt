@@ -6,10 +6,10 @@ import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.reposito
 import com.phoenix.companionforcodblackops7.feature.weapons.domain.repository.WeaponsRepository
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.model.WeaponWithBadges
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,29 +18,36 @@ class WeaponsViewModel @Inject constructor(
     private val masteryBadgeRepository: MasteryBadgeRepository
 ) : ViewModel() {
 
-    val weaponsByCategory: StateFlow<Map<String, List<WeaponWithBadges>>> = combine(
-        weaponsRepository.getAllWeapons(),
-        // Observe all badge changes to trigger refresh when any badge is toggled
-        masteryBadgeRepository.observeAllBadgeChanges()
-    ) { weapons, badgeChangeTimestamp ->
-        timber.log.Timber.d("WeaponsViewModel: Badge change detected at $badgeChangeTimestamp, refreshing ${weapons.size} weapons")
-        weapons.map { weapon ->
-            val (completed, total) = try {
-                masteryBadgeRepository.getBadgeProgress(weapon.id)
-            } catch (e: Exception) {
-                0 to 0
+    private val _weaponsByCategory = MutableStateFlow<Map<String, List<WeaponWithBadges>>>(emptyMap())
+    val weaponsByCategory: StateFlow<Map<String, List<WeaponWithBadges>>> = _weaponsByCategory.asStateFlow()
+
+    init {
+        loadWeapons()
+    }
+
+    fun refreshBadgeCounts() {
+        loadWeapons()
+    }
+
+    private fun loadWeapons() {
+        viewModelScope.launch {
+            weaponsRepository.getAllWeapons().collect { weapons ->
+                val weaponsWithBadges = weapons.map { weapon ->
+                    val (completed, total) = try {
+                        masteryBadgeRepository.getBadgeProgress(weapon.id)
+                    } catch (e: Exception) {
+                        0 to 0
+                    }
+                    WeaponWithBadges(
+                        weapon = weapon,
+                        completedBadges = completed,
+                        totalBadges = total
+                    )
+                }
+                _weaponsByCategory.value = weaponsWithBadges
+                    .groupBy { it.weapon.category }
+                    .toSortedMap(compareBy { it })
             }
-            timber.log.Timber.d("WeaponsViewModel: Weapon ${weapon.id} (${weapon.displayName}): $completed/$total badges")
-            WeaponWithBadges(
-                weapon = weapon,
-                completedBadges = completed,
-                totalBadges = total
-            )
-        }.groupBy { it.weapon.category }
-            .toSortedMap(compareBy { it })
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Lazily, // Keep flow alive even when screen not visible
-        initialValue = emptyMap()
-    )
+        }
+    }
 }
