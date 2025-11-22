@@ -2,6 +2,7 @@ package com.phoenix.companionforcodblackops7
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.Animatable
@@ -358,6 +359,8 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            // Handle system back button
+            BackHandler { navigateBackWithAd() }
             selectedOperator?.let { operator ->
                 OperatorDetailsScreen(
                     operator = operator,
@@ -384,6 +387,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             CategoryChecklistScreen(
                 onNavigateBack = {
                     navigateBackWithAd()
@@ -401,6 +405,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             WeaponMasteryScreen(
                 onNavigateBack = {
                     navigateBackWithAd()
@@ -412,6 +417,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             val weaponId = backStackEntry.arguments?.getString("weaponId")?.toIntOrNull() ?: 0
             WeaponCamoScreen(
                 onCamoClick = { _, camoId ->
@@ -428,6 +434,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             CamoDetailScreen(
                 padding = PaddingValues(),
                 onNavigateBack = {
@@ -467,6 +474,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedMap?.let { map ->
                 MapDetailScreen(
                     map = map,
@@ -485,6 +493,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedMap?.let { map ->
                 MapViewerScreen(
                     map = map,
@@ -511,6 +520,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedGameMode?.let { gameMode ->
                 GameModeDetailScreen(
                     gameMode = gameMode,
@@ -582,6 +592,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedPerk?.let { perk ->
                 PerkDetailScreen(
                     perk = perk,
@@ -608,6 +619,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedScorestreak?.let { scorestreak ->
                 ScorestreakDetailScreen(
                     scorestreak = scorestreak,
@@ -634,6 +646,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedTactical?.let { tactical ->
                 TacticalDetailScreen(
                     tactical = tactical,
@@ -660,6 +673,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedLethal?.let { lethal ->
                 LethalDetailScreen(
                     lethal = lethal,
@@ -686,6 +700,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedFieldUpgrade?.let { fieldUpgrade ->
                 FieldUpgradeDetailScreen(
                     fieldUpgrade = fieldUpgrade,
@@ -712,6 +727,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedPerkACola?.let { perkACola ->
                 PerkAColaDetailScreen(
                     perk = perkACola,
@@ -738,6 +754,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedAmmoMod?.let { ammoMod ->
                 AmmoModDetailScreen(
                     ammoMod = ammoMod,
@@ -764,6 +781,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedFieldUpgradeZM?.let { fieldUpgrade ->
                 FieldUpgradeZMDetailScreen(
                     fieldUpgrade = fieldUpgrade,
@@ -798,6 +816,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 interstitialAdManager.recordAction()
             }
+            BackHandler { navigateBackWithAd() }
             selectedGobbleGum?.let { gobblegum ->
                 GobbleGumDetailScreen(
                     gobblegum = gobblegum,
