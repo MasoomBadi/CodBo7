@@ -310,19 +310,68 @@ class ChecklistRepositoryImpl @Inject constructor(
 
         try {
             val weapons = getWeaponEntitiesSync()
-            val camoCache = buildCamoQueryCache()
 
             var totalCamosCount = 0
             var unlockedCamosCount = 0
 
+            // Calculate progress for each weapon across ALL modes
             for (weaponEntity in weapons) {
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
 
-                val allCamoIds = camoCache.getCamoIdsForWeapon(weaponId)
-                totalCamosCount += allCamoIds.size
+                // Count camos across all 4 modes: campaign, multiplayer, zombie, prestige
+                val modes = listOf("campaign", "multiplayer", "zombie", "prestige")
 
-                val unlockedCount = countUnlockedCamos(weaponId, allCamoIds, camoCache, prefs)
-                unlockedCamosCount += unlockedCount
+                for (mode in modes) {
+                    // Query all camos for this mode
+                    val camoEntities = realm.query<DynamicEntity>(
+                        "tableName == $0 AND data['mode'] == $1",
+                        ChecklistConstants.Tables.CAMO,
+                        mode
+                    ).find()
+
+                    // For prestige mode, filter to weapon-specific + common camos only
+                    val camoIds = if (mode == "prestige") {
+                        // Get weapon-specific prestige camo mappings
+                        val weaponCamoMappings = realm.query<DynamicEntity>(
+                            "tableName == $0 AND data['weapon_id'] == $1",
+                            ChecklistConstants.Tables.WEAPON_CAMO,
+                            weaponId
+                        ).find()
+                            .mapNotNull { it.data["camo_id"]?.asInt() }
+                            .toSet()
+
+                        // Filter: include mapped camos + common prestigem camos
+                        camoEntities.filter { entity ->
+                            val camoId = entity.data["id"]?.asInt()
+                            val category = entity.data["category"]?.asString()
+                            camoId != null && (
+                                weaponCamoMappings.contains(camoId) ||
+                                category in listOf("prestigem1", "prestigem2", "prestigem3")
+                            )
+                        }.mapNotNull { it.data["id"]?.asInt() }
+                    } else {
+                        // For campaign/multiplayer/zombie, all camos apply to all weapons
+                        camoEntities.mapNotNull { it.data["id"]?.asInt() }
+                    }
+
+                    totalCamosCount += camoIds.size
+
+                    // Count unlocked camos (all criteria completed)
+                    for (camoId in camoIds) {
+                        val criteriaIds = getCriteriaIdsForCamo(weaponId, camoId)
+                        if (criteriaIds.isNotEmpty()) {
+                            val allCriteriaComplete = criteriaIds.all { criterionId ->
+                                val key = booleanPreferencesKey(
+                                    ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, camoId, criterionId)
+                                )
+                                prefs[key] ?: false
+                            }
+                            if (allCriteriaComplete) {
+                                unlockedCamosCount++
+                            }
+                        }
+                    }
+                }
             }
 
             progressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
@@ -500,5 +549,18 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Get all criterion IDs for a specific camo on a specific weapon
+     */
+    private fun getCriteriaIdsForCamo(weaponId: Int, camoId: Int): List<Int> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0 AND data['weapon_id'] == $1 AND data['camo_id'] == $2",
+            ChecklistConstants.Tables.CAMO_CRITERIA,
+            weaponId,
+            camoId
+        ).find()
+            .mapNotNull { it.data["id"]?.asInt() }
     }
 }

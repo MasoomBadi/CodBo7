@@ -29,8 +29,8 @@ class CamoDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val weaponId: Int = savedStateHandle.get<Int>("weaponId") ?: 0
-    private val camoId: Int = savedStateHandle.get<Int>("camoId") ?: 0
+    private val weaponId: Int = savedStateHandle.get<String>("weaponId")?.toIntOrNull() ?: 0
+    private val camoId: Int = savedStateHandle.get<String>("camoId")?.toIntOrNull() ?: 0
 
     private val _uiState = MutableStateFlow<CamoDetailUiState>(CamoDetailUiState.Loading)
     val uiState: StateFlow<CamoDetailUiState> = _uiState.asStateFlow()
