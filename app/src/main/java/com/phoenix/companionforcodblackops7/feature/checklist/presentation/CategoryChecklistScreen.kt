@@ -48,6 +48,7 @@ private const val BASE_URL = "http://codbo7.masoombadi.top"
 fun CategoryChecklistScreen(
     onNavigateBack: () -> Unit,
     onMasteryBadgeClick: (weaponId: String, weaponName: String, weaponCategory: String) -> Unit = { _, _, _ -> },
+    onWeaponCamoClick: (weaponId: Int) -> Unit = {},
     viewModel: CategoryChecklistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -240,12 +241,10 @@ fun CategoryChecklistScreen(
                                 onToggle = {
                                     when (state.category) {
                                         ChecklistCategory.WEAPONS -> {
-                                            // Weapon camos feature not yet implemented
-                                            Toast.makeText(
-                                                context,
-                                                "Weapon camos tracking coming soon",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            // Navigate to Weapon Camo screen
+                                            val parts = item.id.split("|")
+                                            val weaponId = parts.getOrNull(0)?.toIntOrNull() ?: 0
+                                            onWeaponCamoClick(weaponId)
                                         }
                                         ChecklistCategory.MASTERY_BADGES -> {
                                             // Navigate to Mastery Badge screen
