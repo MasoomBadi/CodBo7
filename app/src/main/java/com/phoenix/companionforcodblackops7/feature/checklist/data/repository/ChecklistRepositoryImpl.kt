@@ -97,7 +97,8 @@ class ChecklistRepositoryImpl @Inject constructor(
         try {
             // Use compound key: "CATEGORY_ID" to avoid conflicts (Realm doesn't support composite PKs)
             val compoundKey = "${category.name}_$itemId"
-            Timber.d("Toggling item: id=$itemId, category=${category.name}, compoundKey=$compoundKey")
+            val categoryName = category.name
+            Timber.d("Toggling item: id=$itemId, category=$categoryName, compoundKey=$compoundKey")
 
             realm.write {
                 val existing = query<ChecklistItemEntity>("id == $0", compoundKey).first().find()
@@ -108,10 +109,10 @@ class ChecklistRepositoryImpl @Inject constructor(
                 } else {
                     copyToRealm(ChecklistItemEntity().apply {
                         id = compoundKey
-                        category = category.name
+                        category = categoryName
                         isUnlocked = true
                     })
-                    Timber.d("Created new unlocked item: $compoundKey (category=${category.name})")
+                    Timber.d("Created new unlocked item: $compoundKey (category=$categoryName)")
                 }
             }
         } catch (e: Exception) {
