@@ -84,6 +84,7 @@ import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.Zombi
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import com.phoenix.companionforcodblackops7.feature.prestige.presentation.PrestigeInfoScreen
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.WeaponsListScreen
+import com.phoenix.companionforcodblackops7.feature.masterybadge.presentation.WeaponMasteryScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -291,6 +292,17 @@ fun AppNavigation(
 
         composable("checklist/{category}") { backStackEntry ->
             CategoryChecklistScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMasteryBadgeClick = { weaponId, weaponName, weaponCategory ->
+                    navController.navigate("weaponMastery/$weaponId/$weaponName/$weaponCategory")
+                }
+            )
+        }
+
+        composable("weaponMastery/{weaponId}/{weaponName}/{weaponCategory}") {
+            WeaponMasteryScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
