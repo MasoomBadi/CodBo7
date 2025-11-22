@@ -119,6 +119,7 @@ import com.phoenix.companionforcodblackops7.feature.weapons.presentation.Weapons
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.core.ads.BannerAd
+import com.phoenix.companionforcodblackops7.core.ads.InterstitialAdManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -135,10 +136,17 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var analyticsHelper: AnalyticsHelper
 
+    @Inject
+    lateinit var interstitialAdManager: InterstitialAdManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Load interstitial ad early
+        interstitialAdManager.loadAd(this)
+
         setContent {
             BlackOps7Theme {
                 Surface(
@@ -153,9 +161,11 @@ class MainActivity : ComponentActivity() {
                         }
                     ) {
                         AppNavigation(
+                            activity = this@MainActivity,
                             networkMonitor = networkMonitor,
                             iconsRepository = iconsRepository,
-                            analyticsHelper = analyticsHelper
+                            analyticsHelper = analyticsHelper,
+                            interstitialAdManager = interstitialAdManager
                         )
                     }
                 }
@@ -195,11 +205,25 @@ fun ConnectivityWrapper(
 
 @Composable
 fun AppNavigation(
+    activity: MainActivity,
     networkMonitor: NetworkMonitor,
     iconsRepository: IconsRepository,
-    analyticsHelper: AnalyticsHelper
+    analyticsHelper: AnalyticsHelper,
+    interstitialAdManager: InterstitialAdManager
 ) {
     val navController = rememberNavController()
+
+    // Helper function to navigate back with potential interstitial ad
+    fun navigateBackWithAd() {
+        interstitialAdManager.showAdIfReady(
+            activity = activity,
+            onAdDismissed = {
+                navController.popBackStack()
+                // Reload ad for next time
+                interstitialAdManager.loadAd(activity)
+            }
+        )
+    }
 
     // Track screen views on navigation changes
     LaunchedEffect(navController) {
@@ -330,12 +354,16 @@ fun AppNavigation(
         }
 
         composable("operatorDetails") {
+            // Record this as an action for interstitial ad frequency
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedOperator?.let { operator ->
                 OperatorDetailsScreen(
                     operator = operator,
                     iconMap = iconMap,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -353,9 +381,12 @@ fun AppNavigation(
         }
 
         composable("checklist/{category}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             CategoryChecklistScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 },
                 onMasteryBadgeClick = { weaponId, weaponName, weaponCategory ->
                     navController.navigate("weaponMastery/$weaponId/$weaponName/$weaponCategory")
@@ -367,14 +398,20 @@ fun AppNavigation(
         }
 
         composable("weaponMastery/{weaponId}/{weaponName}/{weaponCategory}") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             WeaponMasteryScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
 
         composable("weaponCamo/{weaponId}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             val weaponId = backStackEntry.arguments?.getString("weaponId")?.toIntOrNull() ?: 0
             WeaponCamoScreen(
                 onCamoClick = { _, camoId ->
@@ -382,16 +419,19 @@ fun AppNavigation(
                 },
                 padding = PaddingValues(),
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
 
         composable("camoDetail/{weaponId}/{camoId}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             CamoDetailScreen(
                 padding = PaddingValues(),
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
@@ -424,11 +464,14 @@ fun AppNavigation(
         }
 
         composable("mapDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedMap?.let { map ->
                 MapDetailScreen(
                     map = map,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     },
                     onViewMap = {
                         navController.navigate("mapViewer")
@@ -439,11 +482,14 @@ fun AppNavigation(
         }
 
         composable("mapViewer") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedMap?.let { map ->
                 MapViewerScreen(
                     map = map,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -462,11 +508,14 @@ fun AppNavigation(
         }
 
         composable("gameModeDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedGameMode?.let { gameMode ->
                 GameModeDetailScreen(
                     gameMode = gameMode,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -530,11 +579,14 @@ fun AppNavigation(
         }
 
         composable("perkDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedPerk?.let { perk ->
                 PerkDetailScreen(
                     perk = perk,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -553,11 +605,14 @@ fun AppNavigation(
         }
 
         composable("scorestreakDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedScorestreak?.let { scorestreak ->
                 ScorestreakDetailScreen(
                     scorestreak = scorestreak,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -576,11 +631,14 @@ fun AppNavigation(
         }
 
         composable("tacticalDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedTactical?.let { tactical ->
                 TacticalDetailScreen(
                     tactical = tactical,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -599,11 +657,14 @@ fun AppNavigation(
         }
 
         composable("lethalDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedLethal?.let { lethal ->
                 LethalDetailScreen(
                     lethal = lethal,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -622,11 +683,14 @@ fun AppNavigation(
         }
 
         composable("fieldUpgradeDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedFieldUpgrade?.let { fieldUpgrade ->
                 FieldUpgradeDetailScreen(
                     fieldUpgrade = fieldUpgrade,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -645,11 +709,14 @@ fun AppNavigation(
         }
 
         composable("perkAColaDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedPerkACola?.let { perkACola ->
                 PerkAColaDetailScreen(
                     perk = perkACola,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -668,11 +735,14 @@ fun AppNavigation(
         }
 
         composable("ammoModDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedAmmoMod?.let { ammoMod ->
                 AmmoModDetailScreen(
                     ammoMod = ammoMod,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -691,11 +761,14 @@ fun AppNavigation(
         }
 
         composable("fieldUpgradeZMDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedFieldUpgradeZM?.let { fieldUpgrade ->
                 FieldUpgradeZMDetailScreen(
                     fieldUpgrade = fieldUpgrade,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
@@ -722,11 +795,14 @@ fun AppNavigation(
         }
 
         composable("gobblegumDetail") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedGobbleGum?.let { gobblegum ->
                 GobbleGumDetailScreen(
                     gobblegum = gobblegum,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
