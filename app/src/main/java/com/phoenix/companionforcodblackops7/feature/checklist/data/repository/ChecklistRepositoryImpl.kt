@@ -486,13 +486,18 @@ class ChecklistRepositoryImpl @Inject constructor(
                 countsMap[weaponId] = entities.size
 
                 // Parse all badge requirements dynamically - supports ANY badge levels
-                val badgeLevels = entities.map { entity ->
-                    val badgeLevel = entity.data["badge_level"]?.asString() ?: ""
-                    val mpKillsRequired = entity.data["mp_kills_required"]?.asInt() ?: 0
-                    val zmKillsRequired = entity.data["zm_kills_required"]?.asInt() ?: 0
+                // Sort by sort_order to ensure correct sequential unlocking
+                val badgeLevels = entities
+                    .map { entity ->
+                        val badgeLevel = entity.data["badge_level"]?.asString() ?: ""
+                        val mpKillsRequired = entity.data["mp_kills_required"]?.asInt() ?: 0
+                        val zmKillsRequired = entity.data["zm_kills_required"]?.asInt() ?: 0
+                        val sortOrder = entity.data["sort_order"]?.asInt() ?: 0
 
-                    Triple(badgeLevel, mpKillsRequired, zmKillsRequired)
-                }
+                        Pair(sortOrder, Triple(badgeLevel, mpKillsRequired, zmKillsRequired))
+                    }
+                    .sortedBy { it.first } // Sort by sort_order
+                    .map { it.second } // Extract the badge data
 
                 requirementsMap[weaponId] = WeaponMasteryBadgeRequirements(
                     weaponId = weaponId,
