@@ -121,10 +121,13 @@ class InterstitialAdManager @Inject constructor() {
         activity: Activity,
         onAdDismissed: () -> Unit = {}
     ): Boolean {
+        Timber.d("Interstitial: showAdIfReady called")
         if (!canShowAd()) {
+            Timber.d("Interstitial: canShowAd returned false, skipping ad")
             onAdDismissed()
             return false
         }
+        Timber.d("Interstitial: Showing ad now!")
 
         interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
