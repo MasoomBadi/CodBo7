@@ -319,12 +319,19 @@ private fun CamoCard(
 ) {
     var isExpanded by remember(camo.id) { mutableStateOf(false) }
     var criteria by remember(camo.id) { mutableStateOf<List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria>>(emptyList()) }
+    var refreshKey by remember(camo.id) { mutableStateOf(0) }
 
-    // Load criteria when expanded
-    LaunchedEffect(isExpanded, camo.id) {
-        if (isExpanded && criteria.isEmpty()) {
+    // Load criteria when expanded or after refresh
+    LaunchedEffect(isExpanded, camo.id, refreshKey) {
+        if (isExpanded) {
             criteria = viewModel.loadCriteria(weaponId, camo.id)
         }
+    }
+
+    // Function to toggle and refresh
+    fun toggleAndRefresh(criterionId: Int) {
+        viewModel.toggleCriterion(weaponId, camo.id, criterionId)
+        refreshKey++ // Trigger reload
     }
 
     Card(
@@ -489,14 +496,14 @@ private fun CamoCard(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { viewModel.toggleCriterion(weaponId, camo.id, criterion.id) }
+                                .clickable { toggleAndRefresh(criterion.id) }
                                 .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Checkbox(
                                 checked = criterion.isCompleted,
-                                onCheckedChange = { viewModel.toggleCriterion(weaponId, camo.id, criterion.id) },
+                                onCheckedChange = { toggleAndRefresh(criterion.id) },
                                 colors = CheckboxDefaults.colors(
                                     checkedColor = CODOrange,
                                     checkmarkColor = MaterialTheme.colorScheme.onPrimary
