@@ -45,7 +45,7 @@ class WeaponCamoViewModel @Inject constructor(
 
     // Reactive weapon flow that updates when preferences change
     private val weaponFlow: Flow<Weapon?> = dataStore.data
-        .debounce(150) // Debounce rapid checkbox changes
+        .debounce(50) // Reduced debounce for faster updates (was 150ms)
         .distinctUntilChanged() // Only react to actual changes
         .map { repository.getWeapon(weaponId) }
         .stateIn(

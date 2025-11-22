@@ -321,21 +321,30 @@ private fun CamoCard(
 ) {
     var isExpanded by remember(camo.id) { mutableStateOf(false) }
     var criteria by remember(camo.id) { mutableStateOf<List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria>>(emptyList()) }
-    var refreshKey by remember(camo.id) { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Load criteria when expanded or after refresh
-    LaunchedEffect(isExpanded, camo.id, refreshKey) {
+    // Load criteria when expanded (only once)
+    LaunchedEffect(isExpanded, camo.id) {
         if (isExpanded) {
             criteria = viewModel.loadCriteria(weaponId, camo.id)
         }
     }
 
-    // Function to toggle and refresh - properly suspend until DataStore update completes
+    // OPTIMISTIC UPDATE: Instant checkbox response
     fun toggleAndRefresh(criterionId: Int) {
+        // 1. IMMEDIATE: Update local state for instant UI feedback (0ms)
+        criteria = criteria.map { criterion ->
+            if (criterion.id == criterionId) {
+                criterion.copy(isCompleted = !criterion.isCompleted)
+            } else {
+                criterion
+            }
+        }
+
+        // 2. BACKGROUND: Persist to DataStore (non-blocking, runs async)
         coroutineScope.launch {
             viewModel.toggleCriterionSuspend(weaponId, camo.id, criterionId)
-            refreshKey++ // Trigger reload AFTER DataStore update completes
+            // Camo progress updates reactively through Flow when DataStore write completes
         }
     }
 
