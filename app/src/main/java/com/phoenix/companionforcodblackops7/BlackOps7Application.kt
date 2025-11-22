@@ -4,6 +4,7 @@ import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -13,6 +14,9 @@ class BlackOps7Application : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize AdMob
+        MobileAds.initialize(this)
 
         // Configure Crashlytics
         FirebaseCrashlytics.getInstance().apply {

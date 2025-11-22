@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeData
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
@@ -141,24 +142,10 @@ private fun PrestigeContent(
             }
         }
 
-        // Fixed Banner Ad Space at Bottom
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Banner Ad Space (320x90)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            }
-        }
+        // Banner Ad at Bottom
+        BannerAd(
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

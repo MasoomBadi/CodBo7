@@ -41,6 +41,9 @@ firebaseAnalytics = "23.0.0"
 firebaseCrashlytics = "20.0.3"
 googleFirebaseCrashlytics = "3.0.6"
 
+# Ads
+playServicesAds = "24.3.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
@@ -88,6 +91,9 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebaseAnalytics" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
+
+# Ads
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

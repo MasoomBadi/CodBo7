@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -142,24 +143,10 @@ private fun MapListContent(
             }
         }
 
-        // Banner Ad Space at Bottom (320x90)
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Ad Space (320x90)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            }
-        }
+        // Banner Ad at Bottom
+        BannerAd(
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

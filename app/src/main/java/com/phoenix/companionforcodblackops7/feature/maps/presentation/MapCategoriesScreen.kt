@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -126,24 +127,10 @@ private fun CategoriesContent(
             }
         }
 
-        // Banner Ad Space at Bottom (320x90)
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Ad Space (320x90)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            }
-        }
+        // Banner Ad at Bottom
+        BannerAd(
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 
 /**
  * Hub screen for Multiplayer content
@@ -199,24 +200,10 @@ fun CampaignMultiplayerHubScreen(
                 }
             }
 
-            // Fixed Banner Ad Space at Bottom
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Banner Ad Space (320x90)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-                }
-            }
+            // Banner Ad at Bottom
+            BannerAd(
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
