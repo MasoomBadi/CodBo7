@@ -175,6 +175,12 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         camo: Camo,
         allCamosInMode: List<Camo>
     ): Boolean {
+        // Prestige mode: All camos are unlocked from the start (no category dependency)
+        // Each prestige category is independent
+        if (camo.mode.lowercase() == "prestige") {
+            return true
+        }
+
         // Rule 1: First camo in first category is always unlocked
         if (camo.categoryOrder == 1 && camo.sortOrder == 1) {
             return true
