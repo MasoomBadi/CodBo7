@@ -137,4 +137,14 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
             Pair(0, 0)
         }
     }
+
+    override fun observeAllBadgeChanges(): Flow<Long> {
+        // Observe all MasteryBadgeProgressEntity changes and emit count as trigger
+        return realm.query<MasteryBadgeProgressEntity>()
+            .asFlow()
+            .map { results ->
+                // Return the count as a trigger value
+                results.list.size.toLong()
+            }
+    }
 }

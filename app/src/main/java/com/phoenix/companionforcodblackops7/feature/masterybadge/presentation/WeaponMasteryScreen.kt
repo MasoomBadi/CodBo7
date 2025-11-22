@@ -10,6 +10,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,10 +35,11 @@ import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.MasteryBadge
+import kotlinx.coroutines.launch
 
 private val BadgeColor = Color(0xFFFFB300) // Gold color for mastery badges
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun WeaponMasteryScreen(
     onNavigateBack: () -> Unit,
@@ -179,6 +182,28 @@ fun WeaponMasteryScreen(
                 }
             }
             is WeaponMasteryUiState.Success -> {
+                val pagerState = rememberPagerState(
+                    initialPage = state.availableModes.indexOf(state.selectedMode).coerceAtLeast(0),
+                    pageCount = { state.availableModes.size }
+                )
+                val coroutineScope = rememberCoroutineScope()
+
+                // Sync pager with selected mode
+                LaunchedEffect(state.selectedMode) {
+                    val targetPage = state.availableModes.indexOf(state.selectedMode)
+                    if (targetPage >= 0 && targetPage != pagerState.currentPage) {
+                        pagerState.animateScrollToPage(targetPage)
+                    }
+                }
+
+                // Sync selected mode with pager
+                LaunchedEffect(pagerState.currentPage) {
+                    val mode = state.availableModes.getOrNull(pagerState.currentPage)
+                    if (mode != null && mode != state.selectedMode) {
+                        viewModel.selectMode(mode)
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -189,31 +214,45 @@ fun WeaponMasteryScreen(
                         ModeTabs(
                             modes = state.availableModes,
                             selectedMode = state.selectedMode,
-                            onModeSelected = { viewModel.selectMode(it) }
+                            onModeSelected = { mode ->
+                                coroutineScope.launch {
+                                    val targetPage = state.availableModes.indexOf(mode)
+                                    if (targetPage >= 0) {
+                                        pagerState.animateScrollToPage(targetPage)
+                                    }
+                                }
+                                viewModel.selectMode(mode)
+                            }
                         )
                     }
 
-                    // Badges list
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 16.dp,
-                            bottom = 16.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = state.badges,
-                            key = { it.id }
-                        ) { badge ->
-                            BadgeCard(
-                                badge = badge,
-                                onToggle = { viewModel.toggleBadge(badge) }
-                            )
+                    // Horizontal pager for swipeable badge lists
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.weight(1f)
+                    ) { page ->
+                        val mode = state.availableModes.getOrNull(page) ?: return@HorizontalPager
+                        val badgesForMode = state.badgesByMode[mode] ?: emptyList()
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                end = 16.dp,
+                                top = 16.dp,
+                                bottom = 16.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(
+                                items = badgesForMode,
+                                key = { it.id }
+                            ) { badge ->
+                                BadgeCard(
+                                    badge = badge,
+                                    onToggle = { viewModel.toggleBadge(badge) }
+                                )
+                            }
                         }
                     }
 

@@ -20,9 +20,8 @@ class WeaponsViewModel @Inject constructor(
 
     val weaponsByCategory: StateFlow<Map<String, List<WeaponWithBadges>>> = combine(
         weaponsRepository.getAllWeapons(),
-        // Trigger refresh when any badge is toggled by observing a sample weapon's badges
-        // This is a workaround since we need to know when any badge changes
-        masteryBadgeRepository.getBadgesForWeapon(1)
+        // Observe all badge changes to trigger refresh when any badge is toggled
+        masteryBadgeRepository.observeAllBadgeChanges()
     ) { weapons, _ ->
         weapons.map { weapon ->
             val (completed, total) = try {

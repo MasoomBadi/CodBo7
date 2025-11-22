@@ -33,4 +33,12 @@ interface MasteryBadgeRepository {
      * @return Pair of (completedCount, totalCount)
      */
     suspend fun getBadgeProgress(weaponId: Int): Pair<Int, Int>
+
+    /**
+     * Observe all badge progress changes
+     * Emits whenever any badge completion status changes
+     *
+     * @return Flow that emits a timestamp/counter whenever any badge changes
+     */
+    fun observeAllBadgeChanges(): Flow<Long>
 }
