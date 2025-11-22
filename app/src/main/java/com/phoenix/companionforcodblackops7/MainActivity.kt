@@ -90,6 +90,7 @@ import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weap
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.camodetail.CamoDetailScreen
 import com.phoenix.companionforcodblackops7.feature.feedback.presentation.HelpFeedbackScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
