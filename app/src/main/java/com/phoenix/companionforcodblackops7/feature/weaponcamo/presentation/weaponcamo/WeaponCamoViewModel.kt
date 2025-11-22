@@ -38,14 +38,16 @@ class WeaponCamoViewModel @Inject constructor(
 
     private val _selectedMode = MutableStateFlow(CamoMode.CAMPAIGN)
 
-    // Reactive weapon flow - triggers on repository changes (Realm live queries)
-    private val weaponFlow: Flow<Weapon?> = flow {
-        emit(repository.getWeapon(weaponId))
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
+    // Reactive weapon flow - updates when progress changes
+    // Note: We reload periodically since getWeapon() is not a Flow
+    // The camos update reactively through getCamosForWeapon() which IS a Flow
+    private val weaponFlow: Flow<Weapon?> = repository.getAllWeapons()
+        .map { weapons -> weapons.find { it.id == weaponId } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     val uiState: StateFlow<WeaponCamoUiState> = _selectedMode
         .flatMapLatest { selectedMode ->

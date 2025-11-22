@@ -115,9 +115,23 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     // Weapons
     // =============================================================================================
 
+    /**
+     * Get reactive Flow of ALL user progress
+     * Emits whenever ANY progress changes
+     */
+    private fun getAllProgressFlow(): Flow<List<DynamicEntity>> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS
+        ).asFlow().map { it.list }
+    }
+
     override fun getAllWeapons(): Flow<List<Weapon>> {
-        // Reactive to Realm changes (no DataStore needed!)
-        return getWeaponsFlow().map { weapons ->
+        // REACTIVE to BOTH weapon data AND user progress!
+        return combine(
+            getWeaponsFlow(),
+            getAllProgressFlow()
+        ) { weapons, _ ->
             weapons.map { weaponEntity ->
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: return@map null
                 val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId)
@@ -171,10 +185,25 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     // Camos
     // =============================================================================================
 
+    /**
+     * Get reactive Flow of user progress for this weapon
+     * Emits whenever any progress changes for this weapon
+     */
+    private fun getProgressFlow(weaponId: Int): Flow<List<DynamicEntity>> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0 AND data['weapon_id'] == $1",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+            weaponId
+        ).asFlow().map { it.list }
+    }
+
     override fun getCamosForWeapon(weaponId: Int, mode: String): Flow<List<CamoCategory>> {
-        // Reactive to Realm changes (no DataStore needed!)
-        return getCamosFlow(mode).map { camoEntities ->
-            // Parse camos from database
+        // REACTIVE to BOTH camo definitions AND user progress!
+        return combine(
+            getCamosFlow(mode),
+            getProgressFlow(weaponId)
+        ) { camoEntities, _ ->
+            // Parse camos from database (progress is queried inside parseCamoEntity)
             val allCamos = camoEntities.mapNotNull { entity ->
                 parseCamoEntity(entity, weaponId)
             }
