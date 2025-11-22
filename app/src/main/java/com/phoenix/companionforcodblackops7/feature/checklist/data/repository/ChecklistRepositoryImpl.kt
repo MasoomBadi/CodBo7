@@ -3,6 +3,7 @@ package com.phoenix.companionforcodblackops7.feature.checklist.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.CategoryProgress
@@ -120,6 +121,62 @@ class ChecklistRepositoryImpl @Inject constructor(
                             isUnlocked = false, // Not used for weapons - we track camos instead
                             imageUrl = iconUrl,
                             unlockCriteria = "$unlockedCount/54 camos unlocked"
+                        )
+                    }
+                }
+            }
+            ChecklistCategory.MASTERY_BADGES -> {
+                // Get all weapons from weapons_mp table with category
+                val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
+                    .asFlow()
+                    .map { results ->
+                        results.list.mapNotNull { entity ->
+                            try {
+                                val data = entity.data
+                                // Quadruple: id, name, iconUrl, weaponCategory
+                                listOf(
+                                    data["id"]?.asInt() ?: 0,
+                                    data["display_name"]?.asString() ?: "",
+                                    data["icon_url"]?.asString() ?: "",
+                                    data["category"]?.asString() ?: "Assault Rifle"
+                                )
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }.sortedBy { it[1] as String } // Sort by display_name
+                    }
+
+                // Combine with DataStore to calculate badge progress
+                combine(weaponsFlow, dataStore.data) { weapons, prefs ->
+                    weapons.map { weaponData ->
+                        val weaponId = weaponData[0] as Int
+                        val weaponName = weaponData[1] as String
+                        val iconUrl = weaponData[2] as String
+                        val weaponCategory = weaponData[3] as String
+
+                        // Get MP and ZM kills from DataStore
+                        val mpKillsKey = intPreferencesKey("weapon_${weaponId}_mp_kills")
+                        val zmKillsKey = intPreferencesKey("weapon_${weaponId}_zm_kills")
+                        val mpKills = prefs[mpKillsKey] ?: 0
+                        val zmKills = prefs[zmKillsKey] ?: 0
+
+                        // Calculate unlocked badges (out of 6 total)
+                        // Simplified calculation - count badges where kill requirement is met
+                        var unlockedCount = 0
+                        if (mpKills >= 100) unlockedCount++
+                        if (mpKills >= 250) unlockedCount++
+                        if (mpKills >= 500) unlockedCount++
+                        if (zmKills >= 500) unlockedCount++
+                        if (zmKills >= 1500) unlockedCount++
+                        if (zmKills >= 3000) unlockedCount++
+
+                        ChecklistItem(
+                            id = "$weaponId|$weaponCategory", // Store category in ID
+                            name = weaponName,
+                            category = category,
+                            isUnlocked = false, // Not used for mastery badges
+                            imageUrl = iconUrl,
+                            unlockCriteria = "$unlockedCount/6 badges unlocked"
                         )
                     }
                 }

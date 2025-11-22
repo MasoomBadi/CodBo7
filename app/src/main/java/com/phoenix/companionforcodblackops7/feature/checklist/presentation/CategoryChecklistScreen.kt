@@ -46,6 +46,7 @@ private fun getCategoryAccentColor(category: ChecklistCategory): Color {
     return when (category) {
         ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
         ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
+        ChecklistCategory.MASTERY_BADGES -> Color(0xFFFFB300) // Gold
         ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
         ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
         ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
