@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.Weapon
-import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.WeaponCategory
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -44,7 +43,7 @@ fun WeaponsListScreen(
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
-    var selectedCategory by remember { mutableStateOf<WeaponCategory?>(null) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) } // Dynamic String category
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
@@ -97,9 +96,9 @@ fun WeaponsListScreen(
  */
 @Composable
 private fun WeaponsContent(
-    weaponsByCategory: Map<WeaponCategory, List<Weapon>>,
-    selectedCategory: WeaponCategory?,
-    onCategorySelected: (WeaponCategory?) -> Unit,
+    weaponsByCategory: Map<String, List<Weapon>>, // Dynamic String categories
+    selectedCategory: String?,
+    onCategorySelected: (String?) -> Unit,
     expandedWeaponId: Int?,
     onToggleExpanded: (Int) -> Unit,
     accentColor: Color,
@@ -168,9 +167,9 @@ private fun WeaponsContent(
  */
 @Composable
 private fun CategoryFilterRow(
-    categories: List<WeaponCategory>,
-    selectedCategory: WeaponCategory?,
-    onCategorySelected: (WeaponCategory?) -> Unit,
+    categories: List<String>, // Dynamic String categories
+    selectedCategory: String?,
+    onCategorySelected: (String?) -> Unit,
     accentColor: Color
 ) {
     Row(
@@ -206,7 +205,7 @@ private fun CategoryFilterRow(
                 onClick = { onCategorySelected(category) },
                 label = {
                     Text(
-                        text = category.displayName.uppercase(),
+                        text = formatCategoryDisplayName(category).uppercase(),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
@@ -346,7 +345,7 @@ private fun ExpandableWeaponCard(
                                 .background(accentColor)
                         )
                         Text(
-                            text = weapon.category.displayName.uppercase(),
+                            text = weapon.categoryDisplayName.uppercase(),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp
@@ -362,7 +361,7 @@ private fun ExpandableWeaponCard(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = weapon.weaponType.displayName,
+                        text = weapon.weaponTypeDisplayName,
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Medium
                         ),
@@ -476,5 +475,24 @@ private fun WeaponStatRow(
             ),
             color = accentColor
         )
+    }
+}
+
+/**
+ * Format category string to display name for UI
+ * Matches backend formatting
+ */
+private fun formatCategoryDisplayName(category: String): String {
+    return when (category.uppercase().replace(" ", "_")) {
+        "ASSAULT_RIFLE", "ASSAULT RIFLE", "ASSAULT_RIFLES" -> "Assault Rifles"
+        "SMG", "SMGS" -> "SMGs"
+        "SHOTGUN", "SHOTGUNS" -> "Shotguns"
+        "LMG", "LMGS" -> "LMGs"
+        "MARKSMAN", "MARKSMAN_RIFLE", "MARKSMAN RIFLE", "MARKSMAN_RIFLES" -> "Marksman Rifles"
+        "SNIPER", "SNIPER_RIFLE", "SNIPER RIFLE", "SNIPER_RIFLES" -> "Sniper Rifles"
+        "PISTOL", "PISTOLS" -> "Pistols"
+        "LAUNCHER", "LAUNCHERS" -> "Launchers"
+        "MELEE" -> "Melee"
+        else -> category.replace("_", " ").capitalize()
     }
 }
