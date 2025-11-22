@@ -171,10 +171,7 @@ fun WeaponMasteryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Badge cards for selected mode
-                        items(
-                            items = badges,
-                            key = { it.badge.id }
-                        ) { badgeProgress ->
+                        items(badges) { badgeProgress ->
                             BadgeCard(badgeProgress = badgeProgress)
                         }
                     }
