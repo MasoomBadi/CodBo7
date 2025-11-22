@@ -35,10 +35,12 @@ class PrestigeRepositoryImpl @Inject constructor(
                         val data = entity.data
 
                         // Parse prestige data from database dynamically
-                        val id = data["id"]?.asString() ?: return@mapNotNull null
-                        val name = data["name"]?.asString() ?: return@mapNotNull null
+                        // id is stored as INT in database, convert to String for model
+                        val idInt = data["id"]?.asInt() ?: return@mapNotNull null
+                        val id = idInt.toString()
+                        val name = data["name"]?.asString() ?: "Prestige $idInt"
                         val typeStr = data["type"]?.asString() ?: "PRESTIGE"
-                        val level = data["level"]?.asInt() ?: 0
+                        val level = data["level"]?.asInt() ?: idInt
                         val description = data["description"]?.asString() ?: ""
                         val iconPath = data["icon_path"]?.asString() ?: ""
 
