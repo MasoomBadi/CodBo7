@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.realm.kotlin)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 android {
@@ -71,6 +72,7 @@ dependencies {
     // Architecture & DI
     implementation(libs.hilt.android)
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
