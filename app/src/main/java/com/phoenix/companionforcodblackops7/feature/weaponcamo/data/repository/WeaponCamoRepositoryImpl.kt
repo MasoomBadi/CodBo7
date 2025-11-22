@@ -49,12 +49,12 @@ class WeaponCamoRepositoryImpl @Inject constructor(
 
     /**
      * Check if criterion is completed in Realm
+     * OPTIMIZED: Query by primary key (faster than dictionary search)
      */
     private fun isCompletedInRealm(weaponId: Int, camoId: Int, criterionId: Int): Boolean {
         val progressKey = getProgressKey(weaponId, camoId, criterionId)
         val progress = realm.query<DynamicEntity>(
-            "tableName == $0 AND data['progress_key'] == $1",
-            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+            "id == $0",
             progressKey
         ).first().find()
 
@@ -68,10 +68,9 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         val progressKey = getProgressKey(weaponId, camoId, criterionId)
 
         realm.write {
-            // Try to find existing progress entry
+            // Try to find existing progress entry by primary key (id = progressKey)
             val existing = query<DynamicEntity>(
-                "tableName == $0 AND data['progress_key'] == $1",
-                ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+                "id == $0",
                 progressKey
             ).first().find()
 
@@ -81,8 +80,9 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                     data["is_completed"] = RealmAny.create(isCompleted)
                 }
             } else {
-                // Create new entry
+                // Create new entry with progressKey as primary key
                 copyToRealm(DynamicEntity().apply {
+                    id = progressKey  // PRIMARY KEY - must be unique!
                     tableName = ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS
                     data["progress_key"] = RealmAny.create(progressKey)
                     data["weapon_id"] = RealmAny.create(weaponId)
