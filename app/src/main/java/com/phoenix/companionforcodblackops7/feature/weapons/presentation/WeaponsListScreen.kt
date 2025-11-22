@@ -24,16 +24,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
-import com.phoenix.companionforcodblackops7.feature.weapons.presentation.model.WeaponWithBadges
-import timber.log.Timber
+import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.Weapon
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -46,30 +41,10 @@ fun WeaponsListScreen(
     onNavigateBack: () -> Unit,
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
-    Timber.d("WeaponsListScreen: Composing...")
-
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
-    var selectedCategory by remember { mutableStateOf<String?>(null) } // Dynamic String category
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
-
-    // Lifecycle observer with detailed logging
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        Timber.d("WeaponsListScreen: Setting up lifecycle observer")
-        val observer = LifecycleEventObserver { _, event ->
-            Timber.d("WeaponsListScreen: Lifecycle event = $event")
-            if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
-                Timber.d("WeaponsListScreen: Screen visible - refreshing badge counts")
-                viewModel.refreshBadgeCounts()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            Timber.d("WeaponsListScreen: Removing lifecycle observer")
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -120,7 +95,7 @@ fun WeaponsListScreen(
  */
 @Composable
 private fun WeaponsContent(
-    weaponsByCategory: Map<String, List<WeaponWithBadges>>, // Dynamic String categories
+    weaponsByCategory: Map<String, List<Weapon>>,
     selectedCategory: String?,
     onCategorySelected: (String?) -> Unit,
     expandedWeaponId: Int?,
@@ -154,12 +129,12 @@ private fun WeaponsContent(
         ) {
             items(
                 items = filteredWeapons,
-                key = { it.weapon.id }
-            ) { weaponWithBadges ->
+                key = { it.id }
+            ) { weapon ->
                 ExpandableWeaponCard(
-                    weaponWithBadges = weaponWithBadges,
-                    isExpanded = expandedWeaponId == weaponWithBadges.weapon.id,
-                    onToggleExpanded = { onToggleExpanded(weaponWithBadges.weapon.id) },
+                    weapon = weapon,
+                    isExpanded = expandedWeaponId == weapon.id,
+                    onToggleExpanded = { onToggleExpanded(weapon.id) },
                     accentColor = accentColor
                 )
             }
@@ -191,7 +166,7 @@ private fun WeaponsContent(
  */
 @Composable
 private fun CategoryFilterRow(
-    categories: List<String>, // Dynamic String categories
+    categories: List<String>,
     selectedCategory: String?,
     onCategorySelected: (String?) -> Unit,
     accentColor: Color
@@ -251,12 +226,11 @@ private fun CategoryFilterRow(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ExpandableWeaponCard(
-    weaponWithBadges: WeaponWithBadges,
+    weapon: Weapon,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
     accentColor: Color
 ) {
-    val weapon = weaponWithBadges.weapon
     val infiniteTransition = rememberInfiniteTransition(label = "weaponGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -393,47 +367,6 @@ private fun ExpandableWeaponCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )
-                }
-
-                // Mastery badge count
-                if (weaponWithBadges.totalBadges > 0) {
-                    val badgeColor = Color(0xFFFFB300) // Gold color for mastery badges
-                    Surface(
-                        color = if (weaponWithBadges.isFullyCompleted) {
-                            badgeColor.copy(alpha = 0.3f)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        },
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (weaponWithBadges.isFullyCompleted) badgeColor
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                            )
-                            Text(
-                                text = "MASTERY ${weaponWithBadges.badgeProgressText}",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                ),
-                                color = if (weaponWithBadges.isFullyCompleted) {
-                                    badgeColor
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        }
-                    }
                 }
             }
 
