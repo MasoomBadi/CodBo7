@@ -1,6 +1,7 @@
 package com.phoenix.companionforcodblackops7.feature.prestige.data.repository
 
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeItem
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeType
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.repository.PrestigeRepository
@@ -16,6 +17,9 @@ import javax.inject.Singleton
  * Prestige repository implementation
  * Completely dynamic - queries prestige data from database
  * NO HARDCODED prestige counts, milestones, or levels
+ *
+ * Data source: classic_prestige table
+ * Enforces strict sequential unlocking via CategoryChecklistViewModel
  */
 @Singleton
 class PrestigeRepositoryImpl @Inject constructor(
@@ -23,7 +27,7 @@ class PrestigeRepositoryImpl @Inject constructor(
 ) : PrestigeRepository {
 
     override fun getAllPrestigeItems(): Flow<List<PrestigeItem>> {
-        return realm.query<DynamicEntity>("tableName == 'prestige'")
+        return realm.query<DynamicEntity>("tableName == $0", ChecklistConstants.Tables.CLASSIC_PRESTIGE)
             .asFlow()
             .map { results ->
                 results.list.mapNotNull { entity ->

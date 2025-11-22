@@ -56,22 +56,31 @@ class CategoryChecklistViewModel @Inject constructor(
 
     fun toggleItemUnlocked(itemId: String) {
         viewModelScope.launch {
-            // For Classic Prestige, validate sequential unlock
+            // For Classic Prestige, validate strict sequential unlocking
+            // ALL lower levels must be unlocked before unlocking a higher level
             if (category == ChecklistCategory.PRESTIGE) {
                 val items = checklistRepository.getChecklistItems(category).first()
                 val currentItem = items.find { it.id == itemId }
 
                 if (currentItem != null && !currentItem.isUnlocked) {
-                    // Extract prestige number from id (e.g., "prestige_2" -> 2)
-                    val currentPrestigeNum = itemId.removePrefix("prestige_").toIntOrNull()
+                    // Extract prestige level from unlock criteria (e.g., "Prestige 2" -> 2)
+                    // Try multiple formats: "prestige_2", "Prestige 2", or just parse from name
+                    val currentLevel = extractPrestigeLevel(itemId, currentItem.name)
 
-                    if (currentPrestigeNum != null && currentPrestigeNum > 1) {
-                        // Check if previous prestige is unlocked
-                        val previousPrestigeId = "prestige_${currentPrestigeNum - 1}"
-                        val previousPrestige = items.find { it.id == previousPrestigeId }
+                    if (currentLevel != null && currentLevel > 1) {
+                        // Check if ALL previous prestige levels are unlocked
+                        val unlockedLevels = items
+                            .filter { it.isUnlocked }
+                            .mapNotNull { extractPrestigeLevel(it.id, it.name) }
+                            .toSet()
 
-                        if (previousPrestige?.isUnlocked == false) {
-                            _toastMessage.send("You must unlock Prestige ${currentPrestigeNum - 1} first!")
+                        // Find the first missing level
+                        val missingLevel = (1 until currentLevel).firstOrNull { level ->
+                            level !in unlockedLevels
+                        }
+
+                        if (missingLevel != null) {
+                            _toastMessage.send("You must unlock all previous Prestige levels first! Missing: Prestige $missingLevel")
                             return@launch
                         }
                     }
@@ -80,5 +89,20 @@ class CategoryChecklistViewModel @Inject constructor(
 
             checklistRepository.toggleItemUnlocked(itemId, category)
         }
+    }
+
+    /**
+     * Extract prestige level number from ID or name
+     * Handles multiple formats: "prestige_2", "2", "Prestige 2"
+     */
+    private fun extractPrestigeLevel(id: String, name: String): Int? {
+        // Try parsing from ID (e.g., "prestige_2" or just "2")
+        id.removePrefix("prestige_").toIntOrNull()?.let { return it }
+
+        // Try parsing from name (e.g., "Prestige 2" or "Prestige Level 2")
+        val numberRegex = "\\d+".toRegex()
+        numberRegex.find(name)?.value?.toIntOrNull()?.let { return it }
+
+        return null
     }
 }
