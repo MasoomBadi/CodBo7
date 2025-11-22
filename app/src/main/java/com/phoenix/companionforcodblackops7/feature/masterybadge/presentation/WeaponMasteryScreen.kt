@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -250,7 +251,7 @@ private fun ModeTabs(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp
     ) {
-        TabRow(
+        SecondaryTabRow(
             selectedTabIndex = modes.indexOf(selectedMode).coerceAtLeast(0),
             containerColor = Color.Transparent,
             contentColor = BadgeColor,
@@ -258,7 +259,7 @@ private fun ModeTabs(
                 if (tabPositions.isNotEmpty()) {
                     val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
                     TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[index]),
+                        modifier = Modifier.tabIndicatorLayout { tabPositions[index] },
                         color = BadgeColor,
                         height = 3.dp
                     )
