@@ -256,40 +256,10 @@ private fun ModeTabs(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp
     ) {
-        SecondaryTabRow(
+        PrimaryTabRow(
             selectedTabIndex = modes.indexOf(selectedMode).coerceAtLeast(0),
             containerColor = Color.Transparent,
-            contentColor = BadgeColor,
-            indicator = @Composable {
-                val index = modes.indexOf(selectedMode).coerceAtLeast(0)
-                TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorLayout { measurable, constraints, positions ->
-                        if (positions.isNotEmpty() && index < positions.size) {
-                            val currentTabPosition = positions[index]
-                            val indicatorWidth = currentTabPosition.contentWidth
-                            val indicatorOffset = currentTabPosition.left
-
-                            val placeable = measurable.measure(
-                                constraints.copy(
-                                    minWidth = indicatorWidth.roundToPx(),
-                                    maxWidth = indicatorWidth.roundToPx()
-                                )
-                            )
-
-                            layout(constraints.maxWidth, placeable.height) {
-                                placeable.placeRelative(indicatorOffset.roundToPx(), 0)
-                            }
-                        } else {
-                            val placeable = measurable.measure(constraints)
-                            layout(constraints.maxWidth, placeable.height) {
-                                placeable.placeRelative(0, 0)
-                            }
-                        }
-                    },
-                    color = BadgeColor,
-                    height = 3.dp
-                )
-            }
+            contentColor = BadgeColor
         ) {
             modes.forEach { mode ->
                 val isSelected = mode == selectedMode

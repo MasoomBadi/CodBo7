@@ -2,29 +2,44 @@ package com.phoenix.companionforcodblackops7.feature.weapons.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.Weapon
+import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.repository.MasteryBadgeRepository
 import com.phoenix.companionforcodblackops7.feature.weapons.domain.repository.WeaponsRepository
+import com.phoenix.companionforcodblackops7.feature.weapons.presentation.model.WeaponWithBadges
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class WeaponsViewModel @Inject constructor(
-    weaponsRepository: WeaponsRepository
+    private val weaponsRepository: WeaponsRepository,
+    private val masteryBadgeRepository: MasteryBadgeRepository
 ) : ViewModel() {
 
-    val weaponsByCategory: StateFlow<Map<String, List<Weapon>>> = weaponsRepository
-        .getAllWeapons()
-        .map { weapons ->
-            weapons.groupBy { it.category }
-                .toSortedMap(compareBy { it }) // Sort by String category name
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyMap()
-        )
+    val weaponsByCategory: StateFlow<Map<String, List<WeaponWithBadges>>> = combine(
+        weaponsRepository.getAllWeapons(),
+        // Trigger refresh when any badge is toggled by observing a sample weapon's badges
+        // This is a workaround since we need to know when any badge changes
+        masteryBadgeRepository.getBadgesForWeapon(1)
+    ) { weapons, _ ->
+        weapons.map { weapon ->
+            val (completed, total) = try {
+                masteryBadgeRepository.getBadgeProgress(weapon.id)
+            } catch (e: Exception) {
+                0 to 0
+            }
+            WeaponWithBadges(
+                weapon = weapon,
+                completedBadges = completed,
+                totalBadges = total
+            )
+        }.groupBy { it.weapon.category }
+            .toSortedMap(compareBy { it })
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
 }
