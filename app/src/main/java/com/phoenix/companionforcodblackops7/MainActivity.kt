@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1067,6 +1068,11 @@ fun DashboardScreen(
                 DisclaimerSection()
             }
 
+            // Data Storage Warning
+            item {
+                DataStorageWarning()
+            }
+
             // Feedback Section
             item {
                 FeedbackSection()
@@ -1267,6 +1273,51 @@ private fun DisclaimerSection() {
 
                 Text(
                     text = "This app is in early stages of development. Some data might be missing or incomplete. We are actively working to add more content and features. Updates will be released as soon as possible. Thank you for your patience!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DataStorageWarning() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF3D2A1A) // Warm amber/brown tint for warning
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = "Warning",
+                tint = Color(0xFFFFB300), // Amber warning color
+                modifier = Modifier.size(24.dp)
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "LOCAL STORAGE ONLY",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = Color(0xFFFFB300) // Amber warning color
+                )
+
+                Text(
+                    text = "Your progress and data are stored locally on your device only. Clearing app data or uninstalling the app will permanently delete all your saved progress. Cloud backup is not available at this time.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
