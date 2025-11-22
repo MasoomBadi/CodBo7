@@ -24,12 +24,6 @@ import com.phoenix.companionforcodblackops7.BuildConfig
 import timber.log.Timber
 
 /**
- * Set to true when taking screenshots for Play Store.
- * Remember to set back to false before release!
- */
-private const val SCREENSHOT_MODE = false
-
-/**
  * Banner Ad composable that displays an adaptive banner ad at the bottom of screens.
  * Uses anchored adaptive banner which adjusts to screen width for optimal fill rate.
  */
@@ -37,9 +31,6 @@ private const val SCREENSHOT_MODE = false
 fun BannerAd(
     modifier: Modifier = Modifier
 ) {
-    // Hide ads in screenshot mode
-    if (SCREENSHOT_MODE) return
-
     val context = LocalContext.current
     val adUnitId = if (BuildConfig.DEBUG) {
         AdMobConfig.TEST_BANNER_AD_UNIT_ID

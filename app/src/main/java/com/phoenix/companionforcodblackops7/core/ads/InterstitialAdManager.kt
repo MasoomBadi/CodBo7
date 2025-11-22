@@ -13,12 +13,6 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Set to true when taking screenshots for Play Store.
- * Remember to set back to false before release!
- */
-private const val SCREENSHOT_MODE = false
-
 @Singleton
 class InterstitialAdManager @Inject constructor() {
 
@@ -44,9 +38,6 @@ class InterstitialAdManager @Inject constructor() {
      * Load an interstitial ad. Call this early (e.g., on app start or screen load)
      */
     fun loadAd(context: Context) {
-        // Skip loading ads in screenshot mode
-        if (SCREENSHOT_MODE) return
-
         Timber.d("Interstitial: loadAd called, isLoading=$isLoading, adReady=${interstitialAd != null}")
         if (isLoading || interstitialAd != null) {
             Timber.d("Interstitial: Skipping load - already loaded or loading")
@@ -130,12 +121,6 @@ class InterstitialAdManager @Inject constructor() {
         activity: Activity,
         onAdDismissed: () -> Unit = {}
     ): Boolean {
-        // Skip showing ads in screenshot mode
-        if (SCREENSHOT_MODE) {
-            onAdDismissed()
-            return false
-        }
-
         Timber.d("Interstitial: showAdIfReady called")
         if (!canShowAd()) {
             Timber.d("Interstitial: canShowAd returned false, skipping ad")
