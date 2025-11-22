@@ -105,11 +105,11 @@ private fun WeaponCard(
     weapon: Weapon,
     onClick: () -> Unit
 ) {
-    val progress = if (weapon.totalCamos > 0) {
-        weapon.completedCamos.toFloat() / weapon.totalCamos.toFloat()
+    val progress = if (weapon.totalModes > 0) {
+        weapon.completedModes.toFloat() / weapon.totalModes.toFloat()
     } else 0f
 
-    val isComplete = weapon.completedCamos == weapon.totalCamos && weapon.totalCamos > 0
+    val isComplete = weapon.completedModes == weapon.totalModes && weapon.totalModes > 0
 
     val borderColor = if (isComplete) {
         CODOrange
@@ -198,7 +198,7 @@ private fun WeaponCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${weapon.completedCamos}/${weapon.totalCamos} Camos",
+                            text = "${weapon.completedModes}/${weapon.totalModes} Modes",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontWeight = FontWeight.Medium
                             ),

@@ -30,7 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -159,11 +159,12 @@ fun WeaponCamoScreen(
                         .fillMaxSize()
                         .padding(scaffoldPadding)
                 ) {
-                    // Mode tabs
-                    PrimaryTabRow(
+                    // Mode tabs - scrollable to show full text
+                    ScrollableTabRow(
                         selectedTabIndex = pagerState.currentPage,
                         containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = CODOrange
+                        contentColor = CODOrange,
+                        edgePadding = 0.dp
                     ) {
                         modes.forEachIndexed { index, mode ->
                             Tab(
@@ -173,9 +174,7 @@ fun WeaponCamoScreen(
                                     Text(
                                         text = mode.displayName.uppercase(),
                                         fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 13.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        fontSize = 14.sp
                                     )
                                 }
                             )
