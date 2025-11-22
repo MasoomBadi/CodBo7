@@ -312,34 +312,25 @@ class ChecklistRepositoryImpl @Inject constructor(
             val weapons = getWeaponEntitiesSync()
             Timber.d("Weapon Camo Progress - Total weapons: ${weapons.size}")
 
-            // Batch query all data ONCE to avoid N+1 query problem
-            // Query all camos by mode (4 queries total instead of 29*4)
-            val campaignCamos = realm.query<DynamicEntity>(
-                "tableName == $0 AND data['mode'] == $1",
-                ChecklistConstants.Tables.CAMO,
-                "campaign"
-            ).find().mapNotNull { it.data["id"]?.asInt() }
-
-            val multiplayerCamos = realm.query<DynamicEntity>(
-                "tableName == $0 AND data['mode'] == $1",
-                ChecklistConstants.Tables.CAMO,
-                "multiplayer"
-            ).find().mapNotNull { it.data["id"]?.asInt() }
-
-            val zombieCamos = realm.query<DynamicEntity>(
-                "tableName == $0 AND data['mode'] == $1",
-                ChecklistConstants.Tables.CAMO,
-                "zombie"
-            ).find().mapNotNull { it.data["id"]?.asInt() }
-
-            // Query all prestige camos and categorize
-            val allPrestigeCamos = realm.query<DynamicEntity>(
-                "tableName == $0 AND data['mode'] == $1",
-                ChecklistConstants.Tables.CAMO,
-                "prestige"
+            // OPTIMAL: Query ALL camos once (138 rows), then group in memory
+            val allCamos = realm.query<DynamicEntity>(
+                "tableName == $0",
+                ChecklistConstants.Tables.CAMO
             ).find()
 
-            val commonPrestigeCamos = allPrestigeCamos
+            // Group by mode in memory (microseconds vs milliseconds for DB queries)
+            val camosByMode = allCamos.groupBy {
+                it.data["mode"]?.asString() ?: ""
+            }.mapValues { (_, camos) ->
+                camos.mapNotNull { it.data["id"]?.asInt() }
+            }
+
+            val campaignCamos = camosByMode["campaign"] ?: emptyList()
+            val multiplayerCamos = camosByMode["multiplayer"] ?: emptyList()
+            val zombieCamos = camosByMode["zombie"] ?: emptyList()
+
+            // Filter prestige common camos (prestigem1, prestigem2, prestigem3)
+            val commonPrestigeCamos = allCamos
                 .filter {
                     val category = it.data["category"]?.asString()
                     category in listOf("prestigem1", "prestigem2", "prestigem3")
