@@ -251,7 +251,7 @@ private fun ModeTabs(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp
     ) {
-        TabRow(
+        SecondaryTabRow(
             selectedTabIndex = modes.indexOf(selectedMode).coerceAtLeast(0),
             containerColor = Color.Transparent,
             contentColor = BadgeColor,
