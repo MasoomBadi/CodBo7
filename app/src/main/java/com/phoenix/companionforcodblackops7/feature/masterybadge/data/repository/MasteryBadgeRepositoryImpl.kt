@@ -44,7 +44,8 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                         mode = data["mode"]?.asString() ?: "",
                         killsRequired = data["kills_required"]?.asInt() ?: 0,
                         sortOrder = data["sort_order"]?.asInt() ?: 0,
-                        isCompleted = false // Will be updated from progress
+                        isCompleted = false, // Will be updated from progress
+                        isLocked = false // Will be calculated based on hierarchy
                     )
                 } catch (e: Exception) {
                     Timber.w(e, "Failed to parse mastery badge entity")
@@ -63,11 +64,28 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
             }
         }
 
-        // Combine requirements with progress
+        // Combine requirements with progress and calculate hierarchy locks
         return combine(badgeRequirementsFlow, progressFlow) { badges, progressMap ->
+            // Group badges by mode to check hierarchy within each mode
+            val badgesByMode = badges.groupBy { it.mode }
+
             badges.map { badge ->
                 val key = "${badge.weaponId}_${badge.badgeLevel}_${badge.mode}"
-                badge.copy(isCompleted = progressMap[key] ?: false)
+                val isCompleted = progressMap[key] ?: false
+
+                // Check if this badge is locked based on hierarchy
+                // A badge is locked if any previous badge (lower sortOrder) in the same mode is not completed
+                val badgesInSameMode = badgesByMode[badge.mode] ?: emptyList()
+                val previousBadges = badgesInSameMode.filter { it.sortOrder < badge.sortOrder }
+                val isLocked = previousBadges.any { previousBadge ->
+                    val previousKey = "${previousBadge.weaponId}_${previousBadge.badgeLevel}_${previousBadge.mode}"
+                    progressMap[previousKey] != true
+                }
+
+                badge.copy(
+                    isCompleted = isCompleted,
+                    isLocked = isLocked
+                )
             }
         }
     }
