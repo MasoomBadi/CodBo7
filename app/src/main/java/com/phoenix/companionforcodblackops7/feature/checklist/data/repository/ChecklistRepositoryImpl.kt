@@ -262,7 +262,11 @@ class ChecklistRepositoryImpl @Inject constructor(
 
         val operatorChecklistMap = checklistItems
             .filter { it.category == ChecklistCategory.OPERATORS.name }
-            .associate { it.id to it.isUnlocked }
+            .associate {
+                // Strip compound key prefix: "OPERATORS_ID" -> "ID"
+                val originalId = it.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
+                originalId to it.isUnlocked
+            }
 
         val unlockedCount = operators.count { operatorChecklistMap[it.id] == true }
 
@@ -282,7 +286,11 @@ class ChecklistRepositoryImpl @Inject constructor(
 
         val prestigeChecklistMap = checklistItems
             .filter { it.category == ChecklistCategory.PRESTIGE.name }
-            .associate { it.id to it.isUnlocked }
+            .associate {
+                // Strip compound key prefix: "PRESTIGE_ID" -> "ID"
+                val originalId = it.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
+                originalId to it.isUnlocked
+            }
 
         val unlockedCount = prestigeItems.count { prestigeChecklistMap[it.id] == true }
 
