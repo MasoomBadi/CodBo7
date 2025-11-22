@@ -7,8 +7,10 @@ import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.reposito
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,6 +27,11 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
 
     companion object {
         private const val TABLE_WEAPON_MASTERY_BADGE = "weapon_mastery_badge"
+    }
+
+    // SharedFlow to manually trigger updates when badges are toggled
+    private val badgeChangeTrigger = MutableSharedFlow<Long>(replay = 1).apply {
+        tryEmit(System.currentTimeMillis())
     }
 
     override fun getBadgesForWeapon(weaponId: Int): Flow<List<MasteryBadge>> {
@@ -110,6 +117,9 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                     Timber.d("Created new completed badge: $id")
                 }
             }
+            // Manually trigger badge change notification
+            badgeChangeTrigger.emit(System.currentTimeMillis())
+            Timber.d("Emitted badge change trigger for weapon $weaponId")
         } catch (e: Exception) {
             Timber.e(e, "Failed to toggle badge completion: $weaponId/$badgeLevel/$mode")
             throw e
@@ -139,12 +149,12 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
     }
 
     override fun observeAllBadgeChanges(): Flow<Long> {
-        // Observe all MasteryBadgeProgressEntity changes and emit count as trigger
-        return realm.query<MasteryBadgeProgressEntity>()
+        // Combine Realm changes with manual trigger for guaranteed updates
+        val realmChanges = realm.query<MasteryBadgeProgressEntity>()
             .asFlow()
-            .map { results ->
-                // Return the count as a trigger value
-                results.list.size.toLong()
-            }
+            .map { System.currentTimeMillis() }
+
+        // Merge both flows to ensure updates are always propagated
+        return merge(realmChanges, badgeChangeTrigger)
     }
 }
