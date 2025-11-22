@@ -5,9 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.Camo
-import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoCategory
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoCriteria
-import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoMode
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.WeaponCamoProgress
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.repository.WeaponCamosRepository
 import io.realm.kotlin.Realm
@@ -25,11 +23,11 @@ class WeaponCamosRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : WeaponCamosRepository {
 
-    override fun getWeaponCamos(weaponId: Int): Flow<Map<CamoMode, List<Camo>>> {
+    override fun getWeaponCamos(weaponId: Int): Flow<Map<String, List<Camo>>> {
         // Get common camos (shared by all weapons)
+        // Dynamically query all categories from database - NO HARDCODED LIST
         val commonCamosFlow = realm.query<DynamicEntity>(
-            "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-            "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
+            buildCommonCamosQuery()
         ).asFlow().map { results ->
             results.list.mapNotNull { entity ->
                 try {
@@ -74,10 +72,36 @@ class WeaponCamosRepositoryImpl @Inject constructor(
         // Combine common and unique camos
         return combine(commonCamosFlow, uniqueCamosFlow) { commonCamos, uniqueCamos ->
             val allCamos = (commonCamos + uniqueCamos)
-                .sortedWith(compareBy({ it.mode.ordinal }, { it.category.ordinal }, { it.sortOrder }))
+                // Sort by mode, then category, then sortOrder (using strings instead of enums)
+                .sortedWith(compareBy({ it.mode }, { it.category }, { it.sortOrder }))
 
             // Group by mode
             allCamos.groupBy { it.mode }
+        }
+    }
+
+    /**
+     * Build Realm query for common camos
+     * Dynamically fetches all categories from database - NO HARDCODED LIST
+     */
+    private fun buildCommonCamosQuery(): String {
+        try {
+            // Query all camos to get distinct categories dynamically
+            val allCamos = realm.query<DynamicEntity>("tableName == 'camo'").find()
+            val categories = allCamos
+                .mapNotNull { it.data["category"]?.asString() }
+                .distinct()
+
+            if (categories.isEmpty()) {
+                Timber.w("No camo categories found in database")
+                return "tableName == 'camo'"
+            }
+
+            val conditions = categories.joinToString(" OR ") { "data['category'] == '$it'" }
+            return "tableName == 'camo' AND ($conditions)"
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to build dynamic camo query")
+            return "tableName == 'camo'"
         }
     }
 
@@ -164,16 +188,58 @@ class WeaponCamosRepositoryImpl @Inject constructor(
         }.sortedBy { it.criteriaOrder }
     }
 
+    /**
+     * Map database entity to Camo model
+     * Completely dynamic - fetches all fields from database
+     */
     private fun mapEntityToCamo(entity: DynamicEntity): Camo {
         val data = entity.data
+        val category = data["category"]?.asString() ?: ""
+        val mode = data["mode"]?.asString() ?: ""
+
         return Camo(
             id = data["id"]?.asInt() ?: 0,
             name = data["name"]?.asString() ?: "",
             displayName = data["display_name"]?.asString() ?: "",
-            category = CamoCategory.fromString(data["category"]?.asString() ?: "military"),
-            mode = CamoMode.fromString(data["mode"]?.asString() ?: "multiplayer"),
+            category = category,
+            categoryDisplayName = formatCategoryDisplayName(category),
+            mode = mode,
+            modeDisplayName = formatModeDisplayName(mode),
             camoUrl = data["camo_url"]?.asString() ?: "",
             sortOrder = data["sort_order"]?.asInt() ?: 0
         )
+    }
+
+    /**
+     * Format category string to display name
+     * Fallback if display names not in database
+     */
+    private fun formatCategoryDisplayName(category: String): String {
+        return when (category.lowercase()) {
+            "military" -> "Military"
+            "special" -> "Special"
+            "mastery" -> "Mastery"
+            "prestige1" -> "Prestige 1"
+            "prestige2" -> "Prestige 2"
+            "prestigem" -> "Prestige Master"
+            "prestigem1" -> "Prestige Master 1"
+            "prestigem2" -> "Prestige Master 2"
+            "prestigem3" -> "Prestige Master 3"
+            else -> category.replace("_", " ").capitalize()
+        }
+    }
+
+    /**
+     * Format mode string to display name
+     * Fallback if display names not in database
+     */
+    private fun formatModeDisplayName(mode: String): String {
+        return when (mode.lowercase()) {
+            "campaign" -> "Campaign"
+            "multiplayer", "mp" -> "Multiplayer"
+            "zombie", "zm" -> "Zombie"
+            "prestige" -> "Prestige"
+            else -> mode.capitalize()
+        }
     }
 }

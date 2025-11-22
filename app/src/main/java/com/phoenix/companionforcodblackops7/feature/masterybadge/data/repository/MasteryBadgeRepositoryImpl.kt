@@ -4,8 +4,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
-import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeLevel
-import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeMode
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeProgress
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.MasteryBadge
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.WeaponMasteryProgress
@@ -42,7 +40,7 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                     Timber.e(e, "Error mapping mastery badge entity")
                     null
                 }
-            }.sortedBy { it.badgeLevel.ordinal }
+            }.sortedBy { it.sortOrder }
         }
 
         return combine(badgesFlow, dataStore.data) { badges, prefs ->
@@ -52,9 +50,9 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
             val mpKills = prefs[mpKillsKey] ?: 0
             val zmKills = prefs[zmKillsKey] ?: 0
 
-            // Create badge progress for each mode
-            val mpBadges = createBadgeProgressList(badges, BadgeMode.MULTIPLAYER, mpKills)
-            val zmBadges = createBadgeProgressList(badges, BadgeMode.ZOMBIE, zmKills)
+            // Create badge progress for each mode (using dynamic strings instead of enums)
+            val mpBadges = createBadgeProgressList(badges, "mp", "Multiplayer", mpKills)
+            val zmBadges = createBadgeProgressList(badges, "zm", "Zombie", zmKills)
 
             WeaponMasteryProgress(
                 weaponId = weaponId,
@@ -79,7 +77,7 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                         Triple(
                             data["id"]?.asInt() ?: 0,
                             data["display_name"]?.asString() ?: "",
-                            data["category"]?.asString() ?: "Assault Rifle"
+                            data["category"]?.asString() ?: "" // No hardcoded default - use empty string
                         )
                     } catch (e: Exception) {
                         Timber.e(e, "Error mapping weapon entity")
@@ -99,16 +97,18 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
 
     private fun createBadgeProgressList(
         badges: List<MasteryBadge>,
-        mode: BadgeMode,
+        mode: String,
+        modeDisplayName: String,
         currentKills: Int
     ): List<BadgeProgress> {
-        val sortedBadges = badges.sortedBy { it.badgeLevel.ordinal }
+        val sortedBadges = badges.sortedBy { it.sortOrder }
         var previousUnlocked = true // First badge is always available
 
         return sortedBadges.map { badge ->
-            val requiredKills = when (mode) {
-                BadgeMode.MULTIPLAYER -> badge.mpKillsRequired
-                BadgeMode.ZOMBIE -> badge.zmKillsRequired
+            val requiredKills = when (mode.lowercase()) {
+                "mp", "multiplayer" -> badge.mpKillsRequired
+                "zm", "zombie" -> badge.zmKillsRequired
+                else -> badge.mpKillsRequired
             }
 
             // Badge is unlocked if:
@@ -128,6 +128,7 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
             BadgeProgress(
                 badge = badge,
                 mode = mode,
+                modeDisplayName = modeDisplayName,
                 currentKills = currentKills,
                 requiredKills = requiredKills,
                 isUnlocked = isUnlocked,
@@ -159,8 +160,8 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
         val mpKills = 0
         val zmKills = 0
 
-        val mpBadges = createBadgeProgressList(badges, BadgeMode.MULTIPLAYER, mpKills)
-        val zmBadges = createBadgeProgressList(badges, BadgeMode.ZOMBIE, zmKills)
+        val mpBadges = createBadgeProgressList(badges, "mp", "Multiplayer", mpKills)
+        val zmBadges = createBadgeProgressList(badges, "zm", "Zombie", zmKills)
 
         return WeaponMasteryProgress(
             weaponId = weaponId,
@@ -173,14 +174,40 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Map database entity to MasteryBadge model
+     * Completely dynamic - fetches all fields from database
+     */
     private fun mapEntityToMasteryBadge(entity: DynamicEntity): MasteryBadge {
         val data = entity.data
+        val badgeLevel = data["badge_level"]?.asString() ?: ""
+
+        // Generate display name from badge_level if not in database
+        val displayName = data["display_name"]?.asString()
+            ?: formatBadgeLevelDisplayName(badgeLevel)
+
         return MasteryBadge(
             id = data["id"]?.asInt() ?: 0,
             weaponId = data["weapon_id"]?.asInt() ?: 0,
-            badgeLevel = BadgeLevel.fromString(data["badge_level"]?.asString() ?: "badge_1"),
+            badgeLevel = badgeLevel,
+            badgeLevelDisplayName = displayName,
+            sortOrder = data["sort_order"]?.asInt() ?: 0,
             mpKillsRequired = data["mp_kills_required"]?.asInt() ?: 0,
             zmKillsRequired = data["zm_kills_required"]?.asInt() ?: 0
         )
+    }
+
+    /**
+     * Format badge level string to display name
+     * Fallback if display_name not in database
+     */
+    private fun formatBadgeLevelDisplayName(badgeLevel: String): String {
+        return when (badgeLevel.lowercase()) {
+            "badge_1" -> "Badge I"
+            "badge_2" -> "Badge II"
+            "badge_3" -> "Badge III"
+            "mastery" -> "Mastery"
+            else -> badgeLevel.replace("_", " ").capitalize()
+        }
     }
 }
