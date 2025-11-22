@@ -1,5 +1,7 @@
 package com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponcamo
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,11 +10,15 @@ import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.Camo
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.Weapon
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.repository.WeaponCamoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,23 +35,24 @@ sealed interface WeaponCamoUiState {
 @HiltViewModel
 class WeaponCamoViewModel @Inject constructor(
     private val repository: WeaponCamoRepository,
+    private val dataStore: DataStore<Preferences>,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val weaponId: Int = savedStateHandle.get<String>("weaponId")?.toIntOrNull() ?: 0
 
     private val _selectedMode = MutableStateFlow(CamoMode.CAMPAIGN)
-    private val weaponFlow = MutableStateFlow<Weapon?>(null)
 
-    init {
-        loadWeapon()
-    }
-
-    private fun loadWeapon() {
-        viewModelScope.launch {
-            weaponFlow.value = repository.getWeapon(weaponId)
-        }
-    }
+    // Reactive weapon flow that updates when preferences change
+    private val weaponFlow: Flow<Weapon?> = dataStore.data
+        .debounce(150) // Debounce rapid checkbox changes
+        .distinctUntilChanged() // Only react to actual changes
+        .map { repository.getWeapon(weaponId) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     val uiState: StateFlow<WeaponCamoUiState> = _selectedMode
         .flatMapLatest { selectedMode ->
@@ -80,8 +87,7 @@ class WeaponCamoViewModel @Inject constructor(
     fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
         viewModelScope.launch {
             repository.toggleCriterion(weaponId, camoId, criterionId)
-            // Note: Weapon progress in top bar will update on next screen entry
-            // Camos update reactively through Flow
+            // Weapon progress and camos update reactively through Flow
         }
     }
 }

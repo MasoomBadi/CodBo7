@@ -274,6 +274,52 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Optimized version that uses pre-fetched criteria map
+     * Used by calculateWeaponProgressSync to avoid N+1 query problem
+     */
+    private fun parseCamoEntityOptimized(
+        entity: DynamicEntity,
+        weaponId: Int,
+        prefs: Preferences,
+        criteriaMap: Map<Int, List<Int>>
+    ): Camo? {
+        val id = entity.data["id"]?.asInt() ?: return null
+        val name = entity.data["name"]?.asString() ?: ""
+        val displayName = entity.data["display_name"]?.asString() ?: ""
+        val category = entity.data["category"]?.asString() ?: ""
+        val mode = entity.data["mode"]?.asString() ?: ""
+        val camoUrl = entity.data["camo_url"]?.asString() ?: ""
+        val sortOrder = entity.data["sort_order"]?.asInt() ?: 0
+        val categoryOrder = entity.data["category_order"]?.asInt() ?: 0
+
+        // Use pre-fetched criteria map instead of querying database
+        val criteria = criteriaMap[id] ?: emptyList()
+        val completedCriteriaCount = criteria.count { criterionId ->
+            val key = booleanPreferencesKey(
+                ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, id, criterionId)
+            )
+            prefs[key] ?: false
+        }
+        val totalCriteriaCount = criteria.size
+        val isCompleted = totalCriteriaCount > 0 && completedCriteriaCount == totalCriteriaCount
+
+        return Camo(
+            id = id,
+            name = name,
+            displayName = displayName,
+            category = category,
+            mode = mode,
+            camoUrl = camoUrl,
+            sortOrder = sortOrder,
+            categoryOrder = categoryOrder,
+            isCompleted = isCompleted,
+            isLocked = true, // Will be computed later based on dependencies
+            criteriaCount = totalCriteriaCount,
+            completedCriteriaCount = completedCriteriaCount
+        )
+    }
+
     private fun getCriteriaForCamo(weaponId: Int, camoId: Int): List<Int> {
         return realm.query<DynamicEntity>(
             "tableName == $0 AND data['weapon_id'] == $1 AND data['camo_id'] == $2",
@@ -371,6 +417,19 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             var totalCamos = 0
             var completedModes = 0
 
+            // OPTIMIZATION: Batch-fetch all criteria for this weapon once (1 query instead of 54)
+            val allCriteriaMap = realm.query<DynamicEntity>(
+                "tableName == $0 AND data['weapon_id'] == $1",
+                ChecklistConstants.Tables.CAMO_CRITERIA,
+                weaponId
+            ).find()
+                .mapNotNull { entity ->
+                    val camoId = entity.data["camo_id"]?.asInt()
+                    val criterionId = entity.data["id"]?.asInt()
+                    if (camoId != null && criterionId != null) camoId to criterionId else null
+                }
+                .groupBy({ it.first }, { it.second })
+
             for (mode in modes) {
                 val camoEntities = realm.query<DynamicEntity>(
                     "tableName == $0 AND data['mode'] == $1",
@@ -379,7 +438,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                 ).find()
 
                 val camosForMode = camoEntities.mapNotNull { entity ->
-                    parseCamoEntity(entity, weaponId, prefs)
+                    parseCamoEntityOptimized(entity, weaponId, prefs, allCriteriaMap)
                 }
 
                 // Filter prestige camos for this weapon
