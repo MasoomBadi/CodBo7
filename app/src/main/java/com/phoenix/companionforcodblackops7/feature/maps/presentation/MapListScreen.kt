@@ -128,7 +128,7 @@ private fun MapListContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(filteredMaps) { map ->
+            items(filteredMaps, key = { it.id }) { map ->
                 MapCard(
                     map = map,
                     borderGlow = borderGlow,

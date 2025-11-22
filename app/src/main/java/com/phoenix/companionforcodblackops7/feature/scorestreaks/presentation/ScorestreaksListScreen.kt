@@ -167,7 +167,7 @@ private fun ScorestreaksContent(
             }
 
             // Scorestreaks list
-            items(scorestreaks) { scorestreak ->
+            items(scorestreaks, key = { it.id }) { scorestreak ->
                 ScorestreakCard(
                     scorestreak = scorestreak,
                     onClick = { onScorestreakClick(scorestreak) },

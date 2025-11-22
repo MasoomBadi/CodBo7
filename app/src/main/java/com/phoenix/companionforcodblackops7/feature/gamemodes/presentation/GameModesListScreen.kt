@@ -117,7 +117,7 @@ private fun GameModesContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(gameModes) { gameMode ->
+            items(gameModes, key = { it.id }) { gameMode ->
                 GameModeCard(
                     gameMode = gameMode,
                     glowAlpha = glowAlpha,

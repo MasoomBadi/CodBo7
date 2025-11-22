@@ -167,7 +167,7 @@ private fun LethalsContent(
             }
 
             // Lethals list
-            items(lethals) { lethal ->
+            items(lethals, key = { it.id }) { lethal ->
                 LethalCard(
                     lethal = lethal,
                     onClick = { onLethalClick(lethal) },

@@ -112,7 +112,7 @@ private fun CategoriesContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(categories) { category ->
+            items(categories, key = { it }) { category ->
                 CategoryCard(
                     category = category,
                     borderGlow = borderGlow,

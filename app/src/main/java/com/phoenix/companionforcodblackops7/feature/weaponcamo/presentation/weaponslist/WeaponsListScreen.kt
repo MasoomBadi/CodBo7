@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,36 +64,61 @@ fun WeaponsListScreen(
         }
 
         is WeaponsListUiState.Success -> {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                state.weaponsByCategory.forEach { (category, weapons) ->
-                    // Category header
-                    item(key = "header_$category") {
-                        Text(
-                            text = category.uppercase(),
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp
-                            ),
-                            color = CODOrange,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
+                ) {
+                    state.weaponsByCategory.forEach { (category, weapons) ->
+                        // Category header
+                        item(key = "header_$category") {
+                            Text(
+                                text = category.uppercase(),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = CODOrange,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
 
-                    // Weapons in this category
-                    items(
-                        items = weapons,
-                        key = { "weapon_${it.id}" }
-                    ) { weapon ->
-                        WeaponCard(
-                            weapon = weapon,
-                            onClick = { onWeaponClick(weapon.id) }
+                        // Weapons in this category
+                        items(
+                            items = weapons,
+                            key = { "weapon_${it.id}" }
+                        ) { weapon ->
+                            WeaponCard(
+                                weapon = weapon,
+                                onClick = { onWeaponClick(weapon.id) }
+                            )
+                        }
+                    }
+                }
+
+                // Fixed Banner Ad Space at Bottom
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(90.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLowest
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Banner Ad Space (320x90)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                         )
                     }
                 }

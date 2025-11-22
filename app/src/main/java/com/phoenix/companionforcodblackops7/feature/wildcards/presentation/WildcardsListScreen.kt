@@ -162,7 +162,7 @@ private fun WildcardsContent(
             }
 
             // Wildcards list
-            items(wildcards) { wildcard ->
+            items(wildcards, key = { it.id }) { wildcard ->
                 WildcardCard(
                     wildcard = wildcard,
                     modifier = Modifier.padding(horizontal = 16.dp)

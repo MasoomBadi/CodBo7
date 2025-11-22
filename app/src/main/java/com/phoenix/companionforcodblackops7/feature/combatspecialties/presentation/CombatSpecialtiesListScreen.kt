@@ -173,7 +173,7 @@ private fun CombatSpecialtiesContent(
                     )
                 }
 
-                items(coreSpecialties) { specialty ->
+                items(coreSpecialties, key = { it.id }) { specialty ->
                     CombatSpecialtyCard(
                         specialty = specialty,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -191,7 +191,7 @@ private fun CombatSpecialtiesContent(
                     )
                 }
 
-                items(hybridSpecialties) { specialty ->
+                items(hybridSpecialties, key = { it.id }) { specialty ->
                     CombatSpecialtyCard(
                         specialty = specialty,
                         modifier = Modifier.padding(horizontal = 16.dp)

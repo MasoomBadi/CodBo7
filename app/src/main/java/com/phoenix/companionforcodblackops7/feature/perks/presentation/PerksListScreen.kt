@@ -356,7 +356,7 @@ private fun SlotSection(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(categoryPerks) { perk ->
+                    items(categoryPerks, key = { it.id }) { perk ->
                         PerkCard(
                             perk = perk,
                             onClick = { onPerkClick(perk) }

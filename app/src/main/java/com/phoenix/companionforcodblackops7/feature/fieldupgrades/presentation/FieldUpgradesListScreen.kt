@@ -167,7 +167,7 @@ private fun FieldUpgradesContent(
             }
 
             // Field Upgrades list
-            items(fieldUpgrades) { fieldUpgrade ->
+            items(fieldUpgrades, key = { it.id }) { fieldUpgrade ->
                 FieldUpgradeCard(
                     fieldUpgrade = fieldUpgrade,
                     onClick = { onFieldUpgradeClick(fieldUpgrade) },
