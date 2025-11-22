@@ -49,8 +49,8 @@ class WeaponMasteryViewModel @Inject constructor(
             // Get available modes dynamically from data
             val availableModes = allBadges.map { it.mode }.distinct().sorted()
 
-            // Filter badges by selected mode
-            val badgesForMode = allBadges.filter { it.mode == selectedMode }
+            // Group badges by mode for HorizontalPager
+            val badgesByMode = allBadges.groupBy { it.mode }
 
             // Calculate progress
             val completedCount = allBadges.count { it.isCompleted }
@@ -62,7 +62,7 @@ class WeaponMasteryViewModel @Inject constructor(
                 weaponCategory = weaponCategory,
                 availableModes = availableModes,
                 selectedMode = selectedMode,
-                badges = badgesForMode,
+                badgesByMode = badgesByMode,
                 completedCount = completedCount,
                 totalCount = totalCount
             )
@@ -119,7 +119,7 @@ sealed class WeaponMasteryUiState {
         val weaponCategory: String,
         val availableModes: List<String>, // Dynamically loaded (e.g., ["multiplayer", "zombies"])
         val selectedMode: String,
-        val badges: List<MasteryBadge>, // Badges for selected mode, sorted by sort_order
+        val badgesByMode: Map<String, List<MasteryBadge>>, // All badges grouped by mode for HorizontalPager
         val completedCount: Int,
         val totalCount: Int
     ) : WeaponMasteryUiState()
