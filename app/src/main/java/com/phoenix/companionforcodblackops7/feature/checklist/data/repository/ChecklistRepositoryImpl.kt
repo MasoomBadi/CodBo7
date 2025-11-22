@@ -95,25 +95,23 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     override suspend fun toggleItemUnlocked(itemId: String, category: ChecklistCategory) {
         try {
-            Timber.d("Toggling item: id=$itemId, category=${category.name}")
+            // Use compound key: "CATEGORY_ID" to avoid conflicts (Realm doesn't support composite PKs)
+            val compoundKey = "${category.name}_$itemId"
+            Timber.d("Toggling item: id=$itemId, category=${category.name}, compoundKey=$compoundKey")
+
             realm.write {
-                // Query by BOTH id AND category to avoid conflicts between categories
-                val existing = query<ChecklistItemEntity>(
-                    "id == $0 AND category == $1",
-                    itemId,
-                    category.name
-                ).first().find()
+                val existing = query<ChecklistItemEntity>("id == $0", compoundKey).first().find()
 
                 if (existing != null) {
                     existing.isUnlocked = !existing.isUnlocked
-                    Timber.d("Toggled existing item $itemId (category=${existing.category}): ${existing.isUnlocked}")
+                    Timber.d("Toggled existing item $compoundKey: ${existing.isUnlocked}")
                 } else {
                     copyToRealm(ChecklistItemEntity().apply {
-                        id = itemId
-                        this.category = category.name
+                        id = compoundKey
+                        category = category.name
                         isUnlocked = true
                     })
-                    Timber.d("Created new unlocked item: $itemId (category=${category.name})")
+                    Timber.d("Created new unlocked item: $compoundKey (category=${category.name})")
                 }
             }
         } catch (e: Exception) {
@@ -124,11 +122,9 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     override suspend fun isItemUnlocked(itemId: String, category: ChecklistCategory): Boolean {
         return try {
-            realm.query<ChecklistItemEntity>(
-                "id == $0 AND category == $1",
-                itemId,
-                category.name
-            )
+            // Use compound key: "CATEGORY_ID"
+            val compoundKey = "${category.name}_$itemId"
+            realm.query<ChecklistItemEntity>("id == $0", compoundKey)
                 .first()
                 .find()
                 ?.isUnlocked ?: false
@@ -414,12 +410,17 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     /**
      * Get checklist unlock state as Flow
+     * Strips the compound key prefix to return original IDs
      */
     private fun getChecklistMap(category: ChecklistCategory): Flow<Map<String, Boolean>> {
         return realm.query<ChecklistItemEntity>("category == $0", category.name)
             .asFlow()
             .map { results ->
-                results.list.associate { it.id to it.isUnlocked }
+                results.list.associate {
+                    // Strip compound key prefix: "CATEGORY_ID" -> "ID"
+                    val originalId = it.id.removePrefix("${category.name}_")
+                    originalId to it.isUnlocked
+                }
             }
     }
 
