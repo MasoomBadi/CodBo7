@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
@@ -437,24 +438,10 @@ fun OperatorDetailsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Banner Ad Space
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Banner Ad Space (320x90)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    )
-                }
-            }
+            // Banner Ad at Bottom
+            BannerAd(
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -506,24 +493,10 @@ fun OperatorsScreen(
             }
         }
 
-        // Banner Ad Space at Bottom
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Banner Ad Space (320x90)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            }
-        }
+        // Banner Ad at Bottom
+        BannerAd(
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

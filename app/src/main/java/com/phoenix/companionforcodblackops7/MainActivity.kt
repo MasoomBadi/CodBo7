@@ -118,6 +118,7 @@ import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weap
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.WeaponsListScreen
 import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.WildcardsListScreen
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -1134,24 +1135,10 @@ fun DashboardScreen(
             }
         }
 
-        // Banner Ad Space at Bottom
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Banner Ad Space (320x90)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            }
-        }
+        // Banner Ad at Bottom
+        BannerAd(
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
