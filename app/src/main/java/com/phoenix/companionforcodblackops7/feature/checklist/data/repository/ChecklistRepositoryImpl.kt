@@ -107,9 +107,9 @@ class ChecklistRepositoryImpl @Inject constructor(
                     Timber.d("Toggled existing item $compoundKey: ${existing.isUnlocked}")
                 } else {
                     copyToRealm(ChecklistItemEntity().apply {
-                        id = compoundKey
-                        this.category = category
-                        isUnlocked = true
+                        this.id = compoundKey
+                        this.category = category.name
+                        this.isUnlocked = true
                     })
                     Timber.d("Created new unlocked item: $compoundKey (category=${category.name})")
                 }
@@ -261,7 +261,7 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (operators.isEmpty()) return
 
         val operatorChecklistMap = checklistItems
-            .filter { entity -> entity.category == ChecklistCategory.OPERATORS }
+            .filter { entity -> entity.category == ChecklistCategory.OPERATORS.name }
             .associate { entity ->
                 // Strip compound key prefix: "OPERATORS_ID" -> "ID"
                 val originalId = entity.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
@@ -285,7 +285,7 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (prestigeItems.isEmpty()) return
 
         val prestigeChecklistMap = checklistItems
-            .filter { entity -> entity.category == ChecklistCategory.PRESTIGE }
+            .filter { entity -> entity.category == ChecklistCategory.PRESTIGE.name }
             .associate { entity ->
                 // Strip compound key prefix: "PRESTIGE_ID" -> "ID"
                 val originalId = entity.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
@@ -421,7 +421,7 @@ class ChecklistRepositoryImpl @Inject constructor(
      * Strips the compound key prefix to return original IDs
      */
     private fun getChecklistMap(category: ChecklistCategory): Flow<Map<String, Boolean>> {
-        return realm.query<ChecklistItemEntity>("category == $0", category)
+        return realm.query<ChecklistItemEntity>("category == $0", category.name)
             .asFlow()
             .map { results ->
                 results.list.associate {
