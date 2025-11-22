@@ -265,6 +265,37 @@ class ChecklistRepositoryImpl @Inject constructor(
                 )
             }
 
+            // Calculate mastery badge progress
+            if (weaponCount > 0) {
+                // 6 badges per weapon (3 MP + 3 ZM)
+                val totalBadges = weaponCount * 6
+
+                // Count unlocked badges across all weapons
+                var unlockedBadges = 0
+                for (weaponId in 1..weaponCount) {
+                    val mpKillsKey = intPreferencesKey("weapon_${weaponId}_mp_kills")
+                    val zmKillsKey = intPreferencesKey("weapon_${weaponId}_zm_kills")
+                    val mpKills = prefs[mpKillsKey] ?: 0
+                    val zmKills = prefs[zmKillsKey] ?: 0
+
+                    // Count MP badges (sequential unlock)
+                    if (mpKills >= 100) unlockedBadges++ // Badge I
+                    if (mpKills >= 250) unlockedBadges++ // Badge II
+                    if (mpKills >= 500) unlockedBadges++ // Mastery
+
+                    // Count ZM badges (sequential unlock)
+                    if (zmKills >= 500) unlockedBadges++ // Badge I
+                    if (zmKills >= 1500) unlockedBadges++ // Badge II
+                    if (zmKills >= 3000) unlockedBadges++ // Mastery
+                }
+
+                categoryProgressMap[ChecklistCategory.MASTERY_BADGES] = CategoryProgress(
+                    category = ChecklistCategory.MASTERY_BADGES,
+                    totalItems = totalBadges,
+                    unlockedItems = unlockedBadges
+                )
+            }
+
             val totalItems = categoryProgressMap.values.sumOf { it.totalItems }
             val totalUnlocked = categoryProgressMap.values.sumOf { it.unlockedItems }
 

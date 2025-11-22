@@ -85,6 +85,7 @@ import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.Wildc
 import com.phoenix.companionforcodblackops7.feature.prestige.presentation.PrestigeInfoScreen
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.WeaponsListScreen
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.presentation.WeaponCamosScreen
+import com.phoenix.companionforcodblackops7.feature.masterybadge.presentation.WeaponMasteryScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -303,6 +304,14 @@ fun AppNavigation(
 
         composable("weaponCamos/{weaponId}/{weaponName}/{weaponCategory}") {
             WeaponCamosScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("weaponMastery/{weaponId}/{weaponName}/{weaponCategory}") {
+            WeaponMasteryScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
