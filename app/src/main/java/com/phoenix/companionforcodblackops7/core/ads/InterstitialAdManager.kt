@@ -20,12 +20,12 @@ class InterstitialAdManager @Inject constructor() {
     private var isLoading = false
     private var lastShowTime: Long = 0
 
-    // Minimum interval between ads (60 seconds)
-    private val minIntervalMs = 60_000L
+    // Minimum interval between ads (60 seconds for production, 10 seconds for debug)
+    private val minIntervalMs = if (BuildConfig.DEBUG) 10_000L else 60_000L
 
-    // Counter for actions - show ad every N actions
+    // Counter for actions - show ad every N actions (1 for debug testing, 3 for production)
     private var actionCounter = 0
-    private val actionsBeforeAd = 3 // Show ad every 3 detail screen views
+    private val actionsBeforeAd = if (BuildConfig.DEBUG) 1 else 3
 
     private val adUnitId: String
         get() = if (BuildConfig.DEBUG) {
@@ -38,11 +38,13 @@ class InterstitialAdManager @Inject constructor() {
      * Load an interstitial ad. Call this early (e.g., on app start or screen load)
      */
     fun loadAd(context: Context) {
+        Timber.d("Interstitial: loadAd called, isLoading=$isLoading, adReady=${interstitialAd != null}")
         if (isLoading || interstitialAd != null) {
-            Timber.d("Interstitial ad already loaded or loading")
+            Timber.d("Interstitial: Skipping load - already loaded or loading")
             return
         }
 
+        Timber.d("Interstitial: Starting to load ad with unitId=$adUnitId")
         isLoading = true
         val adRequest = AdRequest.Builder().build()
 
@@ -93,6 +95,7 @@ class InterstitialAdManager @Inject constructor() {
      */
     fun recordAction() {
         actionCounter++
+        Timber.d("Interstitial: recordAction called, actionCounter=$actionCounter, need=$actionsBeforeAd, adReady=${interstitialAd != null}")
     }
 
     /**
