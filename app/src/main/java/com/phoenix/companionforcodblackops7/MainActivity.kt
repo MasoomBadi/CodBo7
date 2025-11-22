@@ -89,6 +89,7 @@ import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weap
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponcamo.WeaponCamoScreen
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.camodetail.CamoDetailScreen
 import com.phoenix.companionforcodblackops7.feature.feedback.presentation.HelpFeedbackScreen
+import com.phoenix.companionforcodblackops7.core.analytics.AnalyticsHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -102,6 +103,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var iconsRepository: IconsRepository
+
+    @Inject
+    lateinit var analyticsHelper: AnalyticsHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -122,7 +126,8 @@ class MainActivity : ComponentActivity() {
                     ) {
                         AppNavigation(
                             networkMonitor = networkMonitor,
-                            iconsRepository = iconsRepository
+                            iconsRepository = iconsRepository,
+                            analyticsHelper = analyticsHelper
                         )
                     }
                 }
@@ -163,9 +168,22 @@ fun ConnectivityWrapper(
 @Composable
 fun AppNavigation(
     networkMonitor: NetworkMonitor,
-    iconsRepository: IconsRepository
+    iconsRepository: IconsRepository,
+    analyticsHelper: AnalyticsHelper
 ) {
     val navController = rememberNavController()
+
+    // Track screen views on navigation changes
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect { backStackEntry ->
+            val route = backStackEntry.destination.route ?: return@collect
+            val screenName = route.substringBefore("/").substringBefore("?")
+            analyticsHelper.logScreenView(
+                screenName = screenName,
+                screenClass = "MainActivity"
+            )
+        }
+    }
 
     // State to hold selected operator and iconMap for navigation to details
     var selectedOperator by remember { mutableStateOf<Operator?>(null) }
