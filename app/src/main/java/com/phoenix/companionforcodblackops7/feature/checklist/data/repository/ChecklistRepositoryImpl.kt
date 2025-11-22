@@ -228,7 +228,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                     id = "$weaponId|$weaponCategory",
                     name = weaponName,
                     category = ChecklistCategory.MASTERY_BADGES,
-                    isUnlocked = false, // Not applicable for badges
+                    isUnlocked = completedCount == totalCount && totalCount > 0, // Unlocked when all badges completed
                     imageUrl = iconUrl,
                     unlockCriteria = "$completedCount/$totalCount badges unlocked"
                 )

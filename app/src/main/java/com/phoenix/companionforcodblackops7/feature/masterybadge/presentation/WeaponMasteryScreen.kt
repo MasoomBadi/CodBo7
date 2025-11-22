@@ -24,11 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalDensity
+import android.widget.Toast
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.MasteryBadge
 
@@ -257,28 +259,30 @@ private fun ModeTabs(
             selectedTabIndex = modes.indexOf(selectedMode).coerceAtLeast(0),
             containerColor = Color.Transparent,
             contentColor = BadgeColor,
-            indicator = @Composable {
-                TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorLayout { measurable, constraints, tabPositions ->
-                        val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
-                        val tabPosition = tabPositions[index]
-                        val indicatorWidth = tabPosition.contentWidth
-                        val indicatorOffset = tabPosition.left
+            indicator = @Composable { tabPositions ->
+                if (tabPositions.isNotEmpty()) {
+                    val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
+                    TabRowDefaults.SecondaryIndicator(
+                        modifier = Modifier.tabIndicatorLayout { measurable, constraints, positions ->
+                            val currentTabPosition = positions[index]
+                            val indicatorWidth = currentTabPosition.contentWidth
+                            val indicatorOffset = currentTabPosition.left
 
-                        val placeable = measurable.measure(
-                            constraints.copy(
-                                minWidth = indicatorWidth.roundToPx(),
-                                maxWidth = indicatorWidth.roundToPx()
+                            val placeable = measurable.measure(
+                                constraints.copy(
+                                    minWidth = indicatorWidth.roundToPx(),
+                                    maxWidth = indicatorWidth.roundToPx()
+                                )
                             )
-                        )
 
-                        layout(constraints.maxWidth, placeable.height) {
-                            placeable.placeRelative(indicatorOffset.roundToPx(), 0)
-                        }
-                    },
-                    color = BadgeColor,
-                    height = 3.dp
-                )
+                            layout(constraints.maxWidth, placeable.height) {
+                                placeable.placeRelative(indicatorOffset.roundToPx(), 0)
+                            }
+                        },
+                        color = BadgeColor,
+                        height = 3.dp
+                    )
+                }
             }
         ) {
             modes.forEach { mode ->
@@ -312,6 +316,8 @@ private fun BadgeCard(
     badge: MasteryBadge,
     onToggle: () -> Unit
 ) {
+    val context = LocalContext.current
+
     // Glow animation for completed badges
     val infiniteTransition = rememberInfiniteTransition(label = "badgeGlow")
     val glowAlpha by infiniteTransition.animateFloat(
@@ -338,7 +344,14 @@ private fun BadgeCard(
 
     Card(
         onClick = if (badge.isLocked) {
-            {} // Disable click for locked badges
+            {
+                // Show toast for locked badges
+                Toast.makeText(
+                    context,
+                    "Complete previous badges first to unlock this one",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         } else {
             onToggle
         },
