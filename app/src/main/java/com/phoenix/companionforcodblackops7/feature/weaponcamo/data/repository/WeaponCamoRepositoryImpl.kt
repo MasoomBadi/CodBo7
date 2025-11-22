@@ -32,6 +32,13 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : WeaponCamoRepository {
 
+    // Cache total modes count to ensure consistency across all weapons
+    private val cachedTotalModes: Int by lazy {
+        val count = getDistinctModes().size
+        Timber.d("Cached total modes count: $count")
+        count
+    }
+
     // =============================================================================================
     // Weapons
     // =============================================================================================
@@ -420,11 +427,11 @@ class WeaponCamoRepositoryImpl @Inject constructor(
 
     /**
      * Get total number of modes from database dynamically
+     * Uses cached value for consistency across all weapon instances
      * @return Total count of distinct modes
      */
     private fun getTotalModesCount(): Int {
-        val count = getDistinctModes().size
-        Timber.d("Total modes count: $count")
-        return count
+        Timber.d("Returning cached total modes count: $cachedTotalModes")
+        return cachedTotalModes
     }
 }
