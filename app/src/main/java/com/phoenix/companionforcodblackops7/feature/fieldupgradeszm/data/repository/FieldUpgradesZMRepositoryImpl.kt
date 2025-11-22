@@ -6,8 +6,11 @@ import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.model
 import com.phoenix.companionforcodblackops7.feature.fieldupgradeszm.domain.repository.FieldUpgradesZMRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -62,5 +65,7 @@ class FieldUpgradesZMRepositoryImpl @Inject constructor(
                 fieldUpgrade.copy(augments = fieldUpgradeAugments)
             }
         }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 }

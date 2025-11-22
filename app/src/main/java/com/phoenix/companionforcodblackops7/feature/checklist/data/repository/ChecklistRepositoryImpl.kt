@@ -17,8 +17,11 @@ import com.phoenix.companionforcodblackops7.feature.operators.domain.repository.
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.repository.PrestigeRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -65,21 +68,31 @@ class ChecklistRepositoryImpl @Inject constructor(
         val prestigeFlow = prestigeRepository.getAllPrestigeItems()
         val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { it.list }
         val weaponsFlow = getWeaponEntities().map { it.size }
+        // Add weapon camo progress flow - reactive to Realm changes!
+        val camoProgressFlow = realm.query<DynamicEntity>(
+            "tableName == $0",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS
+        ).asFlow().map { results ->
+            results.list
+                .filter { it.data["is_completed"]?.asBoolean() == true }
+                .mapNotNull { it.data["progress_key"]?.asString() }
+                .toSet()
+        }
 
         return combine(
             operatorsFlow,
             prestigeFlow,
             checklistFlow,
             weaponsFlow,
-            dataStore.data
-        ) { operators, prestigeItems, checklistItems, weaponCount, prefs ->
+            camoProgressFlow
+        ) { operators, prestigeItems, checklistItems, weaponCount, completedCriteriaKeys ->
             val categoryProgressMap = mutableMapOf<ChecklistCategory, CategoryProgress>()
 
             // Calculate progress for each category
             calculateOperatorProgress(operators, checklistItems, categoryProgressMap)
             calculatePrestigeProgress(prestigeItems, checklistItems, categoryProgressMap)
-            calculateWeaponCamoProgress(weaponCount, prefs, categoryProgressMap)
-            calculateMasteryBadgeProgress(weaponCount, prefs, categoryProgressMap)
+            calculateWeaponCamoProgressFromRealm(weaponCount, completedCriteriaKeys, categoryProgressMap)
+            calculateMasteryBadgeProgressFromRealm(weaponCount, categoryProgressMap)
 
             // Aggregate overall progress
             val totalItems = categoryProgressMap.values.sumOf { it.totalItems }
@@ -91,6 +104,8 @@ class ChecklistRepositoryImpl @Inject constructor(
                 categoryProgress = categoryProgressMap
             )
         }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default) // Heavy computation off main thread
     }
 
     override suspend fun toggleItemUnlocked(itemId: String, category: ChecklistCategory) {
@@ -364,24 +379,26 @@ class ChecklistRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun calculateWeaponCamoProgress(
+    /**
+     * Calculate weapon camo progress from Realm database
+     * Uses the completedCriteriaKeys set from the reactive Flow
+     */
+    private fun calculateWeaponCamoProgressFromRealm(
         weaponCount: Int,
-        prefs: Preferences,
+        completedCriteriaKeys: Set<String>,
         progressMap: MutableMap<ChecklistCategory, CategoryProgress>
     ) {
         if (weaponCount == 0) return
 
         try {
             val weapons = getWeaponEntitiesSync()
-            Timber.d("Weapon Camo Progress - Total weapons: ${weapons.size}")
 
-            // OPTIMAL: Query ALL camos once (138 rows), then group in memory
+            // Query ALL camos once, group by mode
             val allCamos = realm.query<DynamicEntity>(
                 "tableName == $0",
                 ChecklistConstants.Tables.CAMO
             ).find()
 
-            // Group by mode in memory (microseconds vs milliseconds for DB queries)
             val camosByMode = allCamos.groupBy {
                 it.data["mode"]?.asString() ?: ""
             }.mapValues { (_, camos) ->
@@ -392,20 +409,11 @@ class ChecklistRepositoryImpl @Inject constructor(
             val multiplayerCamos = camosByMode["multiplayer"] ?: emptyList()
             val zombieCamos = camosByMode["zombie"] ?: emptyList()
 
-            // Filter prestige common camos (prestigem1, prestigem2, prestigem3)
-            // Per user's SQL: 3 common + 3 unique (from weapon_camo) = 6 total prestige per weapon
-            // Common: prestigem1, prestigem2, prestigem3 (same for all weapons)
-            // Unique: prestige1, prestige2, prestigel (stored in weapon_camo table)
             val commonPrestigeCamos = allCamos
-                .filter {
-                    val category = it.data["category"]?.asString()
-                    category in listOf("prestigem1", "prestigem2", "prestigem3")
-                }
+                .filter { it.data["category"]?.asString() in listOf("prestigem1", "prestigem2", "prestigem3") }
                 .mapNotNull { it.data["id"]?.asInt() }
 
-            Timber.d("Weapon Camo Progress - Camos per mode: campaign=${campaignCamos.size}, multiplayer=${multiplayerCamos.size}, zombie=${zombieCamos.size}, commonPrestige=${commonPrestigeCamos.size}")
-
-            // Query all weapon-specific prestige mappings ONCE (1 query instead of 29)
+            // Query weapon-prestige mappings
             val weaponPrestigeMap = realm.query<DynamicEntity>(
                 "tableName == $0",
                 ChecklistConstants.Tables.WEAPON_CAMO
@@ -417,7 +425,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
                 .groupBy({ it.first }, { it.second })
 
-            // Query all criteria ONCE (1 query instead of thousands)
+            // Query all criteria
             val allCriteriaMap = realm.query<DynamicEntity>(
                 "tableName == $0",
                 ChecklistConstants.Tables.CAMO_CRITERIA
@@ -432,39 +440,31 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
                 .groupBy({ it.first to it.second }, { it.third })
 
-            // Calculate totals
             var totalCamosCount = 0
             var unlockedCamosCount = 0
-            var totalPrestigeCamosCount = 0
 
-            // Process each weapon in memory
             for (weaponEntity in weapons) {
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
 
-                // Campaign camos (all weapons get all campaign camos)
+                // Campaign
                 totalCamosCount += campaignCamos.size
-                unlockedCamosCount += countCompletedCamos(weaponId, campaignCamos, allCriteriaMap, prefs)
+                unlockedCamosCount += countCompletedCamosFromRealm(weaponId, campaignCamos, allCriteriaMap, completedCriteriaKeys)
 
-                // Multiplayer camos (all weapons get all multiplayer camos)
+                // Multiplayer
                 totalCamosCount += multiplayerCamos.size
-                unlockedCamosCount += countCompletedCamos(weaponId, multiplayerCamos, allCriteriaMap, prefs)
+                unlockedCamosCount += countCompletedCamosFromRealm(weaponId, multiplayerCamos, allCriteriaMap, completedCriteriaKeys)
 
-                // Zombie camos (all weapons get all zombie camos)
+                // Zombie
                 totalCamosCount += zombieCamos.size
-                unlockedCamosCount += countCompletedCamos(weaponId, zombieCamos, allCriteriaMap, prefs)
+                unlockedCamosCount += countCompletedCamosFromRealm(weaponId, zombieCamos, allCriteriaMap, completedCriteriaKeys)
 
-                // Prestige camos (weapon-specific + common)
+                // Prestige
                 val weaponPrestigeCamos = (weaponPrestigeMap[weaponId] ?: emptyList()) + commonPrestigeCamos
                 totalCamosCount += weaponPrestigeCamos.size
-                totalPrestigeCamosCount += weaponPrestigeCamos.size
-                unlockedCamosCount += countCompletedCamos(weaponId, weaponPrestigeCamos, allCriteriaMap, prefs)
+                unlockedCamosCount += countCompletedCamosFromRealm(weaponId, weaponPrestigeCamos, allCriteriaMap, completedCriteriaKeys)
             }
 
-            val expectedTotal = (campaignCamos.size + multiplayerCamos.size + zombieCamos.size) * weapons.size + totalPrestigeCamosCount
-            Timber.d("Weapon Camo Progress - Expected: ${weapons.size} weapons × 54 camos = ${weapons.size * 54}")
-            Timber.d("Weapon Camo Progress - Calculated: campaign=${campaignCamos.size * weapons.size}, multiplayer=${multiplayerCamos.size * weapons.size}, zombie=${zombieCamos.size * weapons.size}, prestige=$totalPrestigeCamosCount")
-            Timber.d("Weapon Camo Progress - Total: $totalCamosCount (expected: $expectedTotal)")
-            Timber.d("Weapon Camo Progress - Unlocked: $unlockedCamosCount/$totalCamosCount")
+            Timber.d("Weapon Camo Progress (Realm) - Unlocked: $unlockedCamosCount/$totalCamosCount")
 
             progressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
                 category = ChecklistCategory.WEAPONS,
@@ -472,22 +472,21 @@ class ChecklistRepositoryImpl @Inject constructor(
                 unlockedItems = unlockedCamosCount
             )
         } catch (e: Exception) {
-            Timber.e(e, "Failed to calculate weapon camo progress")
-            // Don't add to progress map if calculation fails
+            Timber.e(e, "Failed to calculate weapon camo progress from Realm")
         }
     }
 
-    private fun calculateMasteryBadgeProgress(
+    /**
+     * Calculate mastery badge progress from Realm database
+     */
+    private fun calculateMasteryBadgeProgressFromRealm(
         weaponCount: Int,
-        prefs: Preferences,
         progressMap: MutableMap<ChecklistCategory, CategoryProgress>
     ) {
         if (weaponCount == 0) return
 
         try {
             val weapons = getWeaponEntitiesSync()
-
-            // Calculate total badges dynamically from database
             var totalBadges = 0
             var completedBadges = 0
 
@@ -509,7 +508,30 @@ class ChecklistRepositoryImpl @Inject constructor(
             )
         } catch (e: Exception) {
             Timber.e(e, "Failed to calculate mastery badge progress")
-            // Don't add to progress map if calculation fails
+        }
+    }
+
+    /**
+     * Count completed camos using Realm progress keys
+     * Progress key format: w{weaponId}_c{camoId}_cr{criterionId}
+     */
+    private fun countCompletedCamosFromRealm(
+        weaponId: Int,
+        camoIds: List<Int>,
+        criteriaMap: Map<Pair<Int, Int>, List<Int>>,
+        completedCriteriaKeys: Set<String>
+    ): Int {
+        return camoIds.count { camoId ->
+            val criteriaIds = criteriaMap[weaponId to camoId] ?: emptyList()
+            if (criteriaIds.isEmpty()) {
+                false
+            } else {
+                // Camo is completed if ALL criteria are completed
+                criteriaIds.all { criterionId ->
+                    val progressKey = "w${weaponId}_c${camoId}_cr${criterionId}"
+                    completedCriteriaKeys.contains(progressKey)
+                }
+            }
         }
     }
 

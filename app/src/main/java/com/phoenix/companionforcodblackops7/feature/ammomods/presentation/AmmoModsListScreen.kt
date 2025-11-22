@@ -166,7 +166,7 @@ private fun AmmoModsContent(
             }
 
             // Ammo Mods list
-            items(ammoMods) { ammoMod ->
+            items(ammoMods, key = { it.id }) { ammoMod ->
                 AmmoModCard(
                     ammoMod = ammoMod,
                     onClick = { onAmmoModClick(ammoMod) },

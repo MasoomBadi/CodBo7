@@ -10,7 +10,10 @@ import com.phoenix.companionforcodblackops7.feature.maps.domain.repository.MapsR
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmAny
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -40,6 +43,8 @@ class MapsRepositoryImpl @Inject constructor(
                     }
                 }
             }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override fun getMapById(mapId: String): Flow<GameMap?> {

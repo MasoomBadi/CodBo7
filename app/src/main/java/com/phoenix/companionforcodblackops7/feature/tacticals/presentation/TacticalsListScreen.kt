@@ -167,7 +167,7 @@ private fun TacticalsContent(
             }
 
             // Tacticals list
-            items(tacticals) { tactical ->
+            items(tacticals, key = { it.id }) { tactical ->
                 TacticalCard(
                     tactical = tactical,
                     onClick = { onTacticalClick(tactical) },

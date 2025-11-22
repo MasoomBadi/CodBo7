@@ -5,7 +5,10 @@ import com.phoenix.companionforcodblackops7.feature.powerups.domain.model.PowerU
 import com.phoenix.companionforcodblackops7.feature.powerups.domain.repository.PowerUpsRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -41,5 +44,7 @@ class PowerUpsRepositoryImpl @Inject constructor(
                     }
                 }.sortedBy { it.sortOrder }
             }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 }

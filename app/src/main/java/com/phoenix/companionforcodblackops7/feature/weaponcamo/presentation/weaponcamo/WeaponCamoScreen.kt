@@ -46,6 +46,8 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
@@ -98,6 +100,9 @@ fun WeaponCamoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
+
+    // Snackbar for locked camo message
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Bottom sheet state
     var selectedCamo by remember { mutableStateOf<Camo?>(null) }
@@ -156,7 +161,8 @@ fun WeaponCamoScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { scaffoldPadding ->
         when (val state = uiState) {
             is WeaponCamoUiState.Loading -> {
@@ -234,12 +240,38 @@ fun WeaponCamoScreen(
                             camoCategories = state.camoCategories,
                             weaponId = state.weapon.id,
                             onCamoClick = { camo ->
-                                if (!camo.isLocked) {
+                                if (camo.isLocked) {
+                                    // Show snackbar for locked camo
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Complete previous camos to unlock this one"
+                                        )
+                                    }
+                                } else {
                                     selectedCamo = camo
                                     showBottomSheet = true
                                 }
                             }
                         )
+                    }
+
+                    // Fixed Banner Ad Space at Bottom
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Banner Ad Space (320x90)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            )
+                        }
                     }
                 }
 
@@ -522,8 +554,8 @@ private fun CamoGridItem(
                 MaterialTheme.colorScheme.surfaceContainer
             }
         ),
-        shape = RoundedCornerShape(12.dp),
-        enabled = !camo.isLocked
+        shape = RoundedCornerShape(12.dp)
+        // No enabled = false, so locked camos can still be clicked to show snackbar
     ) {
         Column(
             modifier = Modifier.padding(8.dp),

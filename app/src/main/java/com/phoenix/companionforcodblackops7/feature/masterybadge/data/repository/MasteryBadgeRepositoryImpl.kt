@@ -6,9 +6,12 @@ import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.Ma
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.repository.MasteryBadgeRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import timber.log.Timber
@@ -95,6 +98,8 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                 )
             }
         }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 
     override suspend fun toggleBadgeCompletion(weaponId: Int, badgeLevel: String, mode: String) {

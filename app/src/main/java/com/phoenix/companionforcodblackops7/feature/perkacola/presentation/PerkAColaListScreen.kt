@@ -166,7 +166,7 @@ private fun PerkAColaContent(
             }
 
             // Perk-a-Cola list
-            items(perkAColas) { perk ->
+            items(perkAColas, key = { it.id }) { perk ->
                 PerkAColaCard(
                     perk = perk,
                     onClick = { onPerkClick(perk) },

@@ -7,7 +7,10 @@ import com.phoenix.companionforcodblackops7.feature.prestige.domain.model.Presti
 import com.phoenix.companionforcodblackops7.feature.prestige.domain.repository.PrestigeRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -64,5 +67,7 @@ class PrestigeRepositoryImpl @Inject constructor(
                     }
                 }.sortedBy { it.level }
             }
+            .distinctUntilChanged()
+            .flowOn(Dispatchers.Default)
     }
 }
