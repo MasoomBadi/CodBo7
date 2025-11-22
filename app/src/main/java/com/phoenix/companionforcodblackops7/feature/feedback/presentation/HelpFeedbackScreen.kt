@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -17,19 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HelpFeedbackScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: HelpFeedbackViewModel = hiltViewModel()
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
-    var feedbackText by remember { mutableStateOf("") }
-    var isSubmitting by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -53,8 +54,7 @@ fun HelpFeedbackScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -69,44 +69,29 @@ fun HelpFeedbackScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Early Access Disclaimer
-                item {
+                item(key = "disclaimer") {
                     DisclaimerCard()
                 }
 
                 // Data Storage Warning
-                item {
+                item(key = "storage_warning") {
                     DataStorageWarningCard()
                 }
 
                 // Feedback Section
-                item {
+                item(key = "feedback") {
                     FeedbackCard(
-                        feedbackText = feedbackText,
-                        onFeedbackChange = { feedbackText = it },
-                        isSubmitting = isSubmitting,
-                        onSubmit = {
-                            if (feedbackText.isNotBlank()) {
-                                isSubmitting = true
-                                coroutineScope.launch {
-                                    // TODO: Replace with API call when endpoint is provided
-                                    try {
-                                        // Simulate API call for now
-                                        kotlinx.coroutines.delay(1000)
-                                        snackbarHostState.showSnackbar("Thank you for your feedback!")
-                                        feedbackText = ""
-                                    } catch (e: Exception) {
-                                        snackbarHostState.showSnackbar("Failed to send feedback. Please try again.")
-                                    } finally {
-                                        isSubmitting = false
-                                    }
-                                }
-                            }
-                        }
+                        feedbackText = uiState.feedbackText,
+                        onFeedbackChange = viewModel::onFeedbackTextChange,
+                        isSubmitting = uiState.isSubmitting,
+                        isValid = uiState.isValidFeedback,
+                        validationError = uiState.validationError,
+                        onSubmit = viewModel::submitFeedback
                     )
                 }
 
                 // Spacer at bottom
-                item {
+                item(key = "spacer") {
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -130,7 +115,147 @@ fun HelpFeedbackScreen(
                 }
             }
         }
+
+        // Success Dialog
+        if (uiState.showSuccessDialog) {
+            FeedbackSuccessDialog(
+                onDismiss = viewModel::dismissSuccessDialog
+            )
+        }
+
+        // Error Dialog
+        if (uiState.showErrorDialog) {
+            FeedbackErrorDialog(
+                errorMessage = uiState.errorMessage,
+                onDismiss = viewModel::dismissErrorDialog,
+                onRetry = {
+                    viewModel.dismissErrorDialog()
+                    viewModel.submitFeedback()
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun FeedbackSuccessDialog(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = "Success",
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "FEEDBACK SUBMITTED",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = "Thank you for your feedback! We appreciate you taking the time to help us improve the app.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "GOT IT",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = MaterialTheme.colorScheme.surface
+    )
+}
+
+@Composable
+private fun FeedbackErrorDialog(
+    errorMessage: String,
+    onDismiss: () -> Unit,
+    onRetry: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = "Error",
+                tint = Color(0xFFE53935),
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "SUBMISSION FAILED",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "RETRY",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "CANCEL",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }
 
 @Composable
@@ -229,6 +354,8 @@ private fun FeedbackCard(
     feedbackText: String,
     onFeedbackChange: (String) -> Unit,
     isSubmitting: Boolean,
+    isValid: Boolean,
+    validationError: String?,
     onSubmit: () -> Unit
 ) {
     Card(
@@ -273,16 +400,34 @@ private fun FeedbackCard(
                     .height(150.dp),
                 placeholder = {
                     Text(
-                        text = "Type your feedback here...",
+                        text = "Type your feedback here... (min 10 characters)",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
+                isError = validationError != null,
+                supportingText = if (validationError != null) {
+                    {
+                        Text(
+                            text = validationError,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else {
+                    {
+                        Text(
+                            text = "${feedbackText.trim().length}/10 minimum",
+                            color = if (isValid) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    errorBorderColor = MaterialTheme.colorScheme.error
                 ),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isSubmitting,
@@ -298,7 +443,7 @@ private fun FeedbackCard(
             Button(
                 onClick = onSubmit,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = feedbackText.isNotBlank() && !isSubmitting,
+                enabled = isValid && !isSubmitting,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
