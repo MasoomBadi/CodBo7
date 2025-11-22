@@ -17,8 +17,16 @@ data class FeedbackUiState(
     val isSubmitting: Boolean = false,
     val showSuccessDialog: Boolean = false,
     val showErrorDialog: Boolean = false,
-    val errorMessage: String = ""
-)
+    val errorMessage: String = "",
+    val validationError: String? = null
+) {
+    val isValidFeedback: Boolean
+        get() = feedbackText.trim().length >= MIN_FEEDBACK_LENGTH
+
+    companion object {
+        const val MIN_FEEDBACK_LENGTH = 10
+    }
+}
 
 @HiltViewModel
 class HelpFeedbackViewModel @Inject constructor(
@@ -29,12 +37,25 @@ class HelpFeedbackViewModel @Inject constructor(
     val uiState: StateFlow<FeedbackUiState> = _uiState.asStateFlow()
 
     fun onFeedbackTextChange(text: String) {
-        _uiState.update { it.copy(feedbackText = text) }
+        _uiState.update { it.copy(feedbackText = text, validationError = null) }
     }
 
     fun submitFeedback() {
-        val currentText = _uiState.value.feedbackText
-        if (currentText.isBlank()) return
+        val currentText = _uiState.value.feedbackText.trim()
+
+        // Validation checks
+        when {
+            currentText.isEmpty() -> {
+                _uiState.update { it.copy(validationError = "Please enter your feedback") }
+                return
+            }
+            currentText.length < FeedbackUiState.MIN_FEEDBACK_LENGTH -> {
+                _uiState.update {
+                    it.copy(validationError = "Feedback must be at least ${FeedbackUiState.MIN_FEEDBACK_LENGTH} characters")
+                }
+                return
+            }
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true) }

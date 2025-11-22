@@ -84,6 +84,8 @@ fun HelpFeedbackScreen(
                         feedbackText = uiState.feedbackText,
                         onFeedbackChange = viewModel::onFeedbackTextChange,
                         isSubmitting = uiState.isSubmitting,
+                        isValid = uiState.isValidFeedback,
+                        validationError = uiState.validationError,
                         onSubmit = viewModel::submitFeedback
                     )
                 }
@@ -352,6 +354,8 @@ private fun FeedbackCard(
     feedbackText: String,
     onFeedbackChange: (String) -> Unit,
     isSubmitting: Boolean,
+    isValid: Boolean,
+    validationError: String?,
     onSubmit: () -> Unit
 ) {
     Card(
@@ -396,16 +400,34 @@ private fun FeedbackCard(
                     .height(150.dp),
                 placeholder = {
                     Text(
-                        text = "Type your feedback here...",
+                        text = "Type your feedback here... (min 10 characters)",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
                 textStyle = MaterialTheme.typography.bodyMedium,
+                isError = validationError != null,
+                supportingText = if (validationError != null) {
+                    {
+                        Text(
+                            text = validationError,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                } else {
+                    {
+                        Text(
+                            text = "${feedbackText.trim().length}/10 minimum",
+                            color = if (isValid) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    errorBorderColor = MaterialTheme.colorScheme.error
                 ),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isSubmitting,
@@ -421,7 +443,7 @@ private fun FeedbackCard(
             Button(
                 onClick = onSubmit,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = feedbackText.isNotBlank() && !isSubmitting,
+                enabled = isValid && !isSubmitting,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
