@@ -48,6 +48,7 @@ fun WeaponCamosScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedMode by remember { mutableStateOf("campaign") } // Dynamic String mode instead of enum
     var expandedCamoId by remember { mutableStateOf<Int?>(null) }
+    var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     Scaffold(
         topBar = {
@@ -169,13 +170,15 @@ fun WeaponCamosScreen(
             }
             is WeaponCamosUiState.Success -> {
                 val camosForMode = state.progress.camosByMode[selectedMode] ?: emptyList()
+                // Group camos by category
+                val camosByCategory = camosForMode.groupBy { it.category }
 
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
                 ) {
-                    // Camos list with expandable cards
+                    // Camos list grouped by category with expandable sections
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f)
@@ -183,20 +186,44 @@ fun WeaponCamosScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(
-                            items = camosForMode,
-                            key = { it.id }
-                        ) { camo ->
-                            ExpandableCamoCard(
-                                camo = camo,
-                                isExpanded = expandedCamoId == camo.id,
-                                onToggleExpand = {
-                                    expandedCamoId = if (expandedCamoId == camo.id) null else camo.id
-                                },
-                                onCriterionToggle = { criterionId, isLocked ->
-                                    viewModel.toggleCriterionCompletion(camo.id, criterionId, isLocked)
+                        // For each category
+                        camosByCategory.forEach { (category, camos) ->
+                            // Category header
+                            item(key = "header_$category") {
+                                CategoryHeader(
+                                    category = category,
+                                    categoryDisplayName = camos.firstOrNull()?.categoryDisplayName ?: category,
+                                    isExpanded = expandedCategories.contains(category),
+                                    onToggle = {
+                                        expandedCategories = if (expandedCategories.contains(category)) {
+                                            expandedCategories - category
+                                        } else {
+                                            expandedCategories + category
+                                        }
+                                    },
+                                    completedCount = camos.count { it.isUnlocked },
+                                    totalCount = camos.size
+                                )
+                            }
+
+                            // Category camos (only if expanded)
+                            if (expandedCategories.contains(category)) {
+                                items(
+                                    items = camos,
+                                    key = { it.id }
+                                ) { camo ->
+                                    ExpandableCamoCard(
+                                        camo = camo,
+                                        isExpanded = expandedCamoId == camo.id,
+                                        onToggleExpand = {
+                                            expandedCamoId = if (expandedCamoId == camo.id) null else camo.id
+                                        },
+                                        onCriterionToggle = { criterionId, isLocked ->
+                                            viewModel.toggleCriterionCompletion(camo.id, criterionId, isLocked)
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
 
@@ -283,6 +310,75 @@ private fun formatModeDisplayName(mode: String): String {
         "zombie", "zm" -> "Zombie"
         "prestige" -> "Prestige"
         else -> mode.capitalize()
+    }
+}
+
+/**
+ * Category header with collapsible functionality
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun CategoryHeader(
+    category: String,
+    categoryDisplayName: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    completedCount: Int,
+    totalCount: Int,
+    modifier: Modifier = Modifier
+) {
+    val accentColor = Color(0xFF00BCD4)
+
+    Card(
+        onClick = onToggle,
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = accentColor.copy(alpha = 0.15f)
+        ),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Expand/Collapse icon
+            Icon(
+                imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                tint = accentColor,
+                modifier = Modifier.size(28.dp)
+            )
+
+            // Category name
+            Text(
+                text = categoryDisplayName.uppercase(),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.2.sp
+                ),
+                color = accentColor,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Progress badge
+            Surface(
+                color = accentColor.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "$completedCount/$totalCount",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = accentColor,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
     }
 }
 

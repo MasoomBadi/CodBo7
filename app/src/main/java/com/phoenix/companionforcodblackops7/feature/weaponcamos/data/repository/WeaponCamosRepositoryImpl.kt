@@ -73,8 +73,10 @@ class WeaponCamosRepositoryImpl @Inject constructor(
         // Combine common and unique camos
         return combine(commonCamosFlow, uniqueCamosFlow) { commonCamos, uniqueCamos ->
             val allCamos = (commonCamos + uniqueCamos)
-                // Sort by mode, then category, then sortOrder (using strings instead of enums)
-                .sortedWith(compareBy({ it.mode }, { it.category }, { it.sortOrder }))
+                // Sort by mode, then category (with custom prestige hierarchy), then sortOrder
+                .sortedWith(compareBy<Camo>({ it.mode })
+                    .thenBy { getCategorySortPriority(it.category, it.mode) }
+                    .thenBy { it.sortOrder })
 
             // Group by mode
             allCamos.groupBy { it.mode }
@@ -162,6 +164,33 @@ class WeaponCamosRepositoryImpl @Inject constructor(
                 null
             }
         }.sortedBy { it.criteriaOrder }
+    }
+
+    /**
+     * Get category sort priority for proper ordering
+     * Prestige mode follows hierarchy: prestige1, prestige2, prestigem1, prestigem2, prestigem3, prestigem
+     * Other modes use alphabetical ordering
+     */
+    private fun getCategorySortPriority(category: String, mode: String): Int {
+        return if (mode.lowercase() == "prestige") {
+            when (category.lowercase()) {
+                "prestige1" -> 1
+                "prestige2" -> 2
+                "prestigem1" -> 3
+                "prestigem2" -> 4
+                "prestigem3" -> 5
+                "prestigem" -> 6
+                else -> 999 // Unknown categories go to end
+            }
+        } else {
+            // For other modes, use standard order: military, special, mastery
+            when (category.lowercase()) {
+                "military" -> 1
+                "special" -> 2
+                "mastery" -> 3
+                else -> 999
+            }
+        }
     }
 
     /**
