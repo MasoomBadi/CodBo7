@@ -46,29 +46,17 @@ fun WeaponsListScreen(
     onNavigateBack: () -> Unit,
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
-    Timber.d("WeaponsListScreen: Composing...")
-
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
     var selectedCategory by remember { mutableStateOf<String?>(null) } // Dynamic String category
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
-    // Lifecycle observer with detailed logging
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        Timber.d("WeaponsListScreen: Setting up lifecycle observer")
-        val observer = LifecycleEventObserver { _, event ->
-            Timber.d("WeaponsListScreen: Lifecycle event = $event")
-            if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
-                Timber.d("WeaponsListScreen: Screen visible - refreshing badge counts")
-                viewModel.refreshBadgeCounts()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            Timber.d("WeaponsListScreen: Removing lifecycle observer")
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+    // Simple approach: Refresh on every composition
+    var refreshKey by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        // Increment key to force refresh
+        refreshKey++
+        viewModel.refreshBadgeCounts()
     }
 
     Scaffold(
