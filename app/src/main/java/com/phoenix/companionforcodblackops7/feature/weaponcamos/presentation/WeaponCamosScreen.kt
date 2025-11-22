@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.Camo
-import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.CamoMode
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -47,7 +46,7 @@ fun WeaponCamosScreen(
     viewModel: WeaponCamosViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedMode by remember { mutableStateOf(CamoMode.CAMPAIGN) }
+    var selectedMode by remember { mutableStateOf("campaign") } // Dynamic String mode instead of enum
     var expandedCamoId by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
@@ -241,9 +240,10 @@ fun WeaponCamosScreen(
 
 @Composable
 private fun ModeTabRow(
-    selectedMode: CamoMode,
-    onModeSelected: (CamoMode) -> Unit,
-    availableModes: List<CamoMode>
+    selectedMode: String,
+    onModeSelected: (String) -> Unit,
+    availableModes: List<String>,
+    modifier: Modifier = Modifier
 ) {
     if (availableModes.isEmpty()) return
 
@@ -251,7 +251,8 @@ private fun ModeTabRow(
         selectedTabIndex = availableModes.indexOf(selectedMode).coerceAtLeast(0),
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = Color(0xFF00BCD4),
-        edgePadding = 16.dp
+        edgePadding = 16.dp,
+        modifier = modifier
     ) {
         availableModes.forEach { mode ->
             Tab(
@@ -259,7 +260,7 @@ private fun ModeTabRow(
                 onClick = { onModeSelected(mode) },
                 text = {
                     Text(
-                        text = mode.displayName.uppercase(),
+                        text = formatModeDisplayName(mode).uppercase(),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
@@ -268,6 +269,20 @@ private fun ModeTabRow(
                 }
             )
         }
+    }
+}
+
+/**
+ * Format mode string to display name for UI
+ * Matches backend formatting
+ */
+private fun formatModeDisplayName(mode: String): String {
+    return when (mode.lowercase()) {
+        "campaign" -> "Campaign"
+        "multiplayer", "mp" -> "Multiplayer"
+        "zombie", "zm" -> "Zombie"
+        "prestige" -> "Prestige"
+        else -> mode.capitalize()
     }
 }
 
