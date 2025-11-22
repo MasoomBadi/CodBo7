@@ -123,7 +123,10 @@ private fun PrestigeContent(
             }
 
             // Prestige data list
-            items(prestigeData) { item ->
+            items(
+                items = prestigeData,
+                key = { it.id } // Unique key to prevent duplicate key errors
+            ) { item ->
                 PrestigeDataCard(
                     item = item,
                     accentColor = accentColor,
