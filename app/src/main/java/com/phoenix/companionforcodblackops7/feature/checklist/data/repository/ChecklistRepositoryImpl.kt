@@ -211,8 +211,9 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     private fun getMasteryBadgeItems(): Flow<List<ChecklistItem>> {
         val weaponsFlow = getWeaponData()
+        val badgeChangesFlow = masteryBadgeRepository.observeAllBadgeChanges()
 
-        return weaponsFlow.map { weapons ->
+        return combine(weaponsFlow, badgeChangesFlow) { weapons, _ ->
             weapons.map { weaponData ->
                 val weaponId = weaponData[0] as Int
                 val weaponName = weaponData[1] as String
