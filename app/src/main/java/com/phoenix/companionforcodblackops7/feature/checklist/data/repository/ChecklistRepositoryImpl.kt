@@ -310,6 +310,7 @@ class ChecklistRepositoryImpl @Inject constructor(
 
         try {
             val weapons = getWeaponEntitiesSync()
+            Timber.d("Weapon Camo Progress - Total weapons: ${weapons.size}")
 
             // Batch query all data ONCE to avoid N+1 query problem
             // Query all camos by mode (4 queries total instead of 29*4)
@@ -345,6 +346,8 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
                 .mapNotNull { it.data["id"]?.asInt() }
 
+            Timber.d("Weapon Camo Progress - Camos per mode: campaign=${campaignCamos.size}, multiplayer=${multiplayerCamos.size}, zombie=${zombieCamos.size}, commonPrestige=${commonPrestigeCamos.size}")
+
             // Query all weapon-specific prestige mappings ONCE (1 query instead of 29)
             val weaponPrestigeMap = realm.query<DynamicEntity>(
                 "tableName == $0",
@@ -375,6 +378,7 @@ class ChecklistRepositoryImpl @Inject constructor(
             // Calculate totals
             var totalCamosCount = 0
             var unlockedCamosCount = 0
+            var totalPrestigeCamosCount = 0
 
             // Process each weapon in memory
             for (weaponEntity in weapons) {
@@ -395,16 +399,21 @@ class ChecklistRepositoryImpl @Inject constructor(
                 // Prestige camos (weapon-specific + common)
                 val weaponPrestigeCamos = (weaponPrestigeMap[weaponId] ?: emptyList()) + commonPrestigeCamos
                 totalCamosCount += weaponPrestigeCamos.size
+                totalPrestigeCamosCount += weaponPrestigeCamos.size
                 unlockedCamosCount += countCompletedCamos(weaponId, weaponPrestigeCamos, allCriteriaMap, prefs)
             }
+
+            val expectedTotal = (campaignCamos.size + multiplayerCamos.size + zombieCamos.size) * weapons.size + totalPrestigeCamosCount
+            Timber.d("Weapon Camo Progress - Expected: ${weapons.size} weapons × 54 camos = ${weapons.size * 54}")
+            Timber.d("Weapon Camo Progress - Calculated: campaign=${campaignCamos.size * weapons.size}, multiplayer=${multiplayerCamos.size * weapons.size}, zombie=${zombieCamos.size * weapons.size}, prestige=$totalPrestigeCamosCount")
+            Timber.d("Weapon Camo Progress - Total: $totalCamosCount (expected: $expectedTotal)")
+            Timber.d("Weapon Camo Progress - Unlocked: $unlockedCamosCount/$totalCamosCount")
 
             progressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
                 category = ChecklistCategory.WEAPONS,
                 totalItems = totalCamosCount,
                 unlockedItems = unlockedCamosCount
             )
-
-            Timber.d("Weapon camo progress: $unlockedCamosCount/$totalCamosCount")
         } catch (e: Exception) {
             Timber.e(e, "Failed to calculate weapon camo progress")
             // Don't add to progress map if calculation fails
