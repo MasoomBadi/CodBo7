@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
+import com.phoenix.companionforcodblackops7.feature.checklist.data.model.CamoQueryCache
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.CategoryProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistItem
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.repository.ChecklistRepository
@@ -18,8 +20,24 @@ import io.realm.kotlin.ext.query
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Singleton
 
+/**
+ * Implementation of ChecklistRepository following clean architecture principles
+ *
+ * Responsibilities:
+ * - Aggregate checklist items from multiple sources (operators, prestige, weapons, camos)
+ * - Calculate progress across all collection categories
+ * - Manage unlock state persistence via Realm and DataStore
+ *
+ * Performance optimizations:
+ * - Bulk query camo data once, process in memory (prevents N+1 queries)
+ * - Use Flow for reactive updates
+ * - Cache common camo IDs shared across weapons
+ */
+@Singleton
 class ChecklistRepositoryImpl @Inject constructor(
     private val realm: Realm,
     private val operatorsRepository: OperatorsRepository,
@@ -27,219 +45,25 @@ class ChecklistRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : ChecklistRepository {
 
+    // =============================================================================================
+    // Public API
+    // =============================================================================================
+
     override fun getChecklistItems(category: ChecklistCategory): Flow<List<ChecklistItem>> {
         return when (category) {
-            ChecklistCategory.OPERATORS -> {
-                // Get operators from repository
-                val operatorsFlow = operatorsRepository.getAllOperators()
-
-                // Get checklist state from realm
-                val checklistFlow = realm.query<ChecklistItemEntity>(
-                    "category == $0", category.name
-                ).asFlow().map { results ->
-                    results.list.associate { it.id to it.isUnlocked }
-                }
-
-                // Combine both flows
-                combine(operatorsFlow, checklistFlow) { operators, checklistMap ->
-                    operators.map { operator ->
-                        ChecklistItem(
-                            id = operator.id,
-                            name = operator.fullName,
-                            category = category,
-                            isUnlocked = checklistMap[operator.id] ?: false,
-                            imageUrl = operator.imageUrl,
-                            unlockCriteria = operator.unlockCriteria
-                        )
-                    }.sortedBy { it.name }
-                }
-            }
-            ChecklistCategory.PRESTIGE -> {
-                // Get prestige items from repository
-                val prestigeFlow = prestigeRepository.getAllPrestigeItems()
-
-                // Get checklist state from realm
-                val checklistFlow = realm.query<ChecklistItemEntity>(
-                    "category == $0", category.name
-                ).asFlow().map { results ->
-                    results.list.associate { it.id to it.isUnlocked }
-                }
-
-                // Combine both flows
-                combine(prestigeFlow, checklistFlow) { prestigeItems, checklistMap ->
-                    prestigeItems.map { item ->
-                        ChecklistItem(
-                            id = item.id,
-                            name = item.name,
-                            category = category,
-                            isUnlocked = checklistMap[item.id] ?: false,
-                            imageUrl = null,
-                            unlockCriteria = item.description
-                        )
-                    }
-                }
-            }
-            ChecklistCategory.WEAPONS -> {
-                // Get all weapons from weapons_mp table with category
-                val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
-                    .asFlow()
-                    .map { results ->
-                        results.list.mapNotNull { entity ->
-                            try {
-                                val data = entity.data
-                                // Quadruple: id, name, iconUrl, weaponCategory
-                                listOf(
-                                    data["id"]?.asInt() ?: 0,
-                                    data["display_name"]?.asString() ?: "",
-                                    data["icon_url"]?.asString() ?: "",
-                                    data["category"]?.asString() ?: "Assault Rifle"
-                                )
-                            } catch (e: Exception) {
-                                null
-                            }
-                        }.sortedBy { it[1] as String } // Sort by display_name
-                    }
-
-                // Combine with DataStore to calculate camo progress
-                combine(weaponsFlow, dataStore.data) { weapons, prefs ->
-                    // OPTIMIZATION: Query all data once instead of per-weapon
-                    // Get common camos (shared by all weapons) - ONCE
-                    val commonCamoIds = realm.query<DynamicEntity>(
-                        "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-                        "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
-                    ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
-
-                    // Get all weapon_camo entries - ONCE
-                    val weaponCamoMap = realm.query<DynamicEntity>("tableName == $0", "weapon_camo")
-                        .find()
-                        .mapNotNull { entity ->
-                            val weaponId = entity.data["weapon_id"]?.asInt()
-                            val camoId = entity.data["camo_id"]?.asInt()
-                            if (weaponId != null && camoId != null) weaponId to camoId else null
-                        }
-                        .groupBy({ it.first }, { it.second })
-
-                    // Get all camo_criteria - ONCE
-                    val allCriteria = realm.query<DynamicEntity>("tableName == $0", "camo_criteria")
-                        .find()
-                        .mapNotNull { entity ->
-                            val weaponId = entity.data["weapon_id"]?.asInt()
-                            val camoId = entity.data["camo_id"]?.asInt()
-                            val criterionId = entity.data["id"]?.asInt()
-                            if (weaponId != null && camoId != null && criterionId != null) {
-                                Triple(weaponId, camoId, criterionId)
-                            } else null
-                        }
-                        .groupBy({ it.first to it.second }, { it.third })
-
-                    // Process each weapon in memory
-                    weapons.map { weaponData ->
-                        val weaponId = weaponData[0] as Int
-                        val weaponName = weaponData[1] as String
-                        val iconUrl = weaponData[2] as String
-                        val weaponCategory = weaponData[3] as String
-
-                        // Get all camo IDs for this weapon (common + unique)
-                        val allCamoIds = commonCamoIds + (weaponCamoMap[weaponId] ?: emptyList())
-
-                        // Count unlocked camos
-                        val unlockedCount = allCamoIds.count { camoId ->
-                            val criteriaIds = allCriteria[weaponId to camoId]
-                            if (criteriaIds.isNullOrEmpty()) {
-                                false
-                            } else {
-                                // Check if all criteria are completed
-                                criteriaIds.all { criterionId ->
-                                    val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
-                                    prefs[key] ?: false
-                                }
-                            }
-                        }
-
-                        ChecklistItem(
-                            id = "$weaponId|$weaponCategory",
-                            name = weaponName,
-                            category = category,
-                            isUnlocked = false,
-                            imageUrl = iconUrl,
-                            unlockCriteria = "$unlockedCount/${allCamoIds.size} camos unlocked"
-                        )
-                    }
-                }
-            }
-            ChecklistCategory.MASTERY_BADGES -> {
-                // Get all weapons from weapons_mp table with category
-                val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
-                    .asFlow()
-                    .map { results ->
-                        results.list.mapNotNull { entity ->
-                            try {
-                                val data = entity.data
-                                // Quadruple: id, name, iconUrl, weaponCategory
-                                listOf(
-                                    data["id"]?.asInt() ?: 0,
-                                    data["display_name"]?.asString() ?: "",
-                                    data["icon_url"]?.asString() ?: "",
-                                    data["category"]?.asString() ?: "Assault Rifle"
-                                )
-                            } catch (e: Exception) {
-                                null
-                            }
-                        }.sortedBy { it[1] as String } // Sort by display_name
-                    }
-
-                // Combine with DataStore to calculate badge progress
-                combine(weaponsFlow, dataStore.data) { weapons, prefs ->
-                    weapons.map { weaponData ->
-                        val weaponId = weaponData[0] as Int
-                        val weaponName = weaponData[1] as String
-                        val iconUrl = weaponData[2] as String
-                        val weaponCategory = weaponData[3] as String
-
-                        // Get MP and ZM kills from DataStore
-                        val mpKillsKey = intPreferencesKey("weapon_${weaponId}_mp_kills")
-                        val zmKillsKey = intPreferencesKey("weapon_${weaponId}_zm_kills")
-                        val mpKills = prefs[mpKillsKey] ?: 0
-                        val zmKills = prefs[zmKillsKey] ?: 0
-
-                        // Calculate unlocked badges (out of 6 total)
-                        // Simplified calculation - count badges where kill requirement is met
-                        var unlockedCount = 0
-                        if (mpKills >= 100) unlockedCount++
-                        if (mpKills >= 250) unlockedCount++
-                        if (mpKills >= 500) unlockedCount++
-                        if (zmKills >= 500) unlockedCount++
-                        if (zmKills >= 1500) unlockedCount++
-                        if (zmKills >= 3000) unlockedCount++
-
-                        ChecklistItem(
-                            id = "$weaponId|$weaponCategory", // Store category in ID
-                            name = weaponName,
-                            category = category,
-                            isUnlocked = false, // Not used for mastery badges
-                            imageUrl = iconUrl,
-                            unlockCriteria = "$unlockedCount/6 badges unlocked"
-                        )
-                    }
-                }
-            }
-            else -> {
-                // For other categories, return empty list for now
-                kotlinx.coroutines.flow.flowOf(emptyList())
-            }
+            ChecklistCategory.OPERATORS -> getOperatorItems()
+            ChecklistCategory.PRESTIGE -> getPrestigeItems()
+            ChecklistCategory.WEAPONS -> getWeaponCamoItems()
+            ChecklistCategory.MASTERY_BADGES -> getMasteryBadgeItems()
+            ChecklistCategory.MAPS, ChecklistCategory.EQUIPMENT -> kotlinx.coroutines.flow.flowOf(emptyList())
         }
     }
 
     override fun getProgress(): Flow<ChecklistProgress> {
-        // Combine operators, prestige, weapons, and checklist state
         val operatorsFlow = operatorsRepository.getAllOperators()
         val prestigeFlow = prestigeRepository.getAllPrestigeItems()
-        val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { results ->
-            results.list
-        }
-        val weaponsFlow = realm.query<DynamicEntity>("tableName == $0", "weapons_mp")
-            .asFlow()
-            .map { results -> results.list.size }
+        val checklistFlow = realm.query<ChecklistItemEntity>().asFlow().map { it.list }
+        val weaponsFlow = getWeaponEntities().map { it.size }
 
         return combine(
             operatorsFlow,
@@ -250,140 +74,13 @@ class ChecklistRepositoryImpl @Inject constructor(
         ) { operators, prestigeItems, checklistItems, weaponCount, prefs ->
             val categoryProgressMap = mutableMapOf<ChecklistCategory, CategoryProgress>()
 
-            // Calculate operators progress
-            if (operators.isNotEmpty()) {
-                val operatorChecklistMap = checklistItems
-                    .filter { it.category == ChecklistCategory.OPERATORS.name }
-                    .associate { it.id to it.isUnlocked }
+            // Calculate progress for each category
+            calculateOperatorProgress(operators, checklistItems, categoryProgressMap)
+            calculatePrestigeProgress(prestigeItems, checklistItems, categoryProgressMap)
+            calculateWeaponCamoProgress(weaponCount, prefs, categoryProgressMap)
+            calculateMasteryBadgeProgress(weaponCount, prefs, categoryProgressMap)
 
-                val unlockedCount = operators.count { operator ->
-                    operatorChecklistMap[operator.id] == true
-                }
-
-                categoryProgressMap[ChecklistCategory.OPERATORS] = CategoryProgress(
-                    category = ChecklistCategory.OPERATORS,
-                    totalItems = operators.size,
-                    unlockedItems = unlockedCount
-                )
-            }
-
-            // Calculate prestige progress
-            if (prestigeItems.isNotEmpty()) {
-                val prestigeChecklistMap = checklistItems
-                    .filter { it.category == ChecklistCategory.PRESTIGE.name }
-                    .associate { it.id to it.isUnlocked }
-
-                val unlockedCount = prestigeItems.count { item ->
-                    prestigeChecklistMap[item.id] == true
-                }
-
-                categoryProgressMap[ChecklistCategory.PRESTIGE] = CategoryProgress(
-                    category = ChecklistCategory.PRESTIGE,
-                    totalItems = prestigeItems.size,
-                    unlockedItems = unlockedCount
-                )
-            }
-
-            // Calculate weapon camos progress
-            if (weaponCount > 0) {
-                // OPTIMIZATION: Query all data once instead of per-weapon
-                val weapons = realm.query<DynamicEntity>("tableName == $0", "weapons_mp").find()
-
-                // Get common camos (shared by all weapons) - ONCE
-                val commonCamoIds = realm.query<DynamicEntity>(
-                    "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-                    "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
-                ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
-
-                // Get all weapon_camo entries - ONCE
-                val weaponCamoMap = realm.query<DynamicEntity>("tableName == $0", "weapon_camo")
-                    .find()
-                    .mapNotNull { entity ->
-                        val weaponId = entity.data["weapon_id"]?.asInt()
-                        val camoId = entity.data["camo_id"]?.asInt()
-                        if (weaponId != null && camoId != null) weaponId to camoId else null
-                    }
-                    .groupBy({ it.first }, { it.second })
-
-                // Get all camo_criteria - ONCE
-                val allCriteria = realm.query<DynamicEntity>("tableName == $0", "camo_criteria")
-                    .find()
-                    .mapNotNull { entity ->
-                        val weaponId = entity.data["weapon_id"]?.asInt()
-                        val camoId = entity.data["camo_id"]?.asInt()
-                        val criterionId = entity.data["id"]?.asInt()
-                        if (weaponId != null && camoId != null && criterionId != null) {
-                            Triple(weaponId, camoId, criterionId)
-                        } else null
-                    }
-                    .groupBy({ it.first to it.second }, { it.third })
-
-                var totalCamosCount = 0
-                var unlockedCamosCount = 0
-
-                // Process each weapon in memory
-                for (weaponEntity in weapons) {
-                    val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
-
-                    // Get all camo IDs for this weapon (common + unique)
-                    val allCamoIds = commonCamoIds + (weaponCamoMap[weaponId] ?: emptyList())
-                    totalCamosCount += allCamoIds.size
-
-                    // Count unlocked camos for this weapon
-                    val unlockedCount = allCamoIds.count { camoId ->
-                        val criteriaIds = allCriteria[weaponId to camoId]
-                        if (criteriaIds.isNullOrEmpty()) {
-                            false
-                        } else {
-                            // Check if all criteria are completed
-                            criteriaIds.all { criterionId ->
-                                val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
-                                prefs[key] ?: false
-                            }
-                        }
-                    }
-
-                    unlockedCamosCount += unlockedCount
-                }
-
-                categoryProgressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
-                    category = ChecklistCategory.WEAPONS,
-                    totalItems = totalCamosCount,
-                    unlockedItems = unlockedCamosCount
-                )
-            }
-
-            // Calculate mastery badge progress
-            if (weaponCount > 0) {
-                // 6 badges per weapon (3 MP + 3 ZM)
-                val totalBadges = weaponCount * 6
-
-                // Count unlocked badges across all weapons
-                var unlockedBadges = 0
-                for (weaponId in 1..weaponCount) {
-                    val mpKillsKey = intPreferencesKey("weapon_${weaponId}_mp_kills")
-                    val zmKillsKey = intPreferencesKey("weapon_${weaponId}_zm_kills")
-                    val mpKills = prefs[mpKillsKey] ?: 0
-                    val zmKills = prefs[zmKillsKey] ?: 0
-
-                    // Count MP badges (sequential unlock)
-                    if (mpKills >= 100) unlockedBadges++ // Badge I
-                    if (mpKills >= 250) unlockedBadges++ // Badge II
-                    if (mpKills >= 500) unlockedBadges++ // Mastery
-
-                    // Count ZM badges (sequential unlock)
-                    if (zmKills >= 500) unlockedBadges++ // Badge I
-                    if (zmKills >= 1500) unlockedBadges++ // Badge II
-                    if (zmKills >= 3000) unlockedBadges++ // Mastery
-                }
-
-                categoryProgressMap[ChecklistCategory.MASTERY_BADGES] = CategoryProgress(
-                    category = ChecklistCategory.MASTERY_BADGES,
-                    totalItems = totalBadges,
-                    unlockedItems = unlockedBadges
-                )
-            }
-
+            // Aggregate overall progress
             val totalItems = categoryProgressMap.values.sumOf { it.totalItems }
             val totalUnlocked = categoryProgressMap.values.sumOf { it.unlockedItems }
 
@@ -396,25 +93,425 @@ class ChecklistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleItemUnlocked(itemId: String, category: ChecklistCategory) {
-        realm.write {
-            val existing = query<ChecklistItemEntity>("id == $0", itemId).first().find()
+        try {
+            realm.write {
+                val existing = query<ChecklistItemEntity>("id == $0", itemId).first().find()
 
-            if (existing != null) {
-                existing.isUnlocked = !existing.isUnlocked
-            } else {
-                copyToRealm(ChecklistItemEntity().apply {
-                    id = itemId
-                    this.category = category.name
-                    isUnlocked = true
-                })
+                if (existing != null) {
+                    existing.isUnlocked = !existing.isUnlocked
+                    Timber.d("Toggled item $itemId: ${existing.isUnlocked}")
+                } else {
+                    copyToRealm(ChecklistItemEntity().apply {
+                        id = itemId
+                        this.category = category.name
+                        isUnlocked = true
+                    })
+                    Timber.d("Created new unlocked item: $itemId")
+                }
             }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to toggle item unlock: $itemId")
+            throw e
         }
     }
 
     override suspend fun isItemUnlocked(itemId: String, category: ChecklistCategory): Boolean {
-        return realm.query<ChecklistItemEntity>("id == $0", itemId)
-            .first()
-            .find()
-            ?.isUnlocked ?: false
+        return try {
+            realm.query<ChecklistItemEntity>("id == $0", itemId)
+                .first()
+                .find()
+                ?.isUnlocked ?: false
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to check item unlock status: $itemId")
+            false
+        }
+    }
+
+    // =============================================================================================
+    // Operator Items
+    // =============================================================================================
+
+    private fun getOperatorItems(): Flow<List<ChecklistItem>> {
+        val operatorsFlow = operatorsRepository.getAllOperators()
+        val checklistFlow = getChecklistMap(ChecklistCategory.OPERATORS)
+
+        return combine(operatorsFlow, checklistFlow) { operators, checklistMap ->
+            operators.map { operator ->
+                ChecklistItem(
+                    id = operator.id,
+                    name = operator.fullName,
+                    category = ChecklistCategory.OPERATORS,
+                    isUnlocked = checklistMap[operator.id] ?: false,
+                    imageUrl = operator.imageUrl,
+                    unlockCriteria = operator.unlockCriteria
+                )
+            }.sortedBy { it.name }
+        }
+    }
+
+    // =============================================================================================
+    // Prestige Items
+    // =============================================================================================
+
+    private fun getPrestigeItems(): Flow<List<ChecklistItem>> {
+        val prestigeFlow = prestigeRepository.getAllPrestigeItems()
+        val checklistFlow = getChecklistMap(ChecklistCategory.PRESTIGE)
+
+        return combine(prestigeFlow, checklistFlow) { prestigeItems, checklistMap ->
+            prestigeItems.map { item ->
+                ChecklistItem(
+                    id = item.id,
+                    name = item.name,
+                    category = ChecklistCategory.PRESTIGE,
+                    isUnlocked = checklistMap[item.id] ?: false,
+                    imageUrl = null,
+                    unlockCriteria = item.description
+                )
+            }
+        }
+    }
+
+    // =============================================================================================
+    // Weapon Camo Items
+    // =============================================================================================
+
+    private fun getWeaponCamoItems(): Flow<List<ChecklistItem>> {
+        val weaponsFlow = getWeaponData()
+
+        return combine(weaponsFlow, dataStore.data) { weapons, prefs ->
+            // Query all camo data once for performance
+            val camoCache = buildCamoQueryCache()
+
+            // Process each weapon in memory
+            weapons.map { weaponData ->
+                val weaponId = weaponData[0] as Int
+                val weaponName = weaponData[1] as String
+                val iconUrl = weaponData[2] as String
+                val weaponCategory = weaponData[3] as String
+
+                val allCamoIds = camoCache.getCamoIdsForWeapon(weaponId)
+                val unlockedCount = countUnlockedCamos(weaponId, allCamoIds, camoCache, prefs)
+
+                ChecklistItem(
+                    id = "$weaponId|$weaponCategory",
+                    name = weaponName,
+                    category = ChecklistCategory.WEAPONS,
+                    isUnlocked = false, // Not applicable for weapons
+                    imageUrl = iconUrl,
+                    unlockCriteria = "$unlockedCount/${allCamoIds.size} camos unlocked"
+                )
+            }
+        }
+    }
+
+    // =============================================================================================
+    // Mastery Badge Items
+    // =============================================================================================
+
+    private fun getMasteryBadgeItems(): Flow<List<ChecklistItem>> {
+        val weaponsFlow = getWeaponData()
+
+        return combine(weaponsFlow, dataStore.data) { weapons, prefs ->
+            weapons.map { weaponData ->
+                val weaponId = weaponData[0] as Int
+                val weaponName = weaponData[1] as String
+                val iconUrl = weaponData[2] as String
+                val weaponCategory = weaponData[3] as String
+
+                val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
+                val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
+                val unlockedCount = countUnlockedBadges(mpKills, zmKills)
+
+                ChecklistItem(
+                    id = "$weaponId|$weaponCategory",
+                    name = weaponName,
+                    category = ChecklistCategory.MASTERY_BADGES,
+                    isUnlocked = false, // Not applicable for badges
+                    imageUrl = iconUrl,
+                    unlockCriteria = "$unlockedCount/${ChecklistConstants.MasteryBadge.TOTAL_BADGES_PER_WEAPON} badges unlocked"
+                )
+            }
+        }
+    }
+
+    // =============================================================================================
+    // Progress Calculations
+    // =============================================================================================
+
+    private fun calculateOperatorProgress(
+        operators: List<com.phoenix.companionforcodblackops7.feature.operators.domain.model.Operator>,
+        checklistItems: List<ChecklistItemEntity>,
+        progressMap: MutableMap<ChecklistCategory, CategoryProgress>
+    ) {
+        if (operators.isEmpty()) return
+
+        val operatorChecklistMap = checklistItems
+            .filter { it.category == ChecklistCategory.OPERATORS.name }
+            .associate { it.id to it.isUnlocked }
+
+        val unlockedCount = operators.count { operatorChecklistMap[it.id] == true }
+
+        progressMap[ChecklistCategory.OPERATORS] = CategoryProgress(
+            category = ChecklistCategory.OPERATORS,
+            totalItems = operators.size,
+            unlockedItems = unlockedCount
+        )
+    }
+
+    private fun calculatePrestigeProgress(
+        prestigeItems: List<com.phoenix.companionforcodblackops7.feature.prestige.domain.model.PrestigeItem>,
+        checklistItems: List<ChecklistItemEntity>,
+        progressMap: MutableMap<ChecklistCategory, CategoryProgress>
+    ) {
+        if (prestigeItems.isEmpty()) return
+
+        val prestigeChecklistMap = checklistItems
+            .filter { it.category == ChecklistCategory.PRESTIGE.name }
+            .associate { it.id to it.isUnlocked }
+
+        val unlockedCount = prestigeItems.count { prestigeChecklistMap[it.id] == true }
+
+        progressMap[ChecklistCategory.PRESTIGE] = CategoryProgress(
+            category = ChecklistCategory.PRESTIGE,
+            totalItems = prestigeItems.size,
+            unlockedItems = unlockedCount
+        )
+    }
+
+    private fun calculateWeaponCamoProgress(
+        weaponCount: Int,
+        prefs: Preferences,
+        progressMap: MutableMap<ChecklistCategory, CategoryProgress>
+    ) {
+        if (weaponCount == 0) return
+
+        try {
+            val weapons = getWeaponEntitiesSync()
+            val camoCache = buildCamoQueryCache()
+
+            var totalCamosCount = 0
+            var unlockedCamosCount = 0
+
+            for (weaponEntity in weapons) {
+                val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
+
+                val allCamoIds = camoCache.getCamoIdsForWeapon(weaponId)
+                totalCamosCount += allCamoIds.size
+
+                val unlockedCount = countUnlockedCamos(weaponId, allCamoIds, camoCache, prefs)
+                unlockedCamosCount += unlockedCount
+            }
+
+            progressMap[ChecklistCategory.WEAPONS] = CategoryProgress(
+                category = ChecklistCategory.WEAPONS,
+                totalItems = totalCamosCount,
+                unlockedItems = unlockedCamosCount
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to calculate weapon camo progress")
+            // Don't add to progress map if calculation fails
+        }
+    }
+
+    private fun calculateMasteryBadgeProgress(
+        weaponCount: Int,
+        prefs: Preferences,
+        progressMap: MutableMap<ChecklistCategory, CategoryProgress>
+    ) {
+        if (weaponCount == 0) return
+
+        try {
+            val weapons = getWeaponEntitiesSync()
+            val totalBadges = weapons.size * ChecklistConstants.MasteryBadge.TOTAL_BADGES_PER_WEAPON
+
+            var unlockedBadges = 0
+
+            for (weaponEntity in weapons) {
+                val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
+
+                val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
+                val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
+
+                unlockedBadges += countUnlockedBadges(mpKills, zmKills)
+            }
+
+            progressMap[ChecklistCategory.MASTERY_BADGES] = CategoryProgress(
+                category = ChecklistCategory.MASTERY_BADGES,
+                totalItems = totalBadges,
+                unlockedItems = unlockedBadges
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to calculate mastery badge progress")
+            // Don't add to progress map if calculation fails
+        }
+    }
+
+    // =============================================================================================
+    // Helper Functions - Data Queries
+    // =============================================================================================
+
+    /**
+     * Get weapon data as Flow: [id, name, iconUrl, category]
+     */
+    private fun getWeaponData(): Flow<List<List<Any>>> {
+        return realm.query<DynamicEntity>("tableName == $0", ChecklistConstants.Tables.WEAPONS_MP)
+            .asFlow()
+            .map { results ->
+                results.list.mapNotNull { entity ->
+                    try {
+                        val data = entity.data
+                        listOf(
+                            data["id"]?.asInt() ?: 0,
+                            data["display_name"]?.asString() ?: "",
+                            data["icon_url"]?.asString() ?: "",
+                            data["category"]?.asString() ?: ChecklistConstants.Defaults.DEFAULT_WEAPON_CATEGORY
+                        )
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to parse weapon entity")
+                        null
+                    }
+                }.sortedBy { it[1] as String }
+            }
+    }
+
+    /**
+     * Get weapon entities as Flow
+     */
+    private fun getWeaponEntities(): Flow<List<DynamicEntity>> {
+        return realm.query<DynamicEntity>("tableName == $0", ChecklistConstants.Tables.WEAPONS_MP)
+            .asFlow()
+            .map { it.list }
+    }
+
+    /**
+     * Get weapon entities synchronously (for use in combine blocks)
+     */
+    private fun getWeaponEntitiesSync(): List<DynamicEntity> {
+        return realm.query<DynamicEntity>("tableName == $0", ChecklistConstants.Tables.WEAPONS_MP).find()
+    }
+
+    /**
+     * Get checklist unlock state as Flow
+     */
+    private fun getChecklistMap(category: ChecklistCategory): Flow<Map<String, Boolean>> {
+        return realm.query<ChecklistItemEntity>("category == $0", category.name)
+            .asFlow()
+            .map { results ->
+                results.list.associate { it.id to it.isUnlocked }
+            }
+    }
+
+    /**
+     * Build camo query cache by fetching all camo data once
+     * Prevents N+1 query problem
+     */
+    private fun buildCamoQueryCache(): CamoQueryCache {
+        try {
+            // Query common camos shared by all weapons
+            val commonCamoIds = realm.query<DynamicEntity>(
+                buildCamoQuery()
+            ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
+
+            // Query all weapon-specific camo assignments
+            val weaponCamoMap = realm.query<DynamicEntity>(
+                "tableName == $0",
+                ChecklistConstants.Tables.WEAPON_CAMO
+            ).find()
+                .mapNotNull { entity ->
+                    val weaponId = entity.data["weapon_id"]?.asInt()
+                    val camoId = entity.data["camo_id"]?.asInt()
+                    if (weaponId != null && camoId != null) weaponId to camoId else null
+                }
+                .groupBy({ it.first }, { it.second })
+
+            // Query all camo criteria
+            val criteriaMap = realm.query<DynamicEntity>(
+                "tableName == $0",
+                ChecklistConstants.Tables.CAMO_CRITERIA
+            ).find()
+                .mapNotNull { entity ->
+                    val weaponId = entity.data["weapon_id"]?.asInt()
+                    val camoId = entity.data["camo_id"]?.asInt()
+                    val criterionId = entity.data["id"]?.asInt()
+                    if (weaponId != null && camoId != null && criterionId != null) {
+                        Triple(weaponId, camoId, criterionId)
+                    } else null
+                }
+                .groupBy({ it.first to it.second }, { it.third })
+
+            return CamoQueryCache(commonCamoIds, weaponCamoMap, criteriaMap)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to build camo query cache")
+            return CamoQueryCache(emptySet(), emptyMap(), emptyMap())
+        }
+    }
+
+    /**
+     * Build Realm query string for common camos
+     */
+    private fun buildCamoQuery(): String {
+        val categories = ChecklistConstants.CamoCategories.ALL_COMMON
+        val conditions = categories.joinToString(" OR ") { "data['category'] == '$it'" }
+        return "tableName == '${ChecklistConstants.Tables.CAMO}' AND ($conditions)"
+    }
+
+    // =============================================================================================
+    // Helper Functions - Calculations
+    // =============================================================================================
+
+    /**
+     * Count unlocked camos for a weapon
+     */
+    private fun countUnlockedCamos(
+        weaponId: Int,
+        camoIds: Set<Int>,
+        camoCache: CamoQueryCache,
+        prefs: Preferences
+    ): Int {
+        return camoIds.count { camoId ->
+            val criteriaIds = camoCache.getCriteriaForCamo(weaponId, camoId)
+            if (criteriaIds.isNullOrEmpty()) {
+                false
+            } else {
+                // Camo is unlocked if ALL criteria are completed
+                criteriaIds.all { criterionId ->
+                    val key = booleanPreferencesKey(
+                        ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, camoId, criterionId)
+                    )
+                    prefs[key] ?: false
+                }
+            }
+        }
+    }
+
+    /**
+     * Count unlocked mastery badges based on kill thresholds
+     */
+    private fun countUnlockedBadges(mpKills: Int, zmKills: Int): Int {
+        var count = 0
+
+        // Multiplayer badges (sequential unlock)
+        if (mpKills >= ChecklistConstants.MasteryBadge.MP_BADGE_1_KILLS) count++
+        if (mpKills >= ChecklistConstants.MasteryBadge.MP_BADGE_2_KILLS) count++
+        if (mpKills >= ChecklistConstants.MasteryBadge.MP_MASTERY_KILLS) count++
+
+        // Zombie badges (sequential unlock)
+        if (zmKills >= ChecklistConstants.MasteryBadge.ZM_BADGE_1_KILLS) count++
+        if (zmKills >= ChecklistConstants.MasteryBadge.ZM_BADGE_2_KILLS) count++
+        if (zmKills >= ChecklistConstants.MasteryBadge.ZM_MASTERY_KILLS) count++
+
+        return count
+    }
+
+    /**
+     * Get kill count from DataStore preferences
+     */
+    private fun getKillCount(prefs: Preferences, weaponId: Int, isMpMode: Boolean): Int {
+        val key = if (isMpMode) {
+            ChecklistConstants.PreferenceKeys.weaponMpKills(weaponId)
+        } else {
+            ChecklistConstants.PreferenceKeys.weaponZmKills(weaponId)
+        }
+        return prefs[intPreferencesKey(key)] ?: 0
     }
 }

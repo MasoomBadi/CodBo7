@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.CategoryProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -329,17 +330,6 @@ private fun getCategoryIcon(category: ChecklistCategory): ImageVector {
     }
 }
 
-private fun getCategoryAccentColor(category: ChecklistCategory): Color {
-    return when (category) {
-        ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
-        ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
-        ChecklistCategory.MASTERY_BADGES -> Color(0xFFFFB300) // Gold
-        ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
-        ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
-        ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
-    }
-}
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EnhancedCategoryCard(
@@ -358,7 +348,7 @@ private fun EnhancedCategoryCard(
         label = "glowAlpha"
     )
 
-    val accentColor = getCategoryAccentColor(categoryProgress.category)
+    val accentColor = ChecklistConstants.CategoryColors.forCategory(categoryProgress.category)
     val icon = getCategoryIcon(categoryProgress.category)
 
     Card(

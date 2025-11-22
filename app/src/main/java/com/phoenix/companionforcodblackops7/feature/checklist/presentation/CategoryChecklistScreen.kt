@@ -38,20 +38,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
+import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistItem
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
-
-private fun getCategoryAccentColor(category: ChecklistCategory): Color {
-    return when (category) {
-        ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
-        ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
-        ChecklistCategory.MASTERY_BADGES -> Color(0xFFFFB300) // Gold
-        ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
-        ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
-        ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -76,7 +66,7 @@ fun CategoryChecklistScreen(
 
     // Get category accent color
     val categoryAccentColor = when (val state = uiState) {
-        is CategoryChecklistUiState.Success -> getCategoryAccentColor(state.category)
+        is CategoryChecklistUiState.Success -> ChecklistConstants.CategoryColors.forCategory(state.category)
         else -> MaterialTheme.colorScheme.secondary
     }
 
