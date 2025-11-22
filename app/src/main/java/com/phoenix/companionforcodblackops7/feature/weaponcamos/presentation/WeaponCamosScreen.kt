@@ -176,6 +176,13 @@ fun WeaponCamosScreen(
                 // Group camos by category
                 val camosByCategory = camosForMode.groupBy { it.category }
 
+                // Initialize categories as expanded on first load
+                LaunchedEffect(selectedMode) {
+                    if (expandedCategories.isEmpty()) {
+                        expandedCategories = camosByCategory.keys
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()

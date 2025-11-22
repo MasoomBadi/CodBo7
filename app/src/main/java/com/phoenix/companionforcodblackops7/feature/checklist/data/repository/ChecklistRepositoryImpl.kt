@@ -426,12 +426,8 @@ class ChecklistRepositoryImpl @Inject constructor(
      */
     private fun buildCamoQueryCache(): CamoQueryCache {
         try {
-            // Query common camos shared by all weapons
-            val commonCamoIds = realm.query<DynamicEntity>(
-                buildCamoQuery()
-            ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
-
-            // Query all weapon-specific camo assignments
+            // Query all weapon-camo assignments from junction table ONLY
+            // Each weapon gets exactly its assigned camos from weapon_camo table
             val weaponCamoMap = realm.query<DynamicEntity>(
                 "tableName == $0",
                 ChecklistConstants.Tables.WEAPON_CAMO
@@ -458,35 +454,10 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
                 .groupBy({ it.first to it.second }, { it.third })
 
-            return CamoQueryCache(commonCamoIds, weaponCamoMap, criteriaMap)
+            return CamoQueryCache(weaponCamoMap, criteriaMap)
         } catch (e: Exception) {
             Timber.e(e, "Failed to build camo query cache")
-            return CamoQueryCache(emptySet(), emptyMap(), emptyMap())
-        }
-    }
-
-    /**
-     * Build Realm query string for common camos
-     * Dynamically fetches all categories from database - NO HARDCODED LIST
-     */
-    private fun buildCamoQuery(): String {
-        try {
-            // Query all camos to get distinct categories dynamically
-            val allCamos = realm.query<DynamicEntity>("tableName == 'camo'").find()
-            val categories = allCamos
-                .mapNotNull { it.data["category"]?.asString() }
-                .distinct()
-
-            if (categories.isEmpty()) {
-                Timber.w("No camo categories found in database")
-                return "tableName == 'camo'"
-            }
-
-            val conditions = categories.joinToString(" OR ") { "data['category'] == '$it'" }
-            return "tableName == 'camo' AND ($conditions)"
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to build dynamic camo query")
-            return "tableName == 'camo'"
+            return CamoQueryCache(emptyMap(), emptyMap())
         }
     }
 
