@@ -407,6 +407,8 @@ private fun ExpandableCamoCard(
 
     val borderColor = if (camo.isUnlocked) {
         accentColor.copy(alpha = glowAlpha * 0.7f)
+    } else if (camo.isLocked) {
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
     } else {
         MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     }
@@ -422,6 +424,8 @@ private fun ExpandableCamoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (camo.isUnlocked) {
                 MaterialTheme.colorScheme.surface
+            } else if (camo.isLocked) {
+                MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f)
             } else {
                 MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f)
             }
@@ -436,7 +440,7 @@ private fun ExpandableCamoCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onToggleExpand() }
+                    .clickable(enabled = !camo.isLocked) { onToggleExpand() }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -456,40 +460,58 @@ private fun ExpandableCamoCard(
                     )
 
                     // Unlock status overlay
-                    if (camo.isUnlocked) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(6.dp),
-                            contentAlignment = Alignment.TopEnd
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = accentColor
+                    when {
+                        camo.isUnlocked -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(6.dp),
+                                contentAlignment = Alignment.TopEnd
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = accentColor
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = "Unlocked",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .padding(4.dp)
+                                    )
+                                }
+                            }
+                        }
+                        camo.isLocked -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.7f)),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.CheckCircle,
-                                    contentDescription = "Unlocked",
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .padding(4.dp)
+                                    imageVector = Icons.Filled.Lock,
+                                    contentDescription = "Locked - Complete previous camos first",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
                         }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Lock,
-                                contentDescription = "Locked",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                modifier = Modifier.size(32.dp)
-                            )
+                        else -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.5f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Lock,
+                                    contentDescription = "Not unlocked",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -506,7 +528,11 @@ private fun ExpandableCamoCard(
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 0.8.sp
                         ),
-                        color = if (camo.isUnlocked) accentColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = when {
+                            camo.isUnlocked -> accentColor
+                            camo.isLocked -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        }
                     )
 
                     // Category badge
@@ -551,12 +577,21 @@ private fun ExpandableCamoCard(
                     }
                 }
 
-                // Expand icon
-                Icon(
-                    imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = accentColor
-                )
+                // Expand icon (only if not locked)
+                if (!camo.isLocked) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = accentColor
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Lock,
+                        contentDescription = "Locked - Complete previous camos",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             // Expanded criteria section
