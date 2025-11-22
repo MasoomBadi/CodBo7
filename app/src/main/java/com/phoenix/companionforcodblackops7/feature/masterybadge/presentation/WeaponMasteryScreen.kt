@@ -26,7 +26,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeMode
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeProgress
 
 private val ACCENT_COLOR = Color(0xFFFFB300) // Gold color for mastery badges
@@ -163,7 +162,7 @@ fun WeaponMasteryScreen(
                         // Multiplayer Section
                         item {
                             ModeSection(
-                                mode = BadgeMode.MULTIPLAYER,
+                                modeDisplayName = "Multiplayer",
                                 currentKills = state.progress.mpKills,
                                 badges = state.progress.mpBadges,
                                 onKillsUpdate = { viewModel.updateMpKills(it) }
@@ -173,7 +172,7 @@ fun WeaponMasteryScreen(
                         // Zombie Section
                         item {
                             ModeSection(
-                                mode = BadgeMode.ZOMBIE,
+                                modeDisplayName = "Zombie",
                                 currentKills = state.progress.zmKills,
                                 badges = state.progress.zmBadges,
                                 onKillsUpdate = { viewModel.updateZmKills(it) }
@@ -222,7 +221,7 @@ fun WeaponMasteryScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ModeSection(
-    mode: BadgeMode,
+    modeDisplayName: String,
     currentKills: Int,
     badges: List<BadgeProgress>,
     onKillsUpdate: (Int) -> Unit
@@ -250,7 +249,7 @@ private fun ModeSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = mode.displayName.uppercase(),
+                    text = modeDisplayName.uppercase(),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp
@@ -386,7 +385,7 @@ private fun BadgeCard(badgeProgress: BadgeProgress) {
             ) {
                 // Badge name
                 Text(
-                    text = badgeProgress.badge.badgeLevel.displayName.uppercase(),
+                    text = badgeProgress.badge.badgeLevelDisplayName.uppercase(),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 0.8.sp
