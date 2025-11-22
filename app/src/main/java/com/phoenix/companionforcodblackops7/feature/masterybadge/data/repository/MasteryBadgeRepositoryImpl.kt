@@ -153,7 +153,7 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                 Timber.e(e, "Error mapping mastery badge entity")
                 null
             }
-        }.sortedBy { it.badgeLevel.ordinal }
+        }.sortedBy { it.sortOrder }
 
         // Get current kills from DataStore - this is a sync operation, so we return 0 for now
         // In a real scenario, you'd need to refactor this to use Flow properly
