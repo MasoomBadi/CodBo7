@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.GameMap
 import com.phoenix.companionforcodblackops7.feature.maps.domain.model.MapMarker
 import kotlinx.coroutines.launch
@@ -308,25 +309,12 @@ fun MapViewerScreen(
                                 }
                             }
 
-                            // Ad Space - Stuck at bottom (320x90)
-                            Surface(
+                            // Banner Ad at Bottom
+                            BannerAd(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
-                                    .height(90.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerLowest
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "Ad Space (320x90)",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                                    )
-                                }
-                            }
+                            )
                         }
                     }
                 }
