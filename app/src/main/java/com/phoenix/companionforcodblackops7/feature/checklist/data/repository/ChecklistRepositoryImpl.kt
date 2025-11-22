@@ -97,8 +97,7 @@ class ChecklistRepositoryImpl @Inject constructor(
         try {
             // Use compound key: "CATEGORY_ID" to avoid conflicts (Realm doesn't support composite PKs)
             val compoundKey = "${category.name}_$itemId"
-            val categoryName = category.name
-            Timber.d("Toggling item: id=$itemId, category=$categoryName, compoundKey=$compoundKey")
+            Timber.d("Toggling item: id=$itemId, category=${category.name}, compoundKey=$compoundKey")
 
             realm.write {
                 val existing = query<ChecklistItemEntity>("id == $0", compoundKey).first().find()
@@ -109,10 +108,10 @@ class ChecklistRepositoryImpl @Inject constructor(
                 } else {
                     copyToRealm(ChecklistItemEntity().apply {
                         id = compoundKey
-                        category = categoryName
+                        this.category = category
                         isUnlocked = true
                     })
-                    Timber.d("Created new unlocked item: $compoundKey (category=$categoryName)")
+                    Timber.d("Created new unlocked item: $compoundKey (category=${category.name})")
                 }
             }
         } catch (e: Exception) {
@@ -262,11 +261,11 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (operators.isEmpty()) return
 
         val operatorChecklistMap = checklistItems
-            .filter { it.category == ChecklistCategory.OPERATORS.name }
-            .associate {
+            .filter { entity -> entity.category == ChecklistCategory.OPERATORS }
+            .associate { entity ->
                 // Strip compound key prefix: "OPERATORS_ID" -> "ID"
-                val originalId = it.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
-                originalId to it.isUnlocked
+                val originalId = entity.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
+                originalId to entity.isUnlocked
             }
 
         val unlockedCount = operators.count { operatorChecklistMap[it.id] == true }
@@ -286,11 +285,11 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (prestigeItems.isEmpty()) return
 
         val prestigeChecklistMap = checklistItems
-            .filter { it.category == ChecklistCategory.PRESTIGE.name }
-            .associate {
+            .filter { entity -> entity.category == ChecklistCategory.PRESTIGE }
+            .associate { entity ->
                 // Strip compound key prefix: "PRESTIGE_ID" -> "ID"
-                val originalId = it.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
-                originalId to it.isUnlocked
+                val originalId = entity.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
+                originalId to entity.isUnlocked
             }
 
         val unlockedCount = prestigeItems.count { prestigeChecklistMap[it.id] == true }
@@ -422,7 +421,7 @@ class ChecklistRepositoryImpl @Inject constructor(
      * Strips the compound key prefix to return original IDs
      */
     private fun getChecklistMap(category: ChecklistCategory): Flow<Map<String, Boolean>> {
-        return realm.query<ChecklistItemEntity>("category == $0", category.name)
+        return realm.query<ChecklistItemEntity>("category == $0", category)
             .asFlow()
             .map { results ->
                 results.list.associate {
