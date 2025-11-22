@@ -33,6 +33,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.weapons.presentation.model.WeaponWithBadges
+import timber.log.Timber
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -45,7 +46,7 @@ fun WeaponsListScreen(
     onNavigateBack: () -> Unit,
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
-    timber.log.Timber.d("WeaponsListScreen: Composing...")
+    Timber.d("WeaponsListScreen: Composing...")
 
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
     var selectedCategory by remember { mutableStateOf<String?>(null) } // Dynamic String category
@@ -55,17 +56,17 @@ fun WeaponsListScreen(
     // Lifecycle observer with detailed logging
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        timber.log.Timber.d("WeaponsListScreen: Setting up lifecycle observer")
+        Timber.d("WeaponsListScreen: Setting up lifecycle observer")
         val observer = LifecycleEventObserver { _, event ->
-            timber.log.Timber.d("WeaponsListScreen: Lifecycle event = $event")
+            Timber.d("WeaponsListScreen: Lifecycle event = $event")
             if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
-                timber.log.Timber.d("WeaponsListScreen: Screen visible - refreshing badge counts")
+                Timber.d("WeaponsListScreen: Screen visible - refreshing badge counts")
                 viewModel.refreshBadgeCounts()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            timber.log.Timber.d("WeaponsListScreen: Removing lifecycle observer")
+            Timber.d("WeaponsListScreen: Removing lifecycle observer")
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
