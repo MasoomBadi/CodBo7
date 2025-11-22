@@ -45,20 +45,28 @@ fun WeaponsListScreen(
     onNavigateBack: () -> Unit,
     viewModel: WeaponsViewModel = hiltViewModel()
 ) {
+    timber.log.Timber.d("WeaponsListScreen: Composing...")
+
     val weaponsByCategory by viewModel.weaponsByCategory.collectAsState()
     var selectedCategory by remember { mutableStateOf<String?>(null) } // Dynamic String category
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
-    // Track if screen is visible using lifecycle state
+    // Lifecycle observer with detailed logging
     val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
-
-    // Refresh whenever we become RESUMED (catches all navigation back cases)
-    LaunchedEffect(lifecycleState) {
-        if (lifecycleState == Lifecycle.State.RESUMED) {
-            timber.log.Timber.d("WeaponsListScreen RESUMED - refreshing badge counts")
-            viewModel.refreshBadgeCounts()
+    DisposableEffect(lifecycleOwner) {
+        timber.log.Timber.d("WeaponsListScreen: Setting up lifecycle observer")
+        val observer = LifecycleEventObserver { _, event ->
+            timber.log.Timber.d("WeaponsListScreen: Lifecycle event = $event")
+            if (event == Lifecycle.Event.ON_START || event == Lifecycle.Event.ON_RESUME) {
+                timber.log.Timber.d("WeaponsListScreen: Screen visible - refreshing badge counts")
+                viewModel.refreshBadgeCounts()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            timber.log.Timber.d("WeaponsListScreen: Removing lifecycle observer")
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
