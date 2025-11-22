@@ -112,7 +112,10 @@ fun ChecklistOverviewScreen(
                         }
 
                         // Active Category Cards
-                        items(state.progress.categoryProgress.values.toList()) { categoryProgress ->
+                        items(
+                            items = state.progress.categoryProgress.values.toList(),
+                            key = { it.category } // Unique key to prevent duplicate key errors
+                        ) { categoryProgress ->
                             EnhancedCategoryCard(
                                 categoryProgress = categoryProgress,
                                 onClick = { onNavigateToCategory(categoryProgress.category) },

@@ -25,9 +25,10 @@ class WeaponCamosRepositoryImpl @Inject constructor(
 
     override fun getWeaponCamos(weaponId: Int): Flow<Map<String, List<Camo>>> {
         // Get common camos (shared by all weapons)
-        // Dynamically query all categories from database - NO HARDCODED LIST
+        // These specific categories (military, special, mastery, prestige) are shared by ALL weapons
         val commonCamosFlow = realm.query<DynamicEntity>(
-            buildCommonCamosQuery()
+            "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
+            "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
         ).asFlow().map { results ->
             results.list.mapNotNull { entity ->
                 try {
@@ -77,31 +78,6 @@ class WeaponCamosRepositoryImpl @Inject constructor(
 
             // Group by mode
             allCamos.groupBy { it.mode }
-        }
-    }
-
-    /**
-     * Build Realm query for common camos
-     * Dynamically fetches all categories from database - NO HARDCODED LIST
-     */
-    private fun buildCommonCamosQuery(): String {
-        try {
-            // Query all camos to get distinct categories dynamically
-            val allCamos = realm.query<DynamicEntity>("tableName == 'camo'").find()
-            val categories = allCamos
-                .mapNotNull { it.data["category"]?.asString() }
-                .distinct()
-
-            if (categories.isEmpty()) {
-                Timber.w("No camo categories found in database")
-                return "tableName == 'camo'"
-            }
-
-            val conditions = categories.joinToString(" OR ") { "data['category'] == '$it'" }
-            return "tableName == 'camo' AND ($conditions)"
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to build dynamic camo query")
-            return "tableName == 'camo'"
         }
     }
 
