@@ -2,6 +2,7 @@ package com.phoenix.companionforcodblackops7.core.di
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.phoenix.companionforcodblackops7.core.data.remote.api.Bo7ApiService
+import com.phoenix.companionforcodblackops7.BuildConfig
 import com.phoenix.companionforcodblackops7.core.util.Constants
 import dagger.Module
 import dagger.Provides
@@ -33,7 +34,11 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
+                    level = if (BuildConfig.DEBUG) {
+                        HttpLoggingInterceptor.Level.BODY
+                    } else {
+                        HttpLoggingInterceptor.Level.NONE
+                    }
                 }
             )
             .connectTimeout(30, TimeUnit.SECONDS)
