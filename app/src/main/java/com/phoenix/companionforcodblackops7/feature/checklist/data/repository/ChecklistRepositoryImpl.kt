@@ -95,19 +95,20 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     override suspend fun toggleItemUnlocked(itemId: String, category: ChecklistCategory) {
         try {
+            Timber.d("Toggling item: id=$itemId, category=${category.name}")
             realm.write {
                 val existing = query<ChecklistItemEntity>("id == $0", itemId).first().find()
 
                 if (existing != null) {
                     existing.isUnlocked = !existing.isUnlocked
-                    Timber.d("Toggled item $itemId: ${existing.isUnlocked}")
+                    Timber.d("Toggled existing item $itemId (category=${existing.category}): ${existing.isUnlocked}")
                 } else {
                     copyToRealm(ChecklistItemEntity().apply {
                         id = itemId
                         this.category = category.name
                         isUnlocked = true
                     })
-                    Timber.d("Created new unlocked item: $itemId")
+                    Timber.d("Created new unlocked item: $itemId (category=${category.name})")
                 }
             }
         } catch (e: Exception) {
@@ -159,12 +160,18 @@ class ChecklistRepositoryImpl @Inject constructor(
         val checklistFlow = getChecklistMap(ChecklistCategory.PRESTIGE)
 
         return combine(prestigeFlow, checklistFlow) { prestigeItems, checklistMap ->
+            Timber.d("Prestige items from DB: ${prestigeItems.size}")
+            Timber.d("Checklist map entries: ${checklistMap.size}, keys: ${checklistMap.keys}")
+
             prestigeItems.map { item ->
+                val isUnlocked = checklistMap[item.id] ?: false
+                Timber.d("Prestige item ${item.id} (${item.name}): unlocked=$isUnlocked")
+
                 ChecklistItem(
                     id = item.id,
                     name = item.name,
                     category = ChecklistCategory.PRESTIGE,
-                    isUnlocked = checklistMap[item.id] ?: false,
+                    isUnlocked = isUnlocked,
                     imageUrl = null,
                     unlockCriteria = item.description
                 )
