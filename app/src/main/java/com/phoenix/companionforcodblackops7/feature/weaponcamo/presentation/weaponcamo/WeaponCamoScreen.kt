@@ -61,6 +61,7 @@ private const val BASE_URL = "http://codbo7.masoombadi.top"
 fun WeaponCamoScreen(
     onCamoClick: (Int, Int) -> Unit, // weaponId, camoId
     padding: PaddingValues,
+    onNavigateBack: () -> Unit = {},
     viewModel: WeaponCamoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
