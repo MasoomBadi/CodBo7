@@ -406,13 +406,16 @@ class WeaponCamoRepositoryImpl @Inject constructor(
      * @return List of mode names (e.g., ["campaign", "multiplayer", "zombie", "prestige"])
      */
     private fun getDistinctModes(): List<String> {
-        return realm.query<DynamicEntity>(
+        val modes = realm.query<DynamicEntity>(
             "tableName == $0",
             ChecklistConstants.Tables.CAMO
         ).find()
             .mapNotNull { it.data["mode"]?.asString() }
             .distinct()
             .sorted()
+
+        Timber.d("Distinct modes from database: $modes (count: ${modes.size})")
+        return modes
     }
 
     /**
@@ -420,6 +423,8 @@ class WeaponCamoRepositoryImpl @Inject constructor(
      * @return Total count of distinct modes
      */
     private fun getTotalModesCount(): Int {
-        return getDistinctModes().size
+        val count = getDistinctModes().size
+        Timber.d("Total modes count: $count")
+        return count
     }
 }
