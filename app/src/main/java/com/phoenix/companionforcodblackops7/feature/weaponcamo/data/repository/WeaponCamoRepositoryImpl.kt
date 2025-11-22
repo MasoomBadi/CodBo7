@@ -249,12 +249,21 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             camoId
         ).find()
 
+        // OPTIMIZATION: Batch fetch all completed criteria for this weapon-camo pair
+        val completedCriteriaIds = realm.query<DynamicEntity>(
+            "tableName == $0 AND data['weapon_id'] == $1 AND data['camo_id'] == $2 AND data['is_completed'] == $3",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+            weaponId,
+            camoId,
+            true
+        ).find()
+            .mapNotNull { it.data["criterion_id"]?.asInt() }
+            .toSet()
+
         return criteriaEntities.mapNotNull { entity ->
             val id = entity.data["id"]?.asInt() ?: return@mapNotNull null
             val criteriaOrder = entity.data["criteria_order"]?.asInt() ?: 1
             val criteriaText = entity.data["criteria_text"]?.asString() ?: ""
-
-            val isCompleted = isCompletedInRealm(weaponId, camoId, id)
 
             CamoCriteria(
                 id = id,
@@ -262,7 +271,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                 camoId = camoId,
                 criteriaOrder = criteriaOrder,
                 criteriaText = criteriaText,
-                isCompleted = isCompleted
+                isCompleted = completedCriteriaIds.contains(id)
             )
         }.sortedBy { it.criteriaOrder }
     }
@@ -282,19 +291,27 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         camo: Camo,
         allCamosInMode: List<Camo>
     ): Boolean {
-        // Prestige mode: All camos are unlocked from the start (no category dependency)
-        // Each prestige category is independent
-        if (camo.mode.lowercase() == "prestige") {
-            return true
-        }
-
         // Rule 1: First camo in first category is always unlocked
         if (camo.categoryOrder == 1 && camo.sortOrder == 1) {
             return true
         }
 
-        // Rule 2: Check category dependency
-        // All camos in previous category_order must be complete
+        // Prestige mode has special dependency chain:
+        // prestige1 (cat 1) -> prestige2 (cat 2) -> prestigem1 (cat 3) -> prestigem2 (cat 4) -> prestigem3 (cat 5) -> prestigel (cat 6)
+        // Each prestige category has exactly 1 camo, so we only check category dependency
+        if (camo.mode.lowercase() == "prestige") {
+            // Check if previous category is complete (there's only 1 camo per prestige category)
+            if (camo.categoryOrder > 1) {
+                val previousCategoryComplete = allCamosInMode
+                    .filter { it.categoryOrder == camo.categoryOrder - 1 }
+                    .all { it.isCompleted }
+                return previousCategoryComplete
+            }
+            return true
+        }
+
+        // Regular modes (campaign, multiplayer, zombie):
+        // Rule 2: Check category dependency - All camos in previous category_order must be complete
         if (camo.categoryOrder > 1) {
             val previousCategoryComplete = allCamosInMode
                 .filter { it.categoryOrder == camo.categoryOrder - 1 }
@@ -436,7 +453,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             .mapNotNull { it.data["id"]?.asInt() }
     }
 
-    private suspend fun filterPrestigeCamosForWeapon(
+    private fun filterPrestigeCamosForWeapon(
         weaponId: Int,
         allPrestigeCamos: List<Camo>
     ): List<Camo> {
@@ -552,9 +569,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
 
                 // Filter prestige camos for this weapon
                 val camosForWeapon = if (mode == "prestige") {
-                    kotlinx.coroutines.runBlocking {
-                        filterPrestigeCamosForWeapon(weaponId, camosForMode)
-                    }
+                    filterPrestigeCamosForWeapon(weaponId, camosForMode)
                 } else {
                     camosForMode
                 }

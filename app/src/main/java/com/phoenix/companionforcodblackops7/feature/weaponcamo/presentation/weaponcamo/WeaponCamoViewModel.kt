@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCategory
+import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoMode
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.Weapon
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.repository.WeaponCamoRepository
@@ -14,10 +15,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface WeaponCamoUiState {
@@ -40,8 +39,6 @@ class WeaponCamoViewModel @Inject constructor(
     private val _selectedMode = MutableStateFlow(CamoMode.CAMPAIGN)
 
     // Reactive weapon flow - updates when progress changes
-    // Note: We reload periodically since getWeapon() is not a Flow
-    // The camos update reactively through getCamosForWeapon() which IS a Flow
     private val weaponFlow: Flow<Weapon?> = repository.getAllWeapons()
         .map { weapons -> weapons.find { it.id == weaponId } }
         .stateIn(
@@ -76,24 +73,18 @@ class WeaponCamoViewModel @Inject constructor(
         _selectedMode.value = mode
     }
 
-    suspend fun loadCriteria(weaponId: Int, camoId: Int): List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria> {
+    /**
+     * Load criteria for a specific camo
+     */
+    suspend fun loadCriteria(weaponId: Int, camoId: Int): List<CamoCriteria> {
         return repository.getCamoCriteria(weaponId, camoId)
     }
 
     /**
-     * Suspend version that waits for DataStore update to complete
-     * Used by UI to ensure checkbox state updates before triggering refresh
+     * Toggle criterion completion status
+     * Persists to database and triggers reactive updates through Flow
      */
     suspend fun toggleCriterionSuspend(weaponId: Int, camoId: Int, criterionId: Int) {
         repository.toggleCriterion(weaponId, camoId, criterionId)
-        // Suspends until DataStore update completes
-        // Weapon progress and camos update reactively through Flow
-    }
-
-    @Deprecated("Use toggleCriterionSuspend instead", ReplaceWith("toggleCriterionSuspend(weaponId, camoId, criterionId)"))
-    fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
-        viewModelScope.launch {
-            toggleCriterionSuspend(weaponId, camoId, criterionId)
-        }
     }
 }
