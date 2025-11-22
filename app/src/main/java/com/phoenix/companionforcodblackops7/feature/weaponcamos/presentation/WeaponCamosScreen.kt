@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.phoenix.companionforcodblackops7.feature.weaponcamos.domain.model.Camo
+import android.widget.Toast
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -49,6 +51,7 @@ fun WeaponCamosScreen(
     var selectedMode by remember { mutableStateOf("campaign") } // Dynamic String mode instead of enum
     var expandedCamoId by remember { mutableStateOf<Int?>(null) }
     var expandedCategories by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -216,10 +219,26 @@ fun WeaponCamosScreen(
                                         camo = camo,
                                         isExpanded = expandedCamoId == camo.id,
                                         onToggleExpand = {
-                                            expandedCamoId = if (expandedCamoId == camo.id) null else camo.id
+                                            if (camo.isLocked) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Complete previous camos in this category first",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                expandedCamoId = if (expandedCamoId == camo.id) null else camo.id
+                                            }
                                         },
                                         onCriterionToggle = { criterionId, isLocked ->
-                                            viewModel.toggleCriterionCompletion(camo.id, criterionId, isLocked)
+                                            if (isLocked) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Complete previous challenges first",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            } else {
+                                                viewModel.toggleCriterionCompletion(camo.id, criterionId, isLocked)
+                                            }
                                         }
                                     )
                                 }
