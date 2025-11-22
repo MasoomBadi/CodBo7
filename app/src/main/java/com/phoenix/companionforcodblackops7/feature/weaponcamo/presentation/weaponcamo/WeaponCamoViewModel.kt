@@ -1,7 +1,5 @@
 package com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponcamo
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,10 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,7 +31,6 @@ sealed interface WeaponCamoUiState {
 @HiltViewModel
 class WeaponCamoViewModel @Inject constructor(
     private val repository: WeaponCamoRepository,
-    private val dataStore: DataStore<Preferences>,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -43,16 +38,14 @@ class WeaponCamoViewModel @Inject constructor(
 
     private val _selectedMode = MutableStateFlow(CamoMode.CAMPAIGN)
 
-    // Reactive weapon flow that updates when preferences change
-    private val weaponFlow: Flow<Weapon?> = dataStore.data
-        .debounce(150) // Debounce rapid checkbox changes
-        .distinctUntilChanged() // Only react to actual changes
-        .map { repository.getWeapon(weaponId) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    // Reactive weapon flow - triggers on repository changes (Realm live queries)
+    private val weaponFlow: Flow<Weapon?> = flow {
+        emit(repository.getWeapon(weaponId))
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
     val uiState: StateFlow<WeaponCamoUiState> = _selectedMode
         .flatMapLatest { selectedMode ->

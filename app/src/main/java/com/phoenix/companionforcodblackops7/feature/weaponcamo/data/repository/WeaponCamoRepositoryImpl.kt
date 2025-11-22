@@ -1,9 +1,5 @@
 package com.phoenix.companionforcodblackops7.feature.weaponcamo.data.repository
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.Camo
@@ -13,6 +9,7 @@ import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.Weap
 import com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.repository.WeaponCamoRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -24,12 +21,12 @@ import javax.inject.Singleton
 /**
  * Implementation of WeaponCamoRepository
  *
- * Handles weapon camo tracking with dynamic database structure and complex dependency logic
+ * Handles weapon camo tracking with Realm database for both game data and user progress
+ * OPTIMIZED: Uses single database (Realm) instead of dual storage (Realm + DataStore)
  */
 @Singleton
 class WeaponCamoRepositoryImpl @Inject constructor(
-    private val realm: Realm,
-    private val dataStore: DataStore<Preferences>
+    private val realm: Realm
 ) : WeaponCamoRepository {
 
     // Cache total modes count to ensure consistency across all weapons
@@ -40,17 +37,90 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     }
 
     // =============================================================================================
+    // Realm-based Progress Tracking (Replaces DataStore)
+    // =============================================================================================
+
+    /**
+     * Generate unique progress ID for criterion
+     */
+    private fun getProgressKey(weaponId: Int, camoId: Int, criterionId: Int): String {
+        return "w${weaponId}_c${camoId}_cr${criterionId}"
+    }
+
+    /**
+     * Check if criterion is completed in Realm
+     */
+    private fun isCompletedInRealm(weaponId: Int, camoId: Int, criterionId: Int): Boolean {
+        val progressKey = getProgressKey(weaponId, camoId, criterionId)
+        val progress = realm.query<DynamicEntity>(
+            "tableName == $0 AND data['progress_key'] == $1",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+            progressKey
+        ).first().find()
+
+        return progress?.data?.get("is_completed")?.asBoolean() ?: false
+    }
+
+    /**
+     * Set criterion completion status in Realm
+     */
+    private suspend fun setCompletedInRealm(weaponId: Int, camoId: Int, criterionId: Int, isCompleted: Boolean) {
+        val progressKey = getProgressKey(weaponId, camoId, criterionId)
+
+        realm.write {
+            // Try to find existing progress entry
+            val existing = query<DynamicEntity>(
+                "tableName == $0 AND data['progress_key'] == $1",
+                ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+                progressKey
+            ).first().find()
+
+            if (existing != null) {
+                // Update existing entry
+                findLatest(existing)?.apply {
+                    data["is_completed"] = RealmAny.create(isCompleted)
+                }
+            } else {
+                // Create new entry
+                copyToRealm(DynamicEntity().apply {
+                    tableName = ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS
+                    data["progress_key"] = RealmAny.create(progressKey)
+                    data["weapon_id"] = RealmAny.create(weaponId)
+                    data["camo_id"] = RealmAny.create(camoId)
+                    data["criterion_id"] = RealmAny.create(criterionId)
+                    data["is_completed"] = RealmAny.create(isCompleted)
+                })
+            }
+        }
+
+        Timber.d("Set progress: weapon=$weaponId, camo=$camoId, criterion=$criterionId, completed=$isCompleted")
+    }
+
+    /**
+     * Batch-fetch all completion statuses for a weapon
+     * OPTIMIZED: Single query instead of N queries
+     */
+    private fun getAllCompletedCriteria(weaponId: Int): Set<String> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0 AND data['weapon_id'] == $1 AND data['is_completed'] == $2",
+            ChecklistConstants.Tables.USER_WEAPON_CAMO_PROGRESS,
+            weaponId,
+            true
+        ).find()
+            .mapNotNull { it.data["progress_key"]?.asString() }
+            .toSet()
+    }
+
+    // =============================================================================================
     // Weapons
     // =============================================================================================
 
     override fun getAllWeapons(): Flow<List<Weapon>> {
-        return combine(
-            getWeaponsFlow(),
-            dataStore.data
-        ) { weapons, prefs ->
+        // Reactive to Realm changes (no DataStore needed!)
+        return getWeaponsFlow().map { weapons ->
             weapons.map { weaponEntity ->
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: return@map null
-                val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId, prefs)
+                val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId)
 
                 Weapon(
                     id = weaponId,
@@ -80,8 +150,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             weaponId
         ).first().find() ?: return null
 
-        val prefs = dataStore.data.first()
-        val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId, prefs)
+        val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId)
 
         return Weapon(
             id = weaponId,
@@ -103,13 +172,11 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     // =============================================================================================
 
     override fun getCamosForWeapon(weaponId: Int, mode: String): Flow<List<CamoCategory>> {
-        return combine(
-            getCamosFlow(mode),
-            dataStore.data
-        ) { camoEntities, prefs ->
+        // Reactive to Realm changes (no DataStore needed!)
+        return getCamosFlow(mode).map { camoEntities ->
             // Parse camos from database
             val allCamos = camoEntities.mapNotNull { entity ->
-                parseCamoEntity(entity, weaponId, prefs)
+                parseCamoEntity(entity, weaponId)
             }
 
             // Filter: For prestige mode, include only camos assigned to this weapon
@@ -132,17 +199,12 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             camoId
         ).find()
 
-        val prefs = dataStore.data.first()
-
         return criteriaEntities.mapNotNull { entity ->
             val id = entity.data["id"]?.asInt() ?: return@mapNotNull null
             val criteriaOrder = entity.data["criteria_order"]?.asInt() ?: 1
             val criteriaText = entity.data["criteria_text"]?.asString() ?: ""
 
-            val key = booleanPreferencesKey(
-                ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, camoId, id)
-            )
-            val isCompleted = prefs[key] ?: false
+            val isCompleted = isCompletedInRealm(weaponId, camoId, id)
 
             CamoCriteria(
                 id = id,
@@ -160,14 +222,9 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     // =============================================================================================
 
     override suspend fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
-        val key = booleanPreferencesKey(
-            ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, camoId, criterionId)
-        )
-        dataStore.edit { prefs ->
-            val currentValue = prefs[key] ?: false
-            prefs[key] = !currentValue
-            Timber.d("Toggled criterion: weapon=$weaponId, camo=$camoId, criterion=$criterionId, newValue=${!currentValue}")
-        }
+        val currentValue = isCompletedInRealm(weaponId, camoId, criterionId)
+        setCompletedInRealm(weaponId, camoId, criterionId, !currentValue)
+        Timber.d("Toggled criterion: weapon=$weaponId, camo=$camoId, criterion=$criterionId, newValue=${!currentValue}")
     }
 
     override suspend fun isCamoUnlocked(
@@ -175,6 +232,12 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         camo: Camo,
         allCamosInMode: List<Camo>
     ): Boolean {
+        // Prestige mode: All camos are unlocked from the start (no category dependency)
+        // Each prestige category is independent
+        if (camo.mode.lowercase() == "prestige") {
+            return true
+        }
+
         // Rule 1: First camo in first category is always unlocked
         if (camo.categoryOrder == 1 && camo.sortOrder == 1) {
             return true
@@ -210,8 +273,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getWeaponProgress(weaponId: Int): Triple<Int, Int, Int> {
-        val prefs = dataStore.data.first()
-        return calculateWeaponProgressSync(weaponId, prefs)
+        return calculateWeaponProgressSync(weaponId)
     }
 
     // =============================================================================================
@@ -235,8 +297,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
 
     private fun parseCamoEntity(
         entity: DynamicEntity,
-        weaponId: Int,
-        prefs: Preferences
+        weaponId: Int
     ): Camo? {
         val id = entity.data["id"]?.asInt() ?: return null
         val name = entity.data["name"]?.asString() ?: ""
@@ -247,13 +308,10 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         val sortOrder = entity.data["sort_order"]?.asInt() ?: 0
         val categoryOrder = entity.data["category_order"]?.asInt() ?: 0
 
-        // Calculate criteria completion
+        // Calculate criteria completion from Realm
         val criteria = getCriteriaForCamo(weaponId, id)
         val completedCriteriaCount = criteria.count { criterionId ->
-            val key = booleanPreferencesKey(
-                ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, id, criterionId)
-            )
-            prefs[key] ?: false
+            isCompletedInRealm(weaponId, id, criterionId)
         }
         val totalCriteriaCount = criteria.size
         val isCompleted = totalCriteriaCount > 0 && completedCriteriaCount == totalCriteriaCount
@@ -275,14 +333,14 @@ class WeaponCamoRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Optimized version that uses pre-fetched criteria map
+     * Optimized version that uses pre-fetched criteria map and completed set
      * Used by calculateWeaponProgressSync to avoid N+1 query problem
      */
     private fun parseCamoEntityOptimized(
         entity: DynamicEntity,
         weaponId: Int,
-        prefs: Preferences,
-        criteriaMap: Map<Int, List<Int>>
+        criteriaMap: Map<Int, List<Int>>,
+        completedSet: Set<String>
     ): Camo? {
         val id = entity.data["id"]?.asInt() ?: return null
         val name = entity.data["name"]?.asString() ?: ""
@@ -293,13 +351,11 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         val sortOrder = entity.data["sort_order"]?.asInt() ?: 0
         val categoryOrder = entity.data["category_order"]?.asInt() ?: 0
 
-        // Use pre-fetched criteria map instead of querying database
+        // Use pre-fetched criteria map and completed set
         val criteria = criteriaMap[id] ?: emptyList()
         val completedCriteriaCount = criteria.count { criterionId ->
-            val key = booleanPreferencesKey(
-                ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, id, criterionId)
-            )
-            prefs[key] ?: false
+            val progressKey = getProgressKey(weaponId, id, criterionId)
+            completedSet.contains(progressKey)
         }
         val totalCriteriaCount = criteria.size
         val isCompleted = totalCriteriaCount > 0 && completedCriteriaCount == totalCriteriaCount
@@ -409,7 +465,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun calculateWeaponProgressSync(weaponId: Int, prefs: Preferences): Triple<Int, Int, Int> {
+    private fun calculateWeaponProgressSync(weaponId: Int): Triple<Int, Int, Int> {
         try {
             // Query distinct modes from database (dynamic, not hardcoded)
             val modes = getDistinctModes()
@@ -417,7 +473,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             var totalCamos = 0
             var completedModes = 0
 
-            // OPTIMIZATION: Batch-fetch all criteria for this weapon once (1 query instead of 54)
+            // OPTIMIZATION 1: Batch-fetch all criteria for this weapon (1 query instead of 54)
             val allCriteriaMap = realm.query<DynamicEntity>(
                 "tableName == $0 AND data['weapon_id'] == $1",
                 ChecklistConstants.Tables.CAMO_CRITERIA,
@@ -430,6 +486,9 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                 }
                 .groupBy({ it.first }, { it.second })
 
+            // OPTIMIZATION 2: Batch-fetch all completed criteria (1 query instead of N)
+            val completedSet = getAllCompletedCriteria(weaponId)
+
             for (mode in modes) {
                 val camoEntities = realm.query<DynamicEntity>(
                     "tableName == $0 AND data['mode'] == $1",
@@ -438,7 +497,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                 ).find()
 
                 val camosForMode = camoEntities.mapNotNull { entity ->
-                    parseCamoEntityOptimized(entity, weaponId, prefs, allCriteriaMap)
+                    parseCamoEntityOptimized(entity, weaponId, allCriteriaMap, completedSet)
                 }
 
                 // Filter prestige camos for this weapon

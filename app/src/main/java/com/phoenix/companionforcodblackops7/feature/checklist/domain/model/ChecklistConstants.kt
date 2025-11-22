@@ -29,6 +29,7 @@ object ChecklistConstants {
         const val WEAPON_CAMO = "weapon_camo"
         const val CAMO_CRITERIA = "camo_criteria"
         const val CLASSIC_PRESTIGE = "classic_prestige"
+        const val USER_WEAPON_CAMO_PROGRESS = "user_weapon_camo_progress"
     }
 
     // UI Category Colors (presentation layer - not data)
