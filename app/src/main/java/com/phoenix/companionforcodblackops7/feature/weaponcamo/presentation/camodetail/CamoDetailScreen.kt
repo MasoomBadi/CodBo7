@@ -47,6 +47,7 @@ private const val BASE_URL = "http://codbo7.masoombadi.top"
 @Composable
 fun CamoDetailScreen(
     padding: PaddingValues,
+    onNavigateBack: () -> Unit = {},
     viewModel: CamoDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
