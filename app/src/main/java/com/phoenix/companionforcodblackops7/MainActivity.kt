@@ -298,6 +298,9 @@ fun AppNavigation(
                 },
                 onWeaponClick = { weaponId, weaponName, weaponCategory ->
                     navController.navigate("weaponCamos/$weaponId/$weaponName/$weaponCategory")
+                },
+                onMasteryBadgeClick = { weaponId, weaponName, weaponCategory ->
+                    navController.navigate("weaponMastery/$weaponId/$weaponName/$weaponCategory")
                 }
             )
         }

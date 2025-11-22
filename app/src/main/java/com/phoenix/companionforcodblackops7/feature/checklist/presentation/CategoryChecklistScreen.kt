@@ -58,6 +58,7 @@ private fun getCategoryAccentColor(category: ChecklistCategory): Color {
 fun CategoryChecklistScreen(
     onNavigateBack: () -> Unit,
     onWeaponClick: (weaponId: String, weaponName: String, weaponCategory: String) -> Unit = { _, _, _ -> },
+    onMasteryBadgeClick: (weaponId: String, weaponName: String, weaponCategory: String) -> Unit = { _, _, _ -> },
     viewModel: CategoryChecklistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -248,15 +249,25 @@ fun CategoryChecklistScreen(
                                 accentColor = categoryAccentColor,
                                 category = state.category,
                                 onToggle = {
-                                    if (state.category == ChecklistCategory.WEAPONS || state.category == ChecklistCategory.MASTERY_BADGES) {
-                                        // Parse ID: "weaponId|weaponCategory"
-                                        val parts = item.id.split("|")
-                                        val weaponId = parts.getOrNull(0) ?: item.id
-                                        val weaponCategory = parts.getOrNull(1) ?: "Assault Rifle"
-                                        onWeaponClick(weaponId, item.name, weaponCategory)
-                                    } else {
-                                        // Toggle unlock status
-                                        viewModel.toggleItemUnlocked(item.id)
+                                    when (state.category) {
+                                        ChecklistCategory.WEAPONS -> {
+                                            // Navigate to Weapon Camos screen
+                                            val parts = item.id.split("|")
+                                            val weaponId = parts.getOrNull(0) ?: item.id
+                                            val weaponCategory = parts.getOrNull(1) ?: "Assault Rifle"
+                                            onWeaponClick(weaponId, item.name, weaponCategory)
+                                        }
+                                        ChecklistCategory.MASTERY_BADGES -> {
+                                            // Navigate to Weapon Mastery screen
+                                            val parts = item.id.split("|")
+                                            val weaponId = parts.getOrNull(0) ?: item.id
+                                            val weaponCategory = parts.getOrNull(1) ?: "Assault Rifle"
+                                            onMasteryBadgeClick(weaponId, item.name, weaponCategory)
+                                        }
+                                        else -> {
+                                            // Toggle unlock status for other categories
+                                            viewModel.toggleItemUnlocked(item.id)
+                                        }
                                     }
                                 }
                             )
