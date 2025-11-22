@@ -329,12 +329,14 @@ class ChecklistRepositoryImpl @Inject constructor(
             val multiplayerCamos = camosByMode["multiplayer"] ?: emptyList()
             val zombieCamos = camosByMode["zombie"] ?: emptyList()
 
-            // Filter prestige common camos (prestige1, prestige2, prestigem1)
+            // Filter prestige common camos (prestigem1, prestigem2, prestigem3)
             // Per user's SQL: 3 common + 3 unique (from weapon_camo) = 6 total prestige per weapon
+            // Common: prestigem1, prestigem2, prestigem3 (same for all weapons)
+            // Unique: prestige1, prestige2, prestigel (stored in weapon_camo table)
             val commonPrestigeCamos = allCamos
                 .filter {
                     val category = it.data["category"]?.asString()
-                    category in listOf("prestige1", "prestige2", "prestigem1")
+                    category in listOf("prestigem1", "prestigem2", "prestigem3")
                 }
                 .mapNotNull { it.data["id"]?.asInt() }
 
