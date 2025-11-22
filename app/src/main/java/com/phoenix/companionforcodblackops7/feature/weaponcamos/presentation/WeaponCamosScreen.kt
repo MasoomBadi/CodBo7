@@ -419,7 +419,7 @@ private fun ExpandableCamoCard(
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
-                            text = camo.category.displayName.uppercase(),
+                            text = camo.categoryDisplayName.uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.6.sp
