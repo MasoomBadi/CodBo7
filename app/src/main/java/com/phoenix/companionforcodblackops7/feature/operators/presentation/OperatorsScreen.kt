@@ -442,6 +442,7 @@ fun OperatorDetailsScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
             }
+            }
 
             // Banner Ad at Bottom
             BannerAd(
