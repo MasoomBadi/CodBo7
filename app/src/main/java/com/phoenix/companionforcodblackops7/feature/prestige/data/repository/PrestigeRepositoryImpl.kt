@@ -41,7 +41,8 @@ class PrestigeRepositoryImpl @Inject constructor(
                         val name = data["name"]?.asString() ?: "Prestige $idInt"
                         val typeStr = data["type"]?.asString() ?: "PRESTIGE"
                         val level = data["level"]?.asInt() ?: idInt
-                        val description = data["description"]?.asString() ?: ""
+                        // Use unlock_by column for unlock criteria description
+                        val description = data["unlock_by"]?.asString() ?: ""
                         val iconPath = data["icon_path"]?.asString() ?: ""
 
                         val type = when (typeStr.uppercase()) {
