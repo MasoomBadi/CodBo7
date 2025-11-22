@@ -47,6 +47,7 @@ private const val BASE_URL = "http://codbo7.masoombadi.top"
 @Composable
 fun CategoryChecklistScreen(
     onNavigateBack: () -> Unit,
+    onMasteryBadgeClick: (weaponId: String, weaponName: String, weaponCategory: String) -> Unit = { _, _, _ -> },
     viewModel: CategoryChecklistViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -238,13 +239,20 @@ fun CategoryChecklistScreen(
                                 category = state.category,
                                 onToggle = {
                                     when (state.category) {
-                                        ChecklistCategory.WEAPONS, ChecklistCategory.MASTERY_BADGES -> {
-                                            // Features removed - will be redesigned
+                                        ChecklistCategory.WEAPONS -> {
+                                            // Weapon camos feature not yet implemented
                                             Toast.makeText(
                                                 context,
-                                                "Tracking feature coming soon",
+                                                "Weapon camos tracking coming soon",
                                                 Toast.LENGTH_SHORT
                                             ).show()
+                                        }
+                                        ChecklistCategory.MASTERY_BADGES -> {
+                                            // Navigate to Mastery Badge screen
+                                            val parts = item.id.split("|")
+                                            val weaponId = parts.getOrNull(0) ?: item.id
+                                            val weaponCategory = parts.getOrNull(1) ?: "Unknown"
+                                            onMasteryBadgeClick(weaponId, item.name, weaponCategory)
                                         }
                                         else -> {
                                             // Toggle unlock status for other categories

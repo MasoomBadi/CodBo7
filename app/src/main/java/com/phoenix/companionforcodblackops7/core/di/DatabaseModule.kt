@@ -3,6 +3,7 @@ package com.phoenix.companionforcodblackops7.core.di
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.core.data.local.entity.TableMetadata
 import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
+import com.phoenix.companionforcodblackops7.feature.masterybadge.data.local.MasteryBadgeProgressEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,11 +23,12 @@ object DatabaseModule {
             schema = setOf(
                 DynamicEntity::class,
                 TableMetadata::class,
-                ChecklistItemEntity::class
+                ChecklistItemEntity::class,
+                MasteryBadgeProgressEntity::class
             )
         )
             .name("bo7_companion.realm")
-            .schemaVersion(2)
+            .schemaVersion(3)
             .build()
     }
 

@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.data.local.ChecklistItemEntity
 import com.phoenix.companionforcodblackops7.feature.checklist.data.model.CamoQueryCache
-import com.phoenix.companionforcodblackops7.feature.checklist.data.model.WeaponMasteryBadgeRequirements
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.CategoryProgress
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistCategory
 import com.phoenix.companionforcodblackops7.feature.checklist.domain.model.ChecklistConstants
@@ -43,7 +42,8 @@ class ChecklistRepositoryImpl @Inject constructor(
     private val realm: Realm,
     private val operatorsRepository: OperatorsRepository,
     private val prestigeRepository: PrestigeRepository,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val masteryBadgeRepository: com.phoenix.companionforcodblackops7.feature.masterybadge.domain.repository.MasteryBadgeRepository
 ) : ChecklistRepository {
 
     // =============================================================================================
@@ -212,23 +212,17 @@ class ChecklistRepositoryImpl @Inject constructor(
     private fun getMasteryBadgeItems(): Flow<List<ChecklistItem>> {
         val weaponsFlow = getWeaponData()
 
-        return combine(weaponsFlow, dataStore.data) { weapons, prefs ->
-            // Fetch all mastery badge data from database once
-            val (badgeRequirementsMap, badgeCountsMap) = getAllMasteryBadgeData()
-
+        return weaponsFlow.map { weapons ->
             weapons.map { weaponData ->
                 val weaponId = weaponData[0] as Int
                 val weaponName = weaponData[1] as String
                 val iconUrl = weaponData[2] as String
                 val weaponCategory = weaponData[3] as String
 
-                val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
-                val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
-
-                // Static: 6 badges per weapon (3 MP + 3 Zombie)
-                val totalBadges = 6
-                val requirements = badgeRequirementsMap[weaponId]
-                val unlockedCount = requirements?.countUnlockedBadges(mpKills, zmKills) ?: 0
+                // Get progress from the new repository
+                val (completedCount, totalCount) = kotlinx.coroutines.runBlocking {
+                    masteryBadgeRepository.getBadgeProgress(weaponId)
+                }
 
                 ChecklistItem(
                     id = "$weaponId|$weaponCategory",
@@ -236,7 +230,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                     category = ChecklistCategory.MASTERY_BADGES,
                     isUnlocked = false, // Not applicable for badges
                     imageUrl = iconUrl,
-                    unlockCriteria = "$unlockedCount/$totalBadges badges unlocked"
+                    unlockCriteria = "$completedCount/$totalCount badges unlocked"
                 )
             }
         }
@@ -331,32 +325,25 @@ class ChecklistRepositoryImpl @Inject constructor(
         try {
             val weapons = getWeaponEntitiesSync()
 
-            // Fetch all mastery badge data from database once
-            val (badgeRequirementsMap, badgeCountsMap) = getAllMasteryBadgeData()
-
             // Calculate total badges dynamically from database
             var totalBadges = 0
-            var unlockedBadges = 0
+            var completedBadges = 0
 
             for (weaponEntity in weapons) {
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
 
-                val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
-                val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
+                val (completed, total) = kotlinx.coroutines.runBlocking {
+                    masteryBadgeRepository.getBadgeProgress(weaponId)
+                }
 
-                // Static: 6 badges per weapon (3 MP + 3 Zombie)
-                val totalBadgesPerWeapon = 6
-                totalBadges += totalBadgesPerWeapon
-
-                val requirements = badgeRequirementsMap[weaponId]
-                val weaponUnlockedCount = requirements?.countUnlockedBadges(mpKills, zmKills) ?: 0
-                unlockedBadges += weaponUnlockedCount
+                totalBadges += total
+                completedBadges += completed
             }
 
             progressMap[ChecklistCategory.MASTERY_BADGES] = CategoryProgress(
                 category = ChecklistCategory.MASTERY_BADGES,
                 totalItems = totalBadges,
-                unlockedItems = unlockedBadges
+                unlockedItems = completedBadges
             )
         } catch (e: Exception) {
             Timber.e(e, "Failed to calculate mastery badge progress")
@@ -460,58 +447,6 @@ class ChecklistRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Fetch all mastery badge data from database
-     * Returns pair of: (requirements map, badge counts map)
-     * Completely dynamic - NO HARDCODED badge levels, counts, or strings
-     */
-    private fun getAllMasteryBadgeData(): Pair<Map<Int, WeaponMasteryBadgeRequirements>, Map<Int, Int>> {
-        try {
-            val badgeEntities = realm.query<DynamicEntity>(
-                "tableName == 'weapon_mastery_badge'"
-            ).find()
-
-            // Group by weapon_id
-            val grouped = badgeEntities.groupBy { entity ->
-                entity.data["weapon_id"]?.asInt() ?: 0
-            }
-
-            val requirementsMap = mutableMapOf<Int, WeaponMasteryBadgeRequirements>()
-            val countsMap = mutableMapOf<Int, Int>()
-
-            for ((weaponId, entities) in grouped) {
-                if (weaponId == 0) continue
-
-                // Count total badges for this weapon dynamically
-                countsMap[weaponId] = entities.size
-
-                // Parse all badge requirements dynamically - supports ANY badge levels
-                // Sort by sort_order to ensure correct sequential unlocking
-                val badgeLevels = entities
-                    .map { entity ->
-                        val badgeLevel = entity.data["badge_level"]?.asString() ?: ""
-                        val mpKillsRequired = entity.data["mp_kills_required"]?.asInt() ?: 0
-                        val zmKillsRequired = entity.data["zm_kills_required"]?.asInt() ?: 0
-                        val sortOrder = entity.data["sort_order"]?.asInt() ?: 0
-
-                        Pair(sortOrder, Triple(badgeLevel, mpKillsRequired, zmKillsRequired))
-                    }
-                    .sortedBy { it.first } // Sort by sort_order
-                    .map { it.second } // Extract the badge data
-
-                requirementsMap[weaponId] = WeaponMasteryBadgeRequirements(
-                    weaponId = weaponId,
-                    badgeLevels = badgeLevels
-                )
-            }
-
-            return Pair(requirementsMap, countsMap)
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to fetch mastery badge data")
-            return Pair(emptyMap(), emptyMap())
-        }
-    }
-
     // =============================================================================================
     // Helper Functions - Calculations
     // =============================================================================================
@@ -539,17 +474,5 @@ class ChecklistRepositoryImpl @Inject constructor(
                 }
             }
         }
-    }
-
-    /**
-     * Get kill count from DataStore preferences
-     */
-    private fun getKillCount(prefs: Preferences, weaponId: Int, isMpMode: Boolean): Int {
-        val key = if (isMpMode) {
-            ChecklistConstants.PreferenceKeys.weaponMpKills(weaponId)
-        } else {
-            ChecklistConstants.PreferenceKeys.weaponZmKills(weaponId)
-        }
-        return prefs[intPreferencesKey(key)] ?: 0
     }
 }
