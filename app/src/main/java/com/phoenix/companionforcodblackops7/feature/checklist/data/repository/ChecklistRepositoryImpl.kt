@@ -97,7 +97,12 @@ class ChecklistRepositoryImpl @Inject constructor(
         try {
             Timber.d("Toggling item: id=$itemId, category=${category.name}")
             realm.write {
-                val existing = query<ChecklistItemEntity>("id == $0", itemId).first().find()
+                // Query by BOTH id AND category to avoid conflicts between categories
+                val existing = query<ChecklistItemEntity>(
+                    "id == $0 AND category == $1",
+                    itemId,
+                    category.name
+                ).first().find()
 
                 if (existing != null) {
                     existing.isUnlocked = !existing.isUnlocked
@@ -119,7 +124,11 @@ class ChecklistRepositoryImpl @Inject constructor(
 
     override suspend fun isItemUnlocked(itemId: String, category: ChecklistCategory): Boolean {
         return try {
-            realm.query<ChecklistItemEntity>("id == $0", itemId)
+            realm.query<ChecklistItemEntity>(
+                "id == $0 AND category == $1",
+                itemId,
+                category.name
+            )
                 .first()
                 .find()
                 ?.isUnlocked ?: false
