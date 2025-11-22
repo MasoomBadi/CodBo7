@@ -101,6 +101,9 @@ dependencies {
     // Logging
     implementation(libs.timber)
 
+    // Ads
+    implementation(libs.play.services.ads)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
