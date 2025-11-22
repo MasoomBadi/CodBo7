@@ -176,11 +176,14 @@ fun WeaponCamosScreen(
                 // Group camos by category
                 val camosByCategory = camosForMode.groupBy { it.category }
 
-                // Initialize categories as expanded on first load
-                LaunchedEffect(selectedMode) {
-                    if (expandedCategories.isEmpty()) {
-                        expandedCategories = camosByCategory.keys
+                // Initialize categories as expanded and set default mode
+                LaunchedEffect(state.progress.camosByMode) {
+                    // Set first available mode as default if current mode is empty
+                    if (camosForMode.isEmpty() && state.progress.camosByMode.isNotEmpty()) {
+                        selectedMode = state.progress.camosByMode.keys.first()
                     }
+                    // Expand all categories
+                    expandedCategories = camosByCategory.keys
                 }
 
                 Column(

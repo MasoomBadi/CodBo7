@@ -225,10 +225,9 @@ class ChecklistRepositoryImpl @Inject constructor(
                 val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
                 val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
 
-                // Get badge requirements and count from database
+                // Static: 6 badges per weapon (3 MP + 3 Zombie)
+                val totalBadges = 6
                 val requirements = badgeRequirementsMap[weaponId]
-                val totalBadges = badgeCountsMap[weaponId] ?: 0
-
                 val unlockedCount = requirements?.countUnlockedBadges(mpKills, zmKills) ?: 0
 
                 ChecklistItem(
@@ -345,9 +344,9 @@ class ChecklistRepositoryImpl @Inject constructor(
                 val mpKills = getKillCount(prefs, weaponId, isMpMode = true)
                 val zmKills = getKillCount(prefs, weaponId, isMpMode = false)
 
-                // Get badge count and requirements from database
-                val weaponBadgeCount = badgeCountsMap[weaponId] ?: 0
-                totalBadges += weaponBadgeCount
+                // Static: 6 badges per weapon (3 MP + 3 Zombie)
+                val totalBadgesPerWeapon = 6
+                totalBadges += totalBadgesPerWeapon
 
                 val requirements = badgeRequirementsMap[weaponId]
                 val weaponUnlockedCount = requirements?.countUnlockedBadges(mpKills, zmKills) ?: 0
