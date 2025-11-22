@@ -2,6 +2,9 @@ package com.phoenix.companionforcodblackops7.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// COD Signature Orange
+val CODOrange = Color(0xFFF96800)
+
 // PRIMARY
 val primaryDark = Color(0xFFF96800)
 val onPrimaryDark = Color(0xFF1C0A00)
