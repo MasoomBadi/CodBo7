@@ -80,8 +80,8 @@ class WeaponCamoViewModel @Inject constructor(
     fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
         viewModelScope.launch {
             repository.toggleCriterion(weaponId, camoId, criterionId)
-            // Reload weapon to update progress
-            loadWeapon()
+            // Note: Weapon progress in top bar will update on next screen entry
+            // Camos update reactively through Flow
         }
     }
 }
