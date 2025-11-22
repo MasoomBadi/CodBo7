@@ -1,17 +1,26 @@
 package com.phoenix.companionforcodblackops7.feature.weaponcamo.presentation.weaponcamo
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -21,11 +30,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
@@ -40,10 +55,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -68,7 +87,7 @@ private const val BASE_URL = "http://codbo7.masoombadi.top"
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun WeaponCamoScreen(
-    onCamoClick: (Int, Int) -> Unit, // weaponId, camoId
+    onCamoClick: (Int, Int) -> Unit = { _, _ -> }, // No longer used, keeping for compatibility
     padding: PaddingValues,
     onNavigateBack: () -> Unit = {},
     viewModel: WeaponCamoViewModel = hiltViewModel()
@@ -190,7 +209,7 @@ fun WeaponCamoScreen(
                             CamoGrid(
                                 camoCategories = state.camoCategories,
                                 weaponId = state.weapon.id,
-                                onCamoClick = onCamoClick
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -232,7 +251,7 @@ private fun WeaponHeader(
 private fun CamoGrid(
     camoCategories: List<CamoCategory>,
     weaponId: Int,
-    onCamoClick: (Int, Int) -> Unit
+    viewModel: WeaponCamoViewModel
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -252,11 +271,8 @@ private fun CamoGrid(
             ) { camo ->
                 CamoCard(
                     camo = camo,
-                    onClick = {
-                        if (!camo.isLocked) {
-                            onCamoClick(weaponId, camo.id)
-                        }
-                    }
+                    weaponId = weaponId,
+                    viewModel = viewModel
                 )
             }
         }
@@ -298,10 +314,21 @@ private fun CategoryHeader(category: CamoCategory) {
 @Composable
 private fun CamoCard(
     camo: Camo,
-    onClick: () -> Unit
+    weaponId: Int,
+    viewModel: WeaponCamoViewModel
 ) {
+    var isExpanded by remember(camo.id) { mutableStateOf(false) }
+    var criteria by remember(camo.id) { mutableStateOf<List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria>>(emptyList()) }
+
+    // Load criteria when expanded
+    LaunchedEffect(isExpanded, camo.id) {
+        if (isExpanded && criteria.isEmpty()) {
+            criteria = viewModel.loadCriteria(weaponId, camo.id)
+        }
+    }
+
     Card(
-        onClick = onClick,
+        onClick = { if (!camo.isLocked) isExpanded = !isExpanded },
         modifier = Modifier
             .fillMaxWidth()
             .border(
@@ -318,114 +345,176 @@ private fun CamoCard(
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Camo image
-            Box(
-                modifier = Modifier.size(60.dp),
-                contentAlignment = Alignment.Center
+        Column {
+            // Camo header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Glow effect if completed
-                if (camo.isCompleted) {
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        CODOrange.copy(alpha = 0.3f),
-                                        CODOrange.copy(alpha = 0.1f),
-                                        Color.Transparent
+                // Camo image
+                Box(
+                    modifier = Modifier.size(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Glow effect if completed
+                    if (camo.isCompleted) {
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            CODOrange.copy(alpha = 0.3f),
+                                            CODOrange.copy(alpha = 0.1f),
+                                            Color.Transparent
+                                        )
                                     )
                                 )
-                            )
+                        )
+                    }
+
+                    AsyncImage(
+                        model = "$BASE_URL${camo.camoUrl}",
+                        contentDescription = camo.displayName,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(55.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        colorFilter = if (camo.isLocked) {
+                            ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                        } else null
                     )
+
+                    // Lock/Check overlay
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (camo.isCompleted) {
+                                CODOrange
+                            } else if (camo.isLocked) {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            } else {
+                                Color.Transparent
+                            },
+                            shadowElevation = if (camo.isCompleted || camo.isLocked) 2.dp else 0.dp
+                        ) {
+                            Icon(
+                                imageVector = if (camo.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.Lock,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(2.dp),
+                                tint = if (camo.isCompleted) {
+                                    MaterialTheme.colorScheme.onSecondary
+                                } else if (camo.isLocked) {
+                                    MaterialTheme.colorScheme.outline
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
+                        }
+                    }
                 }
 
-                AsyncImage(
-                    model = "$BASE_URL${camo.camoUrl}",
-                    contentDescription = camo.displayName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(55.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    colorFilter = if (camo.isLocked) {
-                        ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
-                    } else null
-                )
-
-                // Lock/Check overlay
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
+                // Camo info
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Surface(
-                        shape = CircleShape,
+                    Text(
+                        text = camo.displayName.uppercase(),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.3.sp
+                        ),
                         color = if (camo.isCompleted) {
                             CODOrange
                         } else if (camo.isLocked) {
-                            MaterialTheme.colorScheme.surfaceVariant
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         } else {
-                            Color.Transparent
-                        },
-                        shadowElevation = if (camo.isCompleted || camo.isLocked) 2.dp else 0.dp
-                    ) {
-                        Icon(
-                            imageVector = if (camo.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.Lock,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(2.dp),
-                            tint = if (camo.isCompleted) {
-                                MaterialTheme.colorScheme.onSecondary
-                            } else if (camo.isLocked) {
-                                MaterialTheme.colorScheme.outline
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+
+                    if (camo.criteriaCount > 0) {
+                        Text(
+                            text = if (camo.isLocked) {
+                                "Complete previous camos to unlock"
                             } else {
-                                Color.Transparent
-                            }
+                                "${camo.completedCriteriaCount}/${camo.criteriaCount} challenges"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Start
                         )
                     }
                 }
+
+                // Expand/Collapse icon
+                if (!camo.isLocked && camo.criteriaCount > 0) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = CODOrange
+                    )
+                }
             }
 
-            // Camo info
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            // Expandable criteria checkboxes
+            AnimatedVisibility(
+                visible = isExpanded && !camo.isLocked,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
             ) {
-                Text(
-                    text = camo.displayName.uppercase(),
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.3.sp
-                    ),
-                    color = if (camo.isCompleted) {
-                        CODOrange
-                    } else if (camo.isLocked) {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-
-                if (camo.criteriaCount > 0) {
-                    Text(
-                        text = if (camo.isLocked) {
-                            "Complete previous camos to unlock"
-                        } else {
-                            "${camo.completedCriteriaCount}/${camo.criteriaCount} challenges"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Start
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 12.dp)
+                ) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                     )
+
+                    criteria.forEach { criterion ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.toggleCriterion(weaponId, camo.id, criterion.id) }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Checkbox(
+                                checked = criterion.isCompleted,
+                                onCheckedChange = { viewModel.toggleCriterion(weaponId, camo.id, criterion.id) },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = CODOrange,
+                                    checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            )
+
+                            Text(
+                                text = "${criterion.criteriaOrder}. ${criterion.criteriaText}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (criterion.isCompleted) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
         }

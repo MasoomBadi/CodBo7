@@ -72,4 +72,16 @@ class WeaponCamoViewModel @Inject constructor(
     fun selectMode(mode: CamoMode) {
         _selectedMode.value = mode
     }
+
+    suspend fun loadCriteria(weaponId: Int, camoId: Int): List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria> {
+        return repository.getCamoCriteria(weaponId, camoId)
+    }
+
+    fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
+        viewModelScope.launch {
+            repository.toggleCriterion(weaponId, camoId, criterionId)
+            // Reload weapon to update progress
+            loadWeapon()
+        }
+    }
 }
