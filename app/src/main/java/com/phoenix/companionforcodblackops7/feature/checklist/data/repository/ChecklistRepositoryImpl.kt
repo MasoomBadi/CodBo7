@@ -192,18 +192,81 @@ class ChecklistRepositoryImpl @Inject constructor(
         val weaponsFlow = getWeaponData()
 
         return combine(weaponsFlow, dataStore.data) { weapons, prefs ->
-            // Query all camo data once for performance
-            val camoCache = buildCamoQueryCache()
-
-            // Process each weapon in memory
             weapons.map { weaponData ->
                 val weaponId = weaponData[0] as Int
                 val weaponName = weaponData[1] as String
                 val iconUrl = weaponData[2] as String
                 val weaponCategory = weaponData[3] as String
 
-                val allCamoIds = camoCache.getCamoIdsForWeapon(weaponId)
-                val unlockedCount = countUnlockedCamos(weaponId, allCamoIds, camoCache, prefs)
+                // Calculate completed modes for this weapon
+                val modes = listOf("campaign", "multiplayer", "zombie", "prestige")
+                var completedModes = 0
+
+                for (mode in modes) {
+                    val camoEntities = realm.query<DynamicEntity>(
+                        "tableName == $0 AND data['mode'] == $1",
+                        ChecklistConstants.Tables.CAMO,
+                        mode
+                    ).find()
+
+                    val camosForMode = camoEntities.mapNotNull { it.data["id"]?.asInt() }
+
+                    // Filter prestige camos for this weapon
+                    val camosForWeapon = if (mode == "prestige") {
+                        // Get weapon-specific prestige mappings
+                        val weaponCamoMappings = realm.query<DynamicEntity>(
+                            "tableName == $0 AND data['weapon_id'] == $1",
+                            ChecklistConstants.Tables.WEAPON_CAMO,
+                            weaponId
+                        ).find()
+                            .mapNotNull { it.data["camo_id"]?.asInt() }
+                            .toSet()
+
+                        // Get common prestige camos
+                        val commonPrestige = realm.query<DynamicEntity>(
+                            "tableName == $0 AND data['mode'] == $1",
+                            ChecklistConstants.Tables.CAMO,
+                            "prestige"
+                        ).find()
+                            .filter {
+                                val category = it.data["category"]?.asString()
+                                category in listOf("prestigem1", "prestigem2", "prestigem3")
+                            }
+                            .mapNotNull { it.data["id"]?.asInt() }
+
+                        // Combine unique + common
+                        (weaponCamoMappings + commonPrestige).distinct()
+                    } else {
+                        camosForMode
+                    }
+
+                    // Check if all camos in this mode are completed
+                    if (camosForWeapon.isNotEmpty()) {
+                        val allCompleted = camosForWeapon.all { camoId ->
+                            val criteriaIds = realm.query<DynamicEntity>(
+                                "tableName == $0 AND data['weapon_id'] == $1 AND data['camo_id'] == $2",
+                                ChecklistConstants.Tables.CAMO_CRITERIA,
+                                weaponId,
+                                camoId
+                            ).find()
+                                .mapNotNull { it.data["id"]?.asInt() }
+
+                            if (criteriaIds.isEmpty()) {
+                                false
+                            } else {
+                                criteriaIds.all { criterionId ->
+                                    val key = booleanPreferencesKey(
+                                        ChecklistConstants.PreferenceKeys.weaponCamoCriterion(weaponId, camoId, criterionId)
+                                    )
+                                    prefs[key] ?: false
+                                }
+                            }
+                        }
+                        if (allCompleted) {
+                            completedModes++
+                        }
+                    }
+                }
 
                 ChecklistItem(
                     id = "$weaponId|$weaponCategory",
@@ -211,7 +274,7 @@ class ChecklistRepositoryImpl @Inject constructor(
                     category = ChecklistCategory.WEAPONS,
                     isUnlocked = false, // Not applicable for weapons
                     imageUrl = iconUrl,
-                    unlockCriteria = "$unlockedCount/${allCamoIds.size} camos unlocked"
+                    unlockCriteria = "$completedModes/4 modes"
                 )
             }
         }
