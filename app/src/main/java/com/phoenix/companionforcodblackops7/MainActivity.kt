@@ -381,9 +381,12 @@ fun AppNavigation(
         }
 
         composable("checklist/{category}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             CategoryChecklistScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 },
                 onMasteryBadgeClick = { weaponId, weaponName, weaponCategory ->
                     navController.navigate("weaponMastery/$weaponId/$weaponName/$weaponCategory")
@@ -395,14 +398,20 @@ fun AppNavigation(
         }
 
         composable("weaponMastery/{weaponId}/{weaponName}/{weaponCategory}") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             WeaponMasteryScreen(
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
 
         composable("weaponCamo/{weaponId}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             val weaponId = backStackEntry.arguments?.getString("weaponId")?.toIntOrNull() ?: 0
             WeaponCamoScreen(
                 onCamoClick = { _, camoId ->
@@ -410,16 +419,19 @@ fun AppNavigation(
                 },
                 padding = PaddingValues(),
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
 
         composable("camoDetail/{weaponId}/{camoId}") { backStackEntry ->
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             CamoDetailScreen(
                 padding = PaddingValues(),
                 onNavigateBack = {
-                    navController.popBackStack()
+                    navigateBackWithAd()
                 }
             )
         }
@@ -470,11 +482,14 @@ fun AppNavigation(
         }
 
         composable("mapViewer") {
+            LaunchedEffect(Unit) {
+                interstitialAdManager.recordAction()
+            }
             selectedMap?.let { map ->
                 MapViewerScreen(
                     map = map,
                     onNavigateBack = {
-                        navController.popBackStack()
+                        navigateBackWithAd()
                     }
                 )
             }
