@@ -50,22 +50,15 @@ fun WeaponsListScreen(
     var expandedWeaponId by remember { mutableStateOf<Int?>(null) }
     val accentColor = Color(0xFF00BCD4) // Cyan
 
-    // Refresh badge counts when screen appears (catches both system back and app bar back)
-    LaunchedEffect(Unit) {
-        viewModel.refreshBadgeCounts()
-    }
-
-    // Also refresh on lifecycle resume
+    // Track if screen is visible using lifecycle state
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshBadgeCounts()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+
+    // Refresh whenever we become RESUMED (catches all navigation back cases)
+    LaunchedEffect(lifecycleState) {
+        if (lifecycleState == Lifecycle.State.RESUMED) {
+            timber.log.Timber.d("WeaponsListScreen RESUMED - refreshing badge counts")
+            viewModel.refreshBadgeCounts()
         }
     }
 
