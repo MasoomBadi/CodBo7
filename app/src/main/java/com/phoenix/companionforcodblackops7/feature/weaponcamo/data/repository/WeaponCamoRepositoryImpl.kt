@@ -56,7 +56,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                     completedCamos = completedCamos,
                     totalCamos = totalCamos,
                     completedModes = completedModes,
-                    totalModes = 4
+                    totalModes = getTotalModesCount()
                 )
             }.filterNotNull()
                 .groupBy { it.category }
@@ -87,7 +87,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             completedCamos = completedCamos,
             totalCamos = totalCamos,
             completedModes = completedModes,
-            totalModes = 4
+            totalModes = getTotalModesCount()
         )
     }
 
@@ -358,8 +358,8 @@ class WeaponCamoRepositoryImpl @Inject constructor(
 
     private fun calculateWeaponProgressSync(weaponId: Int, prefs: Preferences): Triple<Int, Int, Int> {
         try {
-            // Get all camos across all modes for this weapon
-            val modes = listOf("campaign", "multiplayer", "zombie", "prestige")
+            // Query distinct modes from database (dynamic, not hardcoded)
+            val modes = getDistinctModes()
             var totalCompleted = 0
             var totalCamos = 0
             var completedModes = 0
@@ -397,7 +397,29 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             return Triple(totalCompleted, totalCamos, completedModes)
         } catch (e: Exception) {
             Timber.e(e, "Failed to calculate weapon progress for weapon $weaponId")
-            return Triple(0, 54, 0) // Default to 0/54 camos, 0 modes
+            return Triple(0, 0, 0) // Default to zeros on error
         }
+    }
+
+    /**
+     * Get distinct modes from database dynamically
+     * @return List of mode names (e.g., ["campaign", "multiplayer", "zombie", "prestige"])
+     */
+    private fun getDistinctModes(): List<String> {
+        return realm.query<DynamicEntity>(
+            "tableName == $0",
+            ChecklistConstants.Tables.CAMO
+        ).find()
+            .mapNotNull { it.data["mode"]?.asString() }
+            .distinct()
+            .sorted()
+    }
+
+    /**
+     * Get total number of modes from database dynamically
+     * @return Total count of distinct modes
+     */
+    private fun getTotalModesCount(): Int {
+        return getDistinctModes().size
     }
 }
