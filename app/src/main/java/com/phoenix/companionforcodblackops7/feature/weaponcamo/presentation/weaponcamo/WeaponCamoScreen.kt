@@ -19,10 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items as lazyColumnItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as lazyGridItems
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -318,7 +319,7 @@ private fun CamoContent(
             }
 
             // Camos in grid
-            items(
+            lazyGridItems(
                 items = category.camos,
                 key = { "camo_${it.id}" }
             ) { camo ->
@@ -800,11 +801,13 @@ private fun CamoDetailBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
-                    items(criteria.size) { index ->
-                        val criterion = criteria[index]
+                    lazyColumnItems(
+                        items = criteria,
+                        key = { it.id } // IMPORTANT: Use stable key for efficient recomposition
+                    ) { criterion ->
                         CriterionItem(
                             criterion = criterion,
-                            index = index + 1,
+                            index = criteria.indexOf(criterion) + 1,
                             onToggle = { onToggleCriterion(criterion.id) }
                         )
                     }
@@ -829,16 +832,18 @@ private fun CriterionItem(
         label = "bgColor"
     )
 
-    Card(
-        onClick = onToggle,
+    // Use Surface instead of Card with onClick to avoid click conflicts
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onToggle() } // Single click handler
             .border(
                 width = if (criterion.isCompleted) 1.5.dp else 1.dp,
                 color = if (criterion.isCompleted) CODOrange.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(10.dp)
             ),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        color = backgroundColor,
         shape = RoundedCornerShape(10.dp)
     ) {
         Row(
@@ -879,10 +884,10 @@ private fun CriterionItem(
                 modifier = Modifier.weight(1f)
             )
 
-            // Checkbox
+            // Checkbox - no onCheckedChange, handled by Surface click
             Checkbox(
                 checked = criterion.isCompleted,
-                onCheckedChange = { onToggle() },
+                onCheckedChange = null, // Handled by Surface clickable
                 colors = CheckboxDefaults.colors(
                     checkedColor = CODOrange,
                     uncheckedColor = MaterialTheme.colorScheme.outline,
