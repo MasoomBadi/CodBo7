@@ -1,51 +1,28 @@
 package com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model
 
+/**
+ * Mastery badge model - Completely dynamic
+ * badge_level comes from database (e.g., "badge_1", "badge_2", "mastery", etc.)
+ * Supports ANY number of badge levels - no hardcoded enum
+ */
 data class MasteryBadge(
     val id: Int,
     val weaponId: Int,
-    val badgeLevel: BadgeLevel,
+    val badgeLevel: String, // Dynamic from database (was enum)
+    val badgeLevelDisplayName: String, // Display name from database
+    val sortOrder: Int, // For sorting badges in correct order
     val mpKillsRequired: Int,
     val zmKillsRequired: Int
 )
 
-enum class BadgeLevel(val displayName: String) {
-    BADGE_1("Badge I"),
-    BADGE_2("Badge II"),
-    MASTERY("Mastery");
-
-    companion object {
-        fun fromString(value: String): BadgeLevel {
-            return when (value.lowercase()) {
-                "badge_1" -> BADGE_1
-                "badge_2" -> BADGE_2
-                "mastery" -> MASTERY
-                else -> BADGE_1
-            }
-        }
-    }
-}
-
-enum class BadgeMode(val displayName: String) {
-    MULTIPLAYER("Multiplayer"),
-    ZOMBIE("Zombie");
-
-    companion object {
-        fun fromString(value: String): BadgeMode {
-            return when (value.lowercase()) {
-                "multiplayer", "mp" -> MULTIPLAYER
-                "zombie", "zm" -> ZOMBIE
-                else -> MULTIPLAYER
-            }
-        }
-    }
-}
-
 /**
  * Represents a badge with its unlock status for a specific mode
+ * mode is now dynamic String from database (was enum)
  */
 data class BadgeProgress(
     val badge: MasteryBadge,
-    val mode: BadgeMode,
+    val mode: String, // Dynamic from database: "mp", "zm", etc. (was enum)
+    val modeDisplayName: String, // Display name for the mode
     val currentKills: Int,
     val requiredKills: Int,
     val isUnlocked: Boolean,
@@ -70,7 +47,8 @@ data class WeaponMasteryProgress(
     val mpBadges: List<BadgeProgress>,
     val zmBadges: List<BadgeProgress>
 ) {
-    val totalBadges: Int = 6 // Always 6 badges per weapon (3 MP + 3 ZM)
+    val totalBadges: Int
+        get() = mpBadges.size + zmBadges.size // Dynamic - calculated from actual badge lists
 
     val unlockedBadgesCount: Int
         get() = mpBadges.count { it.isUnlocked } + zmBadges.count { it.isUnlocked }

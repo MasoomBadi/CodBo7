@@ -2,8 +2,6 @@ package com.phoenix.companionforcodblackops7.feature.weapons.data.repository
 
 import com.phoenix.companionforcodblackops7.core.data.local.entity.DynamicEntity
 import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.Weapon
-import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.WeaponCategory
-import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.WeaponType
 import com.phoenix.companionforcodblackops7.feature.weapons.domain.repository.WeaponsRepository
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
@@ -25,16 +23,17 @@ class WeaponsRepositoryImpl @Inject constructor(
                 results.list.mapNotNull { entity ->
                     try {
                         val data = entity.data
+                        val category = data["category"]?.asString() ?: ""
+                        val weaponType = data["weapon_type"]?.asString() ?: ""
+
                         Weapon(
                             id = data["id"]?.asInt() ?: 0,
                             name = data["name"]?.asString() ?: "",
                             displayName = data["display_name"]?.asString() ?: "",
-                            category = WeaponCategory.fromString(
-                                data["category"]?.asString() ?: "Assault Rifle"
-                            ),
-                            weaponType = WeaponType.fromString(
-                                data["weapon_type"]?.asString() ?: "Primary"
-                            ),
+                            category = category,
+                            categoryDisplayName = formatCategoryDisplayName(category),
+                            weaponType = weaponType,
+                            weaponTypeDisplayName = formatWeaponTypeDisplayName(weaponType),
                             unlockCriteria = data["unlock_criteria"]?.asString() ?: "",
                             unlockLevel = data["unlock_level"]?.asInt()
                                 ?: data["unlock_level"]?.asString()?.toIntOrNull()
@@ -55,5 +54,36 @@ class WeaponsRepositoryImpl @Inject constructor(
                     }
                 }.sortedBy { it.sortOrder }
             }
+    }
+
+    /**
+     * Format category string to display name
+     * Fallback if display names not in database
+     */
+    private fun formatCategoryDisplayName(category: String): String {
+        return when (category.uppercase().replace(" ", "_")) {
+            "ASSAULT_RIFLE", "ASSAULT RIFLE", "ASSAULT_RIFLES" -> "Assault Rifles"
+            "SMG", "SMGS" -> "SMGs"
+            "SHOTGUN", "SHOTGUNS" -> "Shotguns"
+            "LMG", "LMGS" -> "LMGs"
+            "MARKSMAN", "MARKSMAN_RIFLE", "MARKSMAN RIFLE", "MARKSMAN_RIFLES" -> "Marksman Rifles"
+            "SNIPER", "SNIPER_RIFLE", "SNIPER RIFLE", "SNIPER_RIFLES" -> "Sniper Rifles"
+            "PISTOL", "PISTOLS" -> "Pistols"
+            "LAUNCHER", "LAUNCHERS" -> "Launchers"
+            "MELEE" -> "Melee"
+            else -> category.replace("_", " ").capitalize()
+        }
+    }
+
+    /**
+     * Format weapon type string to display name
+     * Fallback if display names not in database
+     */
+    private fun formatWeaponTypeDisplayName(weaponType: String): String {
+        return when (weaponType.uppercase()) {
+            "PRIMARY" -> "Primary"
+            "SECONDARY" -> "Secondary"
+            else -> weaponType.capitalize()
+        }
     }
 }
