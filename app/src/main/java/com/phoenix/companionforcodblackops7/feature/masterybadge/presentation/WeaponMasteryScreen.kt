@@ -244,6 +244,7 @@ fun WeaponMasteryScreen(
 /**
  * Mode tabs component (Multiplayer / Zombies / etc.)
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ModeTabs(
     modes: List<String>,
