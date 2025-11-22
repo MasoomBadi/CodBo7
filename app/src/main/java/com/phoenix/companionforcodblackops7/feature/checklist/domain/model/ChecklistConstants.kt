@@ -4,20 +4,15 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Constants for the Collection Tracker feature
- * Centralizes magic numbers, thresholds, and configuration values
+ * Centralizes static configuration values
+ *
+ * Note: Dynamic values (like mastery badge thresholds) are fetched from database,
+ * not hardcoded here.
  */
 object ChecklistConstants {
 
-    // Mastery Badge Kill Thresholds
+    // Mastery Badge Static Constants
     object MasteryBadge {
-        const val MP_BADGE_1_KILLS = 100
-        const val MP_BADGE_2_KILLS = 250
-        const val MP_MASTERY_KILLS = 500
-
-        const val ZM_BADGE_1_KILLS = 500
-        const val ZM_BADGE_2_KILLS = 1500
-        const val ZM_MASTERY_KILLS = 3000
-
         const val TOTAL_BADGES_PER_WEAPON = 6
         const val BADGES_PER_MODE = 3
     }
