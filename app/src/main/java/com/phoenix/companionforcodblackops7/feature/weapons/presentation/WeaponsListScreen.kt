@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.phoenix.companionforcodblackops7.feature.weapons.domain.model.Weapon
+import com.phoenix.companionforcodblackops7.feature.weapons.presentation.model.WeaponWithBadges
 
 private const val BASE_URL = "http://codbo7.masoombadi.top"
 
@@ -96,7 +96,7 @@ fun WeaponsListScreen(
  */
 @Composable
 private fun WeaponsContent(
-    weaponsByCategory: Map<String, List<Weapon>>, // Dynamic String categories
+    weaponsByCategory: Map<String, List<WeaponWithBadges>>, // Dynamic String categories
     selectedCategory: String?,
     onCategorySelected: (String?) -> Unit,
     expandedWeaponId: Int?,
@@ -130,12 +130,12 @@ private fun WeaponsContent(
         ) {
             items(
                 items = filteredWeapons,
-                key = { it.id }
-            ) { weapon ->
+                key = { it.weapon.id }
+            ) { weaponWithBadges ->
                 ExpandableWeaponCard(
-                    weapon = weapon,
-                    isExpanded = expandedWeaponId == weapon.id,
-                    onToggleExpanded = { onToggleExpanded(weapon.id) },
+                    weaponWithBadges = weaponWithBadges,
+                    isExpanded = expandedWeaponId == weaponWithBadges.weapon.id,
+                    onToggleExpanded = { onToggleExpanded(weaponWithBadges.weapon.id) },
                     accentColor = accentColor
                 )
             }
@@ -227,11 +227,12 @@ private fun CategoryFilterRow(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ExpandableWeaponCard(
-    weapon: Weapon,
+    weaponWithBadges: WeaponWithBadges,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
     accentColor: Color
 ) {
+    val weapon = weaponWithBadges.weapon
     val infiniteTransition = rememberInfiniteTransition(label = "weaponGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -368,6 +369,47 @@ private fun ExpandableWeaponCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                     )
+                }
+
+                // Mastery badge count
+                if (weaponWithBadges.totalBadges > 0) {
+                    val badgeColor = Color(0xFFFFB300) // Gold color for mastery badges
+                    Surface(
+                        color = if (weaponWithBadges.isFullyCompleted) {
+                            badgeColor.copy(alpha = 0.3f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (weaponWithBadges.isFullyCompleted) badgeColor
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                            )
+                            Text(
+                                text = "MASTERY ${weaponWithBadges.badgeProgressText}",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                color = if (weaponWithBadges.isFullyCompleted) {
+                                    badgeColor
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                    }
                 }
             }
 
