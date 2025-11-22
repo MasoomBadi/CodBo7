@@ -24,24 +24,8 @@ class WeaponCamosRepositoryImpl @Inject constructor(
 ) : WeaponCamosRepository {
 
     override fun getWeaponCamos(weaponId: Int): Flow<Map<String, List<Camo>>> {
-        // Get common camos (shared by all weapons)
-        // These specific categories (military, special, mastery, prestige) are shared by ALL weapons
-        val commonCamosFlow = realm.query<DynamicEntity>(
-            "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-            "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
-        ).asFlow().map { results ->
-            results.list.mapNotNull { entity ->
-                try {
-                    mapEntityToCamo(entity)
-                } catch (e: Exception) {
-                    Timber.e(e, "Error mapping common camo entity")
-                    null
-                }
-            }
-        }
-
-        // Get unique camos (weapon-specific from junction table)
-        val uniqueCamosFlow = realm.query<DynamicEntity>(
+        // Get ALL camos for this weapon from weapon_camo junction table
+        return realm.query<DynamicEntity>(
             "tableName == $0 AND data['weapon_id'] == $1",
             "weapon_camo", weaponId
         ).asFlow().map { junctionResults ->
@@ -50,7 +34,7 @@ class WeaponCamosRepositoryImpl @Inject constructor(
             }
 
             // Fetch actual camo data for these IDs
-            if (camoIds.isEmpty()) {
+            val camos = if (camoIds.isEmpty()) {
                 emptyList()
             } else {
                 realm.query<DynamicEntity>("tableName == $0", "camo")
@@ -63,21 +47,16 @@ class WeaponCamosRepositoryImpl @Inject constructor(
                         try {
                             mapEntityToCamo(entity)
                         } catch (e: Exception) {
-                            Timber.e(e, "Error mapping unique camo entity")
+                            Timber.e(e, "Error mapping camo entity")
                             null
                         }
                     }
+                    // Sort by mode, category, then sort_order from database
+                    .sortedWith(compareBy<Camo>({ it.mode }, { it.category }, { it.sortOrder }))
             }
-        }
-
-        // Combine common and unique camos
-        return combine(commonCamosFlow, uniqueCamosFlow) { commonCamos, uniqueCamos ->
-            val allCamos = (commonCamos + uniqueCamos)
-                // Sort by mode, category, then sort_order from database
-                .sortedWith(compareBy<Camo>({ it.mode }, { it.category }, { it.sortOrder }))
 
             // Group by mode
-            allCamos.groupBy { it.mode }
+            camos.groupBy { it.mode }
         }
     }
 
@@ -118,23 +97,62 @@ class WeaponCamosRepositoryImpl @Inject constructor(
 
     /**
      * Apply sequential unlock logic:
-     * Within each mode+category, camos must be unlocked in sort_order sequence
-     * E.g., sort_order=3 is locked if sort_order=1 or 2 is not unlocked
+     * 1. Within each category, camos must be unlocked in sort_order sequence
+     * 2. Categories have dependencies:
+     *    - Campaign/Multiplayer/Zombie: military → special → mastery
+     *    - Prestige: prestige1 → prestige2 → prestigem1 → prestigem2 → prestigem3 → prestigem
      */
     private fun applySequentialLockLogic(camos: List<Camo>): List<Camo> {
-        // Group by mode and category
-        val groupedCamos = camos.groupBy { "${it.mode}_${it.category}" }
+        // Group by mode first
+        val camosByMode = camos.groupBy { it.mode }
 
         return camos.map { camo ->
-            val categoryKey = "${camo.mode}_${camo.category}"
-            val sameCategoryCamos = groupedCamos[categoryKey] ?: emptyList()
+            val sameModeСamos = camosByMode[camo.mode] ?: emptyList()
 
-            // Check if all previous sort_order camos in same category are unlocked
-            val isLocked = sameCategoryCamos
+            // Check 1: Within same category, check sort_order sequence
+            val sameCategoryCamos = sameModeСamos.filter { it.category == camo.category }
+            val lockedBySortOrder = sameCategoryCamos
                 .filter { it.sortOrder < camo.sortOrder }
                 .any { !it.isUnlocked }
 
-            camo.copy(isLocked = isLocked)
+            // Check 2: Check if prerequisite categories are completed
+            val lockedByCategory = when (camo.mode.lowercase()) {
+                "campaign", "multiplayer", "zombie" -> {
+                    when (camo.category.lowercase()) {
+                        "special" -> {
+                            // Special requires ALL military to be unlocked
+                            val militaryCamos = sameModeСamos.filter { it.category.lowercase() == "military" }
+                            militaryCamos.isNotEmpty() && militaryCamos.any { !it.isUnlocked }
+                        }
+                        "mastery" -> {
+                            // Mastery requires ALL military AND special to be unlocked
+                            val militaryCamos = sameModeСamos.filter { it.category.lowercase() == "military" }
+                            val specialCamos = sameModeСamos.filter { it.category.lowercase() == "special" }
+                            (militaryCamos.isNotEmpty() && militaryCamos.any { !it.isUnlocked }) ||
+                            (specialCamos.isNotEmpty() && specialCamos.any { !it.isUnlocked })
+                        }
+                        else -> false // Military is always available
+                    }
+                }
+                "prestige" -> {
+                    // Prestige categories must follow strict order
+                    val categoryOrder = listOf("prestige1", "prestige2", "prestigem1", "prestigem2", "prestigem3", "prestigem")
+                    val currentIndex = categoryOrder.indexOf(camo.category.lowercase())
+
+                    if (currentIndex <= 0) {
+                        false // First category is always available
+                    } else {
+                        // Check if ALL previous categories are fully unlocked
+                        categoryOrder.take(currentIndex).any { prevCategory ->
+                            val prevCategoryCamos = sameModeСamos.filter { it.category.lowercase() == prevCategory }
+                            prevCategoryCamos.isNotEmpty() && prevCategoryCamos.any { !it.isUnlocked }
+                        }
+                    }
+                }
+                else -> false
+            }
+
+            camo.copy(isLocked = lockedBySortOrder || lockedByCategory)
         }
     }
 

@@ -17,11 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.BadgeProgress
+import android.widget.Toast
 
 private val ACCENT_COLOR = Color(0xFFFFB300) // Gold color for mastery badges
 
@@ -33,6 +35,7 @@ fun WeaponMasteryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedMode by remember { mutableStateOf("mp") } // "mp" or "zm"
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -170,7 +173,26 @@ fun WeaponMasteryScreen(
                         // Badge cards for selected mode
                         badges.forEach { badgeProgress ->
                             item(key = badgeProgress.badge.id) {
-                                BadgeCard(badgeProgress = badgeProgress)
+                                BadgeCard(
+                                    badgeProgress = badgeProgress,
+                                    onToggle = {
+                                        if (badgeProgress.isLocked) {
+                                            Toast.makeText(
+                                                context,
+                                                "Complete previous badges first",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } else {
+                                            // Toggle badge by setting kills to required amount or 0
+                                            val newKills = if (badgeProgress.isUnlocked) 0 else badgeProgress.requiredKills
+                                            if (selectedMode == "mp") {
+                                                viewModel.updateMpKills(newKills)
+                                            } else {
+                                                viewModel.updateZmKills(newKills)
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
@@ -256,7 +278,10 @@ private fun ModeTabRow(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun BadgeCard(badgeProgress: BadgeProgress) {
+private fun BadgeCard(
+    badgeProgress: BadgeProgress,
+    onToggle: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "badgeGlow")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.5f,
@@ -277,6 +302,7 @@ private fun BadgeCard(badgeProgress: BadgeProgress) {
     }
 
     Card(
+        onClick = onToggle,
         modifier = Modifier
             .fillMaxWidth()
             .border(
@@ -294,7 +320,8 @@ private fun BadgeCard(badgeProgress: BadgeProgress) {
             }
         ),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (badgeProgress.isUnlocked) 4.dp else 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (badgeProgress.isUnlocked) 4.dp else 0.dp),
+        enabled = !badgeProgress.isLocked
     ) {
         Row(
             modifier = Modifier
@@ -365,7 +392,7 @@ private fun BadgeCard(badgeProgress: BadgeProgress) {
             // Checkbox
             Checkbox(
                 checked = badgeProgress.isUnlocked,
-                onCheckedChange = null, // Will be handled by parent click
+                onCheckedChange = { onToggle() },
                 enabled = !badgeProgress.isLocked,
                 colors = CheckboxDefaults.colors(
                     checkedColor = ACCENT_COLOR,
