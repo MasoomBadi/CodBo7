@@ -260,7 +260,7 @@ private fun ModeTabs(
             selectedTabIndex = modes.indexOf(selectedMode).coerceAtLeast(0),
             containerColor = Color.Transparent,
             contentColor = BadgeColor,
-            indicator = @Composable { tabPositions ->
+            indicator = @Composable {
                 if (tabPositions.isNotEmpty()) {
                     val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
                     TabRowDefaults.SecondaryIndicator(
