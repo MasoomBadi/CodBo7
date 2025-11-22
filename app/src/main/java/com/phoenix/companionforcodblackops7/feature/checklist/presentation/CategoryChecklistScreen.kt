@@ -46,6 +46,7 @@ private fun getCategoryAccentColor(category: ChecklistCategory): Color {
     return when (category) {
         ChecklistCategory.OPERATORS -> Color(0xFFF96800) // COD Orange
         ChecklistCategory.WEAPONS -> Color(0xFF00BCD4) // Cyan
+        ChecklistCategory.MASTERY_BADGES -> Color(0xFFFFB300) // Gold
         ChecklistCategory.MAPS -> Color(0xFF76FF03) // Green
         ChecklistCategory.EQUIPMENT -> Color(0xFFE91E63) // Pink
         ChecklistCategory.PRESTIGE -> Color(0xFFFFB300) // Gold
@@ -194,14 +195,14 @@ fun CategoryChecklistScreen(
                 }
             }
             is CategoryChecklistUiState.Success -> {
-                // Extract unique weapon categories and filter items
-                val weaponCategories = if (state.category == ChecklistCategory.WEAPONS) {
+                // Extract unique weapon categories and filter items (for WEAPONS and MASTERY_BADGES)
+                val weaponCategories = if (state.category == ChecklistCategory.WEAPONS || state.category == ChecklistCategory.MASTERY_BADGES) {
                     state.items.mapNotNull { item ->
                         item.id.split("|").getOrNull(1)
                     }.distinct().sorted()
                 } else emptyList()
 
-                val filteredItems = if (state.category == ChecklistCategory.WEAPONS && selectedWeaponCategory != null) {
+                val filteredItems = if ((state.category == ChecklistCategory.WEAPONS || state.category == ChecklistCategory.MASTERY_BADGES) && selectedWeaponCategory != null) {
                     state.items.filter { item ->
                         val category = item.id.split("|").getOrNull(1)
                         category == selectedWeaponCategory
@@ -215,8 +216,8 @@ fun CategoryChecklistScreen(
                         .fillMaxSize()
                         .padding(padding)
                 ) {
-                    // Weapon category filters (only for WEAPONS category)
-                    if (state.category == ChecklistCategory.WEAPONS && weaponCategories.isNotEmpty()) {
+                    // Weapon category filters (for WEAPONS and MASTERY_BADGES categories)
+                    if ((state.category == ChecklistCategory.WEAPONS || state.category == ChecklistCategory.MASTERY_BADGES) && weaponCategories.isNotEmpty()) {
                         WeaponCategoryFilterRow(
                             categories = weaponCategories,
                             selectedCategory = selectedWeaponCategory,
@@ -247,7 +248,7 @@ fun CategoryChecklistScreen(
                                 accentColor = categoryAccentColor,
                                 category = state.category,
                                 onToggle = {
-                                    if (state.category == ChecklistCategory.WEAPONS) {
+                                    if (state.category == ChecklistCategory.WEAPONS || state.category == ChecklistCategory.MASTERY_BADGES) {
                                         // Parse ID: "weaponId|weaponCategory"
                                         val parts = item.id.split("|")
                                         val weaponId = parts.getOrNull(0) ?: item.id
@@ -519,8 +520,8 @@ private fun EnhancedChecklistItemCard(
                     )
                 }
 
-                // Weapon category badge (only for WEAPONS category)
-                if (category == ChecklistCategory.WEAPONS) {
+                // Weapon category badge (for WEAPONS and MASTERY_BADGES categories)
+                if (category == ChecklistCategory.WEAPONS || category == ChecklistCategory.MASTERY_BADGES) {
                     val weaponCategory = item.id.split("|").getOrNull(1) ?: "Unknown"
                     Surface(
                         color = accentColor.copy(alpha = 0.2f),
