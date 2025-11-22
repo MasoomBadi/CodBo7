@@ -57,8 +57,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -320,6 +322,7 @@ private fun CamoCard(
     var isExpanded by remember(camo.id) { mutableStateOf(false) }
     var criteria by remember(camo.id) { mutableStateOf<List<com.phoenix.companionforcodblackops7.feature.weaponcamo.domain.model.CamoCriteria>>(emptyList()) }
     var refreshKey by remember(camo.id) { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Load criteria when expanded or after refresh
     LaunchedEffect(isExpanded, camo.id, refreshKey) {
@@ -328,10 +331,12 @@ private fun CamoCard(
         }
     }
 
-    // Function to toggle and refresh
+    // Function to toggle and refresh - properly suspend until DataStore update completes
     fun toggleAndRefresh(criterionId: Int) {
-        viewModel.toggleCriterion(weaponId, camo.id, criterionId)
-        refreshKey++ // Trigger reload
+        coroutineScope.launch {
+            viewModel.toggleCriterionSuspend(weaponId, camo.id, criterionId)
+            refreshKey++ // Trigger reload AFTER DataStore update completes
+        }
     }
 
     Card(
