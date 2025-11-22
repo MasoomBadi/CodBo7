@@ -262,11 +262,11 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (operators.isEmpty()) return
 
         val operatorChecklistMap = checklistItems
-            .filter { it.category == ChecklistCategory.OPERATORS.name }
-            .associate {
+            .filter { entity -> entity.category == ChecklistCategory.OPERATORS.name }
+            .associate { entity ->
                 // Strip compound key prefix: "OPERATORS_ID" -> "ID"
-                val originalId = it.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
-                originalId to it.isUnlocked
+                val originalId = entity.id.removePrefix("${ChecklistCategory.OPERATORS.name}_")
+                originalId to entity.isUnlocked
             }
 
         val unlockedCount = operators.count { operatorChecklistMap[it.id] == true }
@@ -286,11 +286,11 @@ class ChecklistRepositoryImpl @Inject constructor(
         if (prestigeItems.isEmpty()) return
 
         val prestigeChecklistMap = checklistItems
-            .filter { it.category == ChecklistCategory.PRESTIGE.name }
-            .associate {
+            .filter { entity -> entity.category == ChecklistCategory.PRESTIGE.name }
+            .associate { entity ->
                 // Strip compound key prefix: "PRESTIGE_ID" -> "ID"
-                val originalId = it.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
-                originalId to it.isUnlocked
+                val originalId = entity.id.removePrefix("${ChecklistCategory.PRESTIGE.name}_")
+                originalId to entity.isUnlocked
             }
 
         val unlockedCount = prestigeItems.count { prestigeChecklistMap[it.id] == true }
