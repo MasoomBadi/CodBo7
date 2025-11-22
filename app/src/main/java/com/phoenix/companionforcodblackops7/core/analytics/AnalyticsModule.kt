@@ -2,6 +2,7 @@ package com.phoenix.companionforcodblackops7.core.analytics
 
 import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -20,6 +21,12 @@ abstract class AnalyticsModule {
         firebaseAnalyticsHelper: FirebaseAnalyticsHelper
     ): AnalyticsHelper
 
+    @Binds
+    @Singleton
+    abstract fun bindCrashlyticsHelper(
+        firebaseCrashlyticsHelper: FirebaseCrashlyticsHelper
+    ): CrashlyticsHelper
+
     companion object {
         @Provides
         @Singleton
@@ -27,6 +34,12 @@ abstract class AnalyticsModule {
             @ApplicationContext context: Context
         ): FirebaseAnalytics {
             return FirebaseAnalytics.getInstance(context)
+        }
+
+        @Provides
+        @Singleton
+        fun provideFirebaseCrashlytics(): FirebaseCrashlytics {
+            return FirebaseCrashlytics.getInstance()
         }
     }
 }
