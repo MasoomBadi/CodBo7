@@ -83,8 +83,13 @@ fun OperatorDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
         ) {
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
             // Hero operator card with image
             Card(
                 modifier = Modifier
