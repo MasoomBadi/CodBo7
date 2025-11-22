@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.feature.masterybadge.domain.model.MasteryBadge
 
@@ -257,9 +258,22 @@ private fun ModeTabs(
             contentColor = BadgeColor,
             indicator = @Composable {
                 TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorLayout {
+                    modifier = Modifier.tabIndicatorLayout { measurable, constraints, tabPositions ->
                         val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
-                        tabPositions[index]
+                        val tabPosition = tabPositions[index]
+                        val indicatorWidth = tabPosition.contentWidth
+                        val indicatorOffset = tabPosition.left
+
+                        val placeable = measurable.measure(
+                            constraints.copy(
+                                minWidth = indicatorWidth.roundToPx(),
+                                maxWidth = indicatorWidth.roundToPx()
+                            )
+                        )
+
+                        layout(constraints.maxWidth, placeable.height) {
+                            placeable.placeRelative(indicatorOffset.roundToPx(), 0)
+                        }
                     },
                     color = BadgeColor,
                     height = 3.dp
