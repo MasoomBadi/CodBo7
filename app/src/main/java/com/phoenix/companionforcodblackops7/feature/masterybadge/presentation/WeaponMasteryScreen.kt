@@ -32,6 +32,7 @@ fun WeaponMasteryScreen(
     viewModel: WeaponMasteryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedMode by remember { mutableStateOf("mp") } // "mp" or "zm"
 
     Scaffold(
         topBar = {
@@ -126,6 +127,14 @@ fun WeaponMasteryScreen(
                         }
                     }
                 }
+
+                // Mode tabs
+                if (uiState is WeaponMasteryUiState.Success) {
+                    ModeTabRow(
+                        selectedMode = selectedMode,
+                        onModeSelected = { selectedMode = it }
+                    )
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -142,6 +151,10 @@ fun WeaponMasteryScreen(
                 }
             }
             is WeaponMasteryUiState.Success -> {
+                // Select badges based on selected mode
+                val badges = if (selectedMode == "mp") state.progress.mpBadges else state.progress.zmBadges
+                val currentKills = if (selectedMode == "mp") state.progress.mpKills else state.progress.zmKills
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -152,26 +165,14 @@ fun WeaponMasteryScreen(
                             .weight(1f)
                             .fillMaxWidth(),
                         contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Multiplayer Section
-                        item {
-                            ModeSection(
-                                modeDisplayName = "Multiplayer",
-                                currentKills = state.progress.mpKills,
-                                badges = state.progress.mpBadges,
-                                onKillsUpdate = { viewModel.updateMpKills(it) }
-                            )
-                        }
-
-                        // Zombie Section
-                        item {
-                            ModeSection(
-                                modeDisplayName = "Zombie",
-                                currentKills = state.progress.zmKills,
-                                badges = state.progress.zmBadges,
-                                onKillsUpdate = { viewModel.updateZmKills(it) }
-                            )
+                        // Badge cards for selected mode
+                        items(
+                            items = badges,
+                            key = { it.badge.id }
+                        ) { badgeProgress ->
+                            BadgeCard(badgeProgress = badgeProgress)
                         }
                     }
 
@@ -213,45 +214,44 @@ fun WeaponMasteryScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ModeSection(
-    modeDisplayName: String,
-    currentKills: Int,
-    badges: List<BadgeProgress>,
-    onKillsUpdate: (Int) -> Unit
+private fun ModeTabRow(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    TabRow(
+        selectedTabIndex = if (selectedMode == "mp") 0 else 1,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = ACCENT_COLOR,
+        modifier = modifier
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Mode header
-            Text(
-                text = modeDisplayName.uppercase(),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
-                ),
-                color = ACCENT_COLOR
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            // Badge cards
-            badges.forEach { badgeProgress ->
-                BadgeCard(badgeProgress = badgeProgress)
+        Tab(
+            selected = selectedMode == "mp",
+            onClick = { onModeSelected("mp") },
+            text = {
+                Text(
+                    text = "MULTIPLAYER",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+                )
             }
-        }
+        )
+        Tab(
+            selected = selectedMode == "zm",
+            onClick = { onModeSelected("zm") },
+            text = {
+                Text(
+                    text = "ZOMBIE",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+                )
+            }
+        )
     }
 }
 
@@ -346,9 +346,9 @@ private fun BadgeCard(badgeProgress: BadgeProgress) {
                 }
             }
 
-            // Badge name
+            // Badge description
             Text(
-                text = badgeProgress.badge.badgeLevelDisplayName.uppercase(),
+                text = "GET ${badgeProgress.requiredKills} KILLS",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.8.sp

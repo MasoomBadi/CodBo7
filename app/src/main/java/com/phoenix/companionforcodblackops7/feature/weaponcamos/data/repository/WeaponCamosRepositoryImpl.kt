@@ -73,8 +73,8 @@ class WeaponCamosRepositoryImpl @Inject constructor(
         // Combine common and unique camos
         return combine(commonCamosFlow, uniqueCamosFlow) { commonCamos, uniqueCamos ->
             val allCamos = (commonCamos + uniqueCamos)
-                // Sort by mode, then category, then sortOrder (using strings instead of enums)
-                .sortedWith(compareBy({ it.mode }, { it.category }, { it.sortOrder }))
+                // Sort by mode, category, then sort_order from database
+                .sortedWith(compareBy<Camo>({ it.mode }, { it.category }, { it.sortOrder }))
 
             // Group by mode
             allCamos.groupBy { it.mode }
@@ -101,15 +101,40 @@ class WeaponCamosRepositoryImpl @Inject constructor(
                 )
             }
 
-            val unlockedCount = camosWithCriteria.count { it.isUnlocked }
+            // Apply sequential unlock logic within each category
+            val camosWithLockStatus = applySequentialLockLogic(camosWithCriteria)
+
+            val unlockedCount = camosWithLockStatus.count { it.isUnlocked }
 
             WeaponCamoProgress(
                 weaponId = weaponId,
                 weaponName = weaponName,
-                camosByMode = camosWithCriteria.groupBy { it.mode },
-                totalCamos = camosWithCriteria.size,
+                camosByMode = camosWithLockStatus.groupBy { it.mode },
+                totalCamos = camosWithLockStatus.size,
                 unlockedCount = unlockedCount
             )
+        }
+    }
+
+    /**
+     * Apply sequential unlock logic:
+     * Within each mode+category, camos must be unlocked in sort_order sequence
+     * E.g., sort_order=3 is locked if sort_order=1 or 2 is not unlocked
+     */
+    private fun applySequentialLockLogic(camos: List<Camo>): List<Camo> {
+        // Group by mode and category
+        val groupedCamos = camos.groupBy { "${it.mode}_${it.category}" }
+
+        return camos.map { camo ->
+            val categoryKey = "${camo.mode}_${camo.category}"
+            val sameCategoryCamos = groupedCamos[categoryKey] ?: emptyList()
+
+            // Check if all previous sort_order camos in same category are unlocked
+            val isLocked = sameCategoryCamos
+                .filter { it.sortOrder < camo.sortOrder }
+                .any { !it.isUnlocked }
+
+            camo.copy(isLocked = isLocked)
         }
     }
 

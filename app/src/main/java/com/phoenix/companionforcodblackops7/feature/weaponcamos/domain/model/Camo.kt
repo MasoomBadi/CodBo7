@@ -15,7 +15,8 @@ data class Camo(
     val camoUrl: String,
     val sortOrder: Int,
     val criteria: List<CamoCriteria> = emptyList(),
-    val isUnlocked: Boolean = false
+    val isUnlocked: Boolean = false,
+    val isLocked: Boolean = false // Locked if previous camos in same category aren't unlocked
 ) {
     val completedCriteriaCount: Int
         get() = criteria.count { it.isCompleted }
