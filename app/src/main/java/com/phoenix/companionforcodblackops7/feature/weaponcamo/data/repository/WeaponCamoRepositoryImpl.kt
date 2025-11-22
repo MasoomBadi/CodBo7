@@ -291,11 +291,11 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             .toSet()
 
         // Include camos that are either:
-        // 1. Mapped to this weapon in weapon_camo table (unique prestige camos)
-        // 2. Common prestige camos (prestigem1, prestigem2, prestigem3)
+        // 1. Mapped to this weapon in weapon_camo table (unique: prestigem2, prestigem3, prestigel)
+        // 2. Common prestige camos (prestige1, prestige2, prestigem1)
         return allPrestigeCamos.filter { camo ->
             weaponCamoMappings.contains(camo.id) ||
-                    camo.category in listOf("prestigem1", "prestigem2", "prestigem3")
+                    camo.category in listOf("prestige1", "prestige2", "prestigem1")
         }
     }
 
