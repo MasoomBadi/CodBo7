@@ -114,10 +114,10 @@ class WeaponCamosRepositoryImpl @Inject constructor(
     }
 
     private fun fetchCamoCriteria(camoId: Int, weaponId: Int, prefs: Preferences): List<CamoCriteria> {
-        // Fetch criteria from camo_criteria table
+        // Fetch criteria from camo_criteria table filtered by weapon_id AND camo_id
         val criteriaEntities = realm.query<DynamicEntity>(
-            "tableName == $0 AND data['camo_id'] == $1",
-            "camo_criteria", camoId
+            "tableName == $0 AND data['camo_id'] == $1 AND data['weapon_id'] == $2",
+            "camo_criteria", camoId, weaponId
         ).find()
 
         return criteriaEntities.mapNotNull { entity ->
