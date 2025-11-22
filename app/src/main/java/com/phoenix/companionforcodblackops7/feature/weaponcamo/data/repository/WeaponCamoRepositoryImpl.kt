@@ -202,10 +202,31 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         return combine(
             getCamosFlow(mode),
             getProgressFlow(weaponId)
-        ) { camoEntities, _ ->
-            // Parse camos from database (progress is queried inside parseCamoEntity)
+        ) { camoEntities, progressEntities ->
+            // OPTIMIZATION 1: Build criteria map from a single batch query
+            // This avoids N queries (one per camo)
+            val criteriaMap = realm.query<DynamicEntity>(
+                "tableName == $0 AND data['weapon_id'] == $1",
+                ChecklistConstants.Tables.CAMO_CRITERIA,
+                weaponId
+            ).find()
+                .mapNotNull { entity ->
+                    val camoId = entity.data["camo_id"]?.asInt()
+                    val criterionId = entity.data["id"]?.asInt()
+                    if (camoId != null && criterionId != null) camoId to criterionId else null
+                }
+                .groupBy({ it.first }, { it.second })
+
+            // OPTIMIZATION 2: Build completed set from Flow data (no additional query needed!)
+            // progressEntities already contains all progress for this weapon
+            val completedSet = progressEntities
+                .filter { it.data["is_completed"]?.asBoolean() == true }
+                .mapNotNull { it.data["progress_key"]?.asString() }
+                .toSet()
+
+            // Parse camos using optimized method (0 additional queries per camo!)
             val allCamos = camoEntities.mapNotNull { entity ->
-                parseCamoEntity(entity, weaponId)
+                parseCamoEntityOptimized(entity, weaponId, criteriaMap, completedSet)
             }
 
             // Filter: For prestige mode, include only camos assigned to this weapon
