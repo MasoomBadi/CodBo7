@@ -261,10 +261,10 @@ private fun ModeTabs(
             containerColor = Color.Transparent,
             contentColor = BadgeColor,
             indicator = @Composable {
-                if (tabPositions.isNotEmpty()) {
-                    val index = modes.indexOf(selectedMode).coerceIn(0, tabPositions.lastIndex)
-                    TabRowDefaults.SecondaryIndicator(
-                        modifier = Modifier.tabIndicatorLayout { measurable, constraints, positions ->
+                val index = modes.indexOf(selectedMode).coerceAtLeast(0)
+                TabRowDefaults.SecondaryIndicator(
+                    modifier = Modifier.tabIndicatorLayout { measurable, constraints, positions ->
+                        if (positions.isNotEmpty() && index < positions.size) {
                             val currentTabPosition = positions[index]
                             val indicatorWidth = currentTabPosition.contentWidth
                             val indicatorOffset = currentTabPosition.left
@@ -279,11 +279,16 @@ private fun ModeTabs(
                             layout(constraints.maxWidth, placeable.height) {
                                 placeable.placeRelative(indicatorOffset.roundToPx(), 0)
                             }
-                        },
-                        color = BadgeColor,
-                        height = 3.dp
-                    )
-                }
+                        } else {
+                            val placeable = measurable.measure(constraints)
+                            layout(constraints.maxWidth, placeable.height) {
+                                placeable.placeRelative(0, 0)
+                            }
+                        }
+                    },
+                    color = BadgeColor,
+                    height = 3.dp
+                )
             }
         ) {
             modes.forEach { mode ->
