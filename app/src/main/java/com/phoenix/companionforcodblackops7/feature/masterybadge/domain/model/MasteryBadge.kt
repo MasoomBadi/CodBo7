@@ -48,7 +48,7 @@ data class WeaponMasteryProgress(
     val zmBadges: List<BadgeProgress>
 ) {
     val totalBadges: Int
-        get() = mpBadges.size + zmBadges.size // Dynamic - calculated from actual badge lists
+        get() = 6 // Static: 3 MP badges + 3 Zombie badges = 6 total
 
     val unlockedBadgesCount: Int
         get() = mpBadges.count { it.isUnlocked } + zmBadges.count { it.isUnlocked }
