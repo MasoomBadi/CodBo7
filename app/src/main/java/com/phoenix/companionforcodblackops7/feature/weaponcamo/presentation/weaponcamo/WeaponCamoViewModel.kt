@@ -84,10 +84,20 @@ class WeaponCamoViewModel @Inject constructor(
         return repository.getCamoCriteria(weaponId, camoId)
     }
 
+    /**
+     * Suspend version that waits for DataStore update to complete
+     * Used by UI to ensure checkbox state updates before triggering refresh
+     */
+    suspend fun toggleCriterionSuspend(weaponId: Int, camoId: Int, criterionId: Int) {
+        repository.toggleCriterion(weaponId, camoId, criterionId)
+        // Suspends until DataStore update completes
+        // Weapon progress and camos update reactively through Flow
+    }
+
+    @Deprecated("Use toggleCriterionSuspend instead", ReplaceWith("toggleCriterionSuspend(weaponId, camoId, criterionId)"))
     fun toggleCriterion(weaponId: Int, camoId: Int, criterionId: Int) {
         viewModelScope.launch {
-            repository.toggleCriterion(weaponId, camoId, criterionId)
-            // Weapon progress and camos update reactively through Flow
+            toggleCriterionSuspend(weaponId, camoId, criterionId)
         }
     }
 }
