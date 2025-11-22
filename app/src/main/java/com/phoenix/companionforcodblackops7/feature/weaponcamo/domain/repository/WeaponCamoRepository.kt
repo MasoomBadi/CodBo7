@@ -66,10 +66,10 @@ interface WeaponCamoRepository {
     ): Boolean
 
     /**
-     * Get overall progress for a weapon (X/54)
+     * Get overall progress for a weapon
      *
      * @param weaponId The weapon ID
-     * @return Pair of (completed, total)
+     * @return Triple of (completedCamos, totalCamos, completedModes)
      */
-    suspend fun getWeaponProgress(weaponId: Int): Pair<Int, Int>
+    suspend fun getWeaponProgress(weaponId: Int): Triple<Int, Int, Int>
 }

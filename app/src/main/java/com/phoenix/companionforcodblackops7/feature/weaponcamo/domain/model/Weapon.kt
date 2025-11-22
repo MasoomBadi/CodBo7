@@ -9,5 +9,7 @@ data class Weapon(
     val iconUrl: String,
     val sortOrder: Int,
     val completedCamos: Int = 0,
-    val totalCamos: Int = 54
+    val totalCamos: Int = 54,
+    val completedModes: Int = 0,
+    val totalModes: Int = 4  // campaign, multiplayer, zombie, prestige
 )

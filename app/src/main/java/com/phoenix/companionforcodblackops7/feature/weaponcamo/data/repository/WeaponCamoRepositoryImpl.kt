@@ -43,7 +43,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         ) { weapons, prefs ->
             weapons.map { weaponEntity ->
                 val weaponId = weaponEntity.data["id"]?.asInt() ?: return@map null
-                val (completed, total) = calculateWeaponProgressSync(weaponId, prefs)
+                val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId, prefs)
 
                 Weapon(
                     id = weaponId,
@@ -53,8 +53,10 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                     weaponType = weaponEntity.data["weapon_type"]?.asString() ?: "",
                     iconUrl = weaponEntity.data["icon_url"]?.asString() ?: "",
                     sortOrder = weaponEntity.data["sort_order"]?.asInt() ?: 0,
-                    completedCamos = completed,
-                    totalCamos = total
+                    completedCamos = completedCamos,
+                    totalCamos = totalCamos,
+                    completedModes = completedModes,
+                    totalModes = 4
                 )
             }.filterNotNull()
                 .groupBy { it.category }
@@ -72,7 +74,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         ).first().find() ?: return null
 
         val prefs = dataStore.data.first()
-        val (completed, total) = calculateWeaponProgressSync(weaponId, prefs)
+        val (completedCamos, totalCamos, completedModes) = calculateWeaponProgressSync(weaponId, prefs)
 
         return Weapon(
             id = weaponId,
@@ -82,8 +84,10 @@ class WeaponCamoRepositoryImpl @Inject constructor(
             weaponType = weaponEntity.data["weapon_type"]?.asString() ?: "",
             iconUrl = weaponEntity.data["icon_url"]?.asString() ?: "",
             sortOrder = weaponEntity.data["sort_order"]?.asInt() ?: 0,
-            completedCamos = completed,
-            totalCamos = total
+            completedCamos = completedCamos,
+            totalCamos = totalCamos,
+            completedModes = completedModes,
+            totalModes = 4
         )
     }
 
@@ -198,7 +202,7 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         return true
     }
 
-    override suspend fun getWeaponProgress(weaponId: Int): Pair<Int, Int> {
+    override suspend fun getWeaponProgress(weaponId: Int): Triple<Int, Int, Int> {
         val prefs = dataStore.data.first()
         return calculateWeaponProgressSync(weaponId, prefs)
     }
@@ -352,12 +356,13 @@ class WeaponCamoRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun calculateWeaponProgressSync(weaponId: Int, prefs: Preferences): Pair<Int, Int> {
+    private fun calculateWeaponProgressSync(weaponId: Int, prefs: Preferences): Triple<Int, Int, Int> {
         try {
             // Get all camos across all modes for this weapon
             val modes = listOf("campaign", "multiplayer", "zombie", "prestige")
             var totalCompleted = 0
             var totalCamos = 0
+            var completedModes = 0
 
             for (mode in modes) {
                 val camoEntities = realm.query<DynamicEntity>(
@@ -380,13 +385,19 @@ class WeaponCamoRepositoryImpl @Inject constructor(
                 }
 
                 totalCamos += camosForWeapon.size
-                totalCompleted += camosForWeapon.count { it.isCompleted }
+                val completedInMode = camosForWeapon.count { it.isCompleted }
+                totalCompleted += completedInMode
+
+                // Mode is complete if ALL camos in that mode are unlocked
+                if (camosForWeapon.isNotEmpty() && completedInMode == camosForWeapon.size) {
+                    completedModes++
+                }
             }
 
-            return Pair(totalCompleted, totalCamos)
+            return Triple(totalCompleted, totalCamos, completedModes)
         } catch (e: Exception) {
             Timber.e(e, "Failed to calculate weapon progress for weapon $weaponId")
-            return Pair(0, 54) // Default to 0/54
+            return Triple(0, 54, 0) // Default to 0/54 camos, 0 modes
         }
     }
 }
