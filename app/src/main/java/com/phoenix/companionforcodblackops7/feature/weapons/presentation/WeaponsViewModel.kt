@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,7 +40,7 @@ class WeaponsViewModel @Inject constructor(
                 } catch (e: Exception) {
                     0 to 0
                 }
-                timber.log.Timber.d("Weapon ${weapon.id} (${weapon.displayName}): $completed/$total")
+                Timber.d("Weapon ${weapon.id} (${weapon.displayName}): $completed/$total")
                 WeaponWithBadges(
                     weapon = weapon,
                     completedBadges = completed,
@@ -49,7 +50,7 @@ class WeaponsViewModel @Inject constructor(
             _weaponsByCategory.value = weaponsWithBadges
                 .groupBy { it.weapon.category }
                 .toSortedMap(compareBy { it })
-            timber.log.Timber.d("Loaded ${weapons.size} weapons with badge counts")
+            Timber.d("Loaded ${weapons.size} weapons with badge counts")
         }
     }
 }
