@@ -11,5 +11,6 @@ data class MasteryBadge(
     val mode: String, // e.g., "multiplayer", "zombies"
     val killsRequired: Int,
     val sortOrder: Int,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val isLocked: Boolean = false // True if previous badges in same mode are not completed
 )

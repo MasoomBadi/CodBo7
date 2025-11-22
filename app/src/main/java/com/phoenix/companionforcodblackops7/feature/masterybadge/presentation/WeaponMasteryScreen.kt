@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -323,20 +324,24 @@ private fun BadgeCard(
         label = "glowAlpha"
     )
 
-    val borderColor = if (badge.isCompleted) {
-        BadgeColor.copy(alpha = glowAlpha * 0.8f)
-    } else {
-        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+    val borderColor = when {
+        badge.isLocked -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        badge.isCompleted -> BadgeColor.copy(alpha = glowAlpha * 0.8f)
+        else -> MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     }
 
-    val cardColor = if (badge.isCompleted) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f)
+    val cardColor = when {
+        badge.isLocked -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f)
+        badge.isCompleted -> MaterialTheme.colorScheme.surface
+        else -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f)
     }
 
     Card(
-        onClick = onToggle,
+        onClick = if (badge.isLocked) {
+            {} // Disable click for locked badges
+        } else {
+            onToggle
+        },
         modifier = Modifier
             .fillMaxWidth()
             .border(
@@ -350,7 +355,8 @@ private fun BadgeCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (badge.isCompleted) 6.dp else 2.dp
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        enabled = !badge.isLocked // Disable interaction for locked badges
     ) {
         Row(
             modifier = Modifier
@@ -384,10 +390,10 @@ private fun BadgeCard(
 
                 Surface(
                     shape = CircleShape,
-                    color = if (badge.isCompleted) {
-                        BadgeColor.copy(alpha = 0.3f)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
+                    color = when {
+                        badge.isLocked -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        badge.isCompleted -> BadgeColor.copy(alpha = 0.3f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
                     },
                     modifier = Modifier.size(40.dp)
                 ) {
@@ -400,7 +406,11 @@ private fun BadgeCard(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = if (badge.isCompleted) BadgeColor else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = when {
+                                badge.isLocked -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                badge.isCompleted -> BadgeColor
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
                 }
@@ -417,17 +427,24 @@ private fun BadgeCard(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     ),
-                    color = if (badge.isCompleted) {
-                        BadgeColor
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    color = when {
+                        badge.isLocked -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        badge.isCompleted -> BadgeColor
+                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     }
                 )
 
                 Text(
-                    text = "GET ${badge.killsRequired} KILLS",
+                    text = if (badge.isLocked) {
+                        "UNLOCK PREVIOUS BADGES FIRST"
+                    } else {
+                        "GET ${badge.killsRequired} KILLS"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = when {
+                        badge.isLocked -> MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
 
@@ -465,15 +482,37 @@ private fun BadgeCard(
                 }
             }
 
-            // Empty checkbox when not completed
+            // Lock icon for locked badges, empty checkbox for unlocked/incomplete badges
             if (!badge.isCompleted) {
-                Surface(
-                    shape = CircleShape,
-                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
-                    color = Color.Transparent,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    // Empty
+                if (badge.isLocked) {
+                    // Lock icon for locked badges
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                } else {
+                    // Empty checkbox for unlocked but not completed badges
+                    Surface(
+                        shape = CircleShape,
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
+                        color = Color.Transparent,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        // Empty
+                    }
                 }
             }
         }

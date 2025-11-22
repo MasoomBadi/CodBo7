@@ -28,30 +28,25 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
     }
 
     override fun getBadgesForWeapon(weaponId: Int): Flow<List<MasteryBadge>> {
-        Timber.d("getBadgesForWeapon called for weaponId: $weaponId")
-
         // Fetch badge requirements from database
         val badgeRequirementsFlow = realm.query<DynamicEntity>(
             "tableName == $0 AND data['weapon_id'] == $1",
             TABLE_WEAPON_MASTERY_BADGE,
             weaponId
         ).asFlow().map { results ->
-            Timber.d("Found ${results.list.size} badge requirement rows for weapon $weaponId")
-
             results.list.mapNotNull { entity ->
                 try {
                     val data = entity.data
-                    val badge = MasteryBadge(
+                    MasteryBadge(
                         id = data["id"]?.asInt() ?: 0,
                         weaponId = data["weapon_id"]?.asInt() ?: 0,
                         badgeLevel = data["badge_level"]?.asString() ?: "",
                         mode = data["mode"]?.asString() ?: "",
                         killsRequired = data["kills_required"]?.asInt() ?: 0,
                         sortOrder = data["sort_order"]?.asInt() ?: 0,
-                        isCompleted = false // Will be updated from progress
+                        isCompleted = false, // Will be updated from progress
+                        isLocked = false // Will be calculated based on hierarchy
                     )
-                    Timber.d("Parsed badge: ${badge.badgeLevel} / ${badge.mode} for weapon $weaponId")
-                    badge
                 } catch (e: Exception) {
                     Timber.w(e, "Failed to parse mastery badge entity")
                     null
@@ -69,11 +64,28 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
             }
         }
 
-        // Combine requirements with progress
+        // Combine requirements with progress and calculate hierarchy locks
         return combine(badgeRequirementsFlow, progressFlow) { badges, progressMap ->
+            // Group badges by mode to check hierarchy within each mode
+            val badgesByMode = badges.groupBy { it.mode }
+
             badges.map { badge ->
                 val key = "${badge.weaponId}_${badge.badgeLevel}_${badge.mode}"
-                badge.copy(isCompleted = progressMap[key] ?: false)
+                val isCompleted = progressMap[key] ?: false
+
+                // Check if this badge is locked based on hierarchy
+                // A badge is locked if any previous badge (lower sortOrder) in the same mode is not completed
+                val badgesInSameMode = badgesByMode[badge.mode] ?: emptyList()
+                val previousBadges = badgesInSameMode.filter { it.sortOrder < badge.sortOrder }
+                val isLocked = previousBadges.any { previousBadge ->
+                    val previousKey = "${previousBadge.weaponId}_${previousBadge.badgeLevel}_${previousBadge.mode}"
+                    progressMap[previousKey] != true
+                }
+
+                badge.copy(
+                    isCompleted = isCompleted,
+                    isLocked = isLocked
+                )
             }
         }
     }
@@ -106,8 +118,6 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
 
     override suspend fun getBadgeProgress(weaponId: Int): Pair<Int, Int> {
         return try {
-            Timber.d("getBadgeProgress called for weaponId: $weaponId")
-
             // Get total count from database
             val totalCount = realm.query<DynamicEntity>(
                 "tableName == $0 AND data['weapon_id'] == $1",
@@ -121,7 +131,6 @@ class MasteryBadgeRepositoryImpl @Inject constructor(
                 weaponId
             ).count().find().toInt()
 
-            Timber.d("Badge progress for weapon $weaponId: $completedCount/$totalCount")
             Pair(completedCount, totalCount)
         } catch (e: Exception) {
             Timber.e(e, "Failed to get badge progress for weapon $weaponId")

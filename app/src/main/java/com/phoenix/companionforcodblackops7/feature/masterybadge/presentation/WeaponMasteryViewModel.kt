@@ -83,8 +83,15 @@ class WeaponMasteryViewModel @Inject constructor(
 
     /**
      * Toggle badge completion checkbox
+     * Only allows toggling if badge is not locked (previous badges are completed)
      */
     fun toggleBadge(badge: MasteryBadge) {
+        // Prevent toggling locked badges
+        if (badge.isLocked) {
+            Timber.d("Cannot toggle locked badge: ${badge.badgeLevel} / ${badge.mode}")
+            return
+        }
+
         viewModelScope.launch {
             try {
                 repository.toggleBadgeCompletion(
