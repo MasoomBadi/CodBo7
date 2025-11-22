@@ -102,59 +102,67 @@ class ChecklistRepositoryImpl @Inject constructor(
 
                 // Combine with DataStore to calculate camo progress
                 combine(weaponsFlow, dataStore.data) { weapons, prefs ->
+                    // OPTIMIZATION: Query all data once instead of per-weapon
+                    // Get common camos (shared by all weapons) - ONCE
+                    val commonCamoIds = realm.query<DynamicEntity>(
+                        "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
+                        "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
+                    ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
+
+                    // Get all weapon_camo entries - ONCE
+                    val weaponCamoMap = realm.query<DynamicEntity>("tableName == $0", "weapon_camo")
+                        .find()
+                        .mapNotNull { entity ->
+                            val weaponId = entity.data["weapon_id"]?.asInt()
+                            val camoId = entity.data["camo_id"]?.asInt()
+                            if (weaponId != null && camoId != null) weaponId to camoId else null
+                        }
+                        .groupBy({ it.first }, { it.second })
+
+                    // Get all camo_criteria - ONCE
+                    val allCriteria = realm.query<DynamicEntity>("tableName == $0", "camo_criteria")
+                        .find()
+                        .mapNotNull { entity ->
+                            val weaponId = entity.data["weapon_id"]?.asInt()
+                            val camoId = entity.data["camo_id"]?.asInt()
+                            val criterionId = entity.data["id"]?.asInt()
+                            if (weaponId != null && camoId != null && criterionId != null) {
+                                Triple(weaponId, camoId, criterionId)
+                            } else null
+                        }
+                        .groupBy({ it.first to it.second }, { it.third })
+
+                    // Process each weapon in memory
                     weapons.map { weaponData ->
                         val weaponId = weaponData[0] as Int
                         val weaponName = weaponData[1] as String
                         val iconUrl = weaponData[2] as String
                         val weaponCategory = weaponData[3] as String
 
-                        // Calculate unlocked camos for this weapon
-                        // Fetch all camos for this weapon (common + unique)
-                        val allCamoIds = mutableSetOf<Int>()
+                        // Get all camo IDs for this weapon (common + unique)
+                        val allCamoIds = commonCamoIds + (weaponCamoMap[weaponId] ?: emptyList())
 
-                        // Get common camos
-                        val commonCamos = realm.query<DynamicEntity>(
-                            "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-                            "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
-                        ).find()
-                        allCamoIds.addAll(commonCamos.mapNotNull { it.data["id"]?.asInt() })
-
-                        // Get unique camos for this weapon
-                        val weaponCamos = realm.query<DynamicEntity>(
-                            "tableName == $0 AND data['weapon_id'] == $1",
-                            "weapon_camo", weaponId
-                        ).find()
-                        allCamoIds.addAll(weaponCamos.mapNotNull { it.data["camo_id"]?.asInt() })
-
-                        // Count how many camos have all criteria completed
+                        // Count unlocked camos
                         val unlockedCount = allCamoIds.count { camoId ->
-                            // Get all criteria for this camo
-                            val criteria = realm.query<DynamicEntity>(
-                                "tableName == $0 AND data['camo_id'] == $1 AND data['weapon_id'] == $2",
-                                "camo_criteria", camoId, weaponId
-                            ).find()
-
-                            // Camo is unlocked if all criteria are completed
-                            if (criteria.isEmpty()) {
+                            val criteriaIds = allCriteria[weaponId to camoId]
+                            if (criteriaIds.isNullOrEmpty()) {
                                 false
                             } else {
-                                criteria.all { criterionEntity ->
-                                    val criterionId = criterionEntity.data["id"]?.asInt() ?: 0
+                                // Check if all criteria are completed
+                                criteriaIds.all { criterionId ->
                                     val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
                                     prefs[key] ?: false
                                 }
                             }
                         }
 
-                        val totalCamos = allCamoIds.size
-
                         ChecklistItem(
-                            id = "$weaponId|$weaponCategory", // Store category in ID
+                            id = "$weaponId|$weaponCategory",
                             name = weaponName,
                             category = category,
-                            isUnlocked = false, // Not used for weapons - we track camos instead
+                            isUnlocked = false,
                             imageUrl = iconUrl,
-                            unlockCriteria = "$unlockedCount/$totalCamos camos unlocked"
+                            unlockCriteria = "$unlockedCount/${allCamoIds.size} camos unlocked"
                         )
                     }
                 }
@@ -278,49 +286,57 @@ class ChecklistRepositoryImpl @Inject constructor(
 
             // Calculate weapon camos progress
             if (weaponCount > 0) {
-                // Get all weapons
+                // OPTIMIZATION: Query all data once instead of per-weapon
                 val weapons = realm.query<DynamicEntity>("tableName == $0", "weapons_mp").find()
+
+                // Get common camos (shared by all weapons) - ONCE
+                val commonCamoIds = realm.query<DynamicEntity>(
+                    "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
+                    "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
+                ).find().mapNotNull { it.data["id"]?.asInt() }.toSet()
+
+                // Get all weapon_camo entries - ONCE
+                val weaponCamoMap = realm.query<DynamicEntity>("tableName == $0", "weapon_camo")
+                    .find()
+                    .mapNotNull { entity ->
+                        val weaponId = entity.data["weapon_id"]?.asInt()
+                        val camoId = entity.data["camo_id"]?.asInt()
+                        if (weaponId != null && camoId != null) weaponId to camoId else null
+                    }
+                    .groupBy({ it.first }, { it.second })
+
+                // Get all camo_criteria - ONCE
+                val allCriteria = realm.query<DynamicEntity>("tableName == $0", "camo_criteria")
+                    .find()
+                    .mapNotNull { entity ->
+                        val weaponId = entity.data["weapon_id"]?.asInt()
+                        val camoId = entity.data["camo_id"]?.asInt()
+                        val criterionId = entity.data["id"]?.asInt()
+                        if (weaponId != null && camoId != null && criterionId != null) {
+                            Triple(weaponId, camoId, criterionId)
+                        } else null
+                    }
+                    .groupBy({ it.first to it.second }, { it.third })
 
                 var totalCamosCount = 0
                 var unlockedCamosCount = 0
 
-                // For each weapon, count camos
+                // Process each weapon in memory
                 for (weaponEntity in weapons) {
                     val weaponId = weaponEntity.data["id"]?.asInt() ?: continue
 
-                    // Fetch all camos for this weapon (common + unique)
-                    val allCamoIds = mutableSetOf<Int>()
-
-                    // Get common camos
-                    val commonCamos = realm.query<DynamicEntity>(
-                        "tableName == $0 AND (data['category'] == $1 OR data['category'] == $2 OR data['category'] == $3 OR data['category'] == $4 OR data['category'] == $5 OR data['category'] == $6)",
-                        "camo", "military", "special", "mastery", "prestigem1", "prestigem2", "prestigem3"
-                    ).find()
-                    allCamoIds.addAll(commonCamos.mapNotNull { it.data["id"]?.asInt() })
-
-                    // Get unique camos for this weapon
-                    val weaponCamos = realm.query<DynamicEntity>(
-                        "tableName == $0 AND data['weapon_id'] == $1",
-                        "weapon_camo", weaponId
-                    ).find()
-                    allCamoIds.addAll(weaponCamos.mapNotNull { it.data["camo_id"]?.asInt() })
-
+                    // Get all camo IDs for this weapon (common + unique)
+                    val allCamoIds = commonCamoIds + (weaponCamoMap[weaponId] ?: emptyList())
                     totalCamosCount += allCamoIds.size
 
                     // Count unlocked camos for this weapon
                     val unlockedCount = allCamoIds.count { camoId ->
-                        // Get all criteria for this camo
-                        val criteria = realm.query<DynamicEntity>(
-                            "tableName == $0 AND data['camo_id'] == $1 AND data['weapon_id'] == $2",
-                            "camo_criteria", camoId, weaponId
-                        ).find()
-
-                        // Camo is unlocked if all criteria are completed
-                        if (criteria.isEmpty()) {
+                        val criteriaIds = allCriteria[weaponId to camoId]
+                        if (criteriaIds.isNullOrEmpty()) {
                             false
                         } else {
-                            criteria.all { criterionEntity ->
-                                val criterionId = criterionEntity.data["id"]?.asInt() ?: 0
+                            // Check if all criteria are completed
+                            criteriaIds.all { criterionId ->
                                 val key = booleanPreferencesKey("weapon_${weaponId}_camo_${camoId}_criterion_${criterionId}")
                                 prefs[key] ?: false
                             }
