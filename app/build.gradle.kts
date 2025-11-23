@@ -36,6 +36,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Include native debug symbols for Play Console crash reporting
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     compileOptions {
