@@ -21,7 +21,7 @@ class InterstitialAdManager @Inject constructor() {
     private var lastShowTime: Long = 0
 
     // Minimum interval between ads (4 minutes for production, 10 seconds for debug)
-    private val minIntervalMs = if (BuildConfig.DEBUG) 10_000L else 240_000L
+    private val minIntervalMs = if (BuildConfig.DEBUG) 1000_000L else 240_000L
 
     // Counter for actions - show ad every N actions (1 for debug testing, 8 for production)
     private var actionCounter = 0
