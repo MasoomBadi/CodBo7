@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Resume update if it was interrupted
-        inAppUpdateManager.resumeUpdateIfNeeded(this)
+        inAppUpdateManager.resumeIfNeeded(this)
     }
 }
 
@@ -299,7 +299,6 @@ fun AppNavigation(
         composable("sync") {
             SyncScreen(
                 networkMonitor = networkMonitor,
-                activity = activity,
                 inAppUpdateManager = inAppUpdateManager,
                 onSyncComplete = {
                     navController.navigate("home") {
