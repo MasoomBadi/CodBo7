@@ -109,6 +109,10 @@ dependencies {
     // Ads
     implementation(libs.play.services.ads)
 
+    // In-App Updates
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

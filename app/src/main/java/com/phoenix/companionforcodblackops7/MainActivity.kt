@@ -121,6 +121,7 @@ import com.phoenix.companionforcodblackops7.feature.wildcards.presentation.Wildc
 import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.ZombieHubScreen
 import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.core.ads.InterstitialAdManager
+import com.phoenix.companionforcodblackops7.core.update.InAppUpdateManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -140,6 +141,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var interstitialAdManager: InterstitialAdManager
 
+    @Inject
+    lateinit var inAppUpdateManager: InAppUpdateManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -147,6 +151,10 @@ class MainActivity : ComponentActivity() {
 
         // Load interstitial ad early
         interstitialAdManager.loadAd(this)
+
+        // Initialize in-app update manager
+        inAppUpdateManager.initialize(this)
+        lifecycle.addObserver(inAppUpdateManager)
 
         setContent {
             BlackOps7Theme {
@@ -166,12 +174,19 @@ class MainActivity : ComponentActivity() {
                             networkMonitor = networkMonitor,
                             iconsRepository = iconsRepository,
                             analyticsHelper = analyticsHelper,
-                            interstitialAdManager = interstitialAdManager
+                            interstitialAdManager = interstitialAdManager,
+                            inAppUpdateManager = inAppUpdateManager
                         )
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resume update if it was interrupted
+        inAppUpdateManager.resumeUpdateIfNeeded(this)
     }
 }
 
@@ -210,7 +225,8 @@ fun AppNavigation(
     networkMonitor: NetworkMonitor,
     iconsRepository: IconsRepository,
     analyticsHelper: AnalyticsHelper,
-    interstitialAdManager: InterstitialAdManager
+    interstitialAdManager: InterstitialAdManager,
+    inAppUpdateManager: InAppUpdateManager
 ) {
     val navController = rememberNavController()
 
@@ -283,6 +299,8 @@ fun AppNavigation(
         composable("sync") {
             SyncScreen(
                 networkMonitor = networkMonitor,
+                activity = activity,
+                inAppUpdateManager = inAppUpdateManager,
                 onSyncComplete = {
                     navController.navigate("home") {
                         popUpTo("sync") { inclusive = true }

@@ -44,6 +44,9 @@ googleFirebaseCrashlytics = "3.0.6"
 # Ads
 playServicesAds = "24.3.0"
 
+# In-App Updates
+playAppUpdate = "2.1.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
@@ -94,6 +97,10 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 
 # Ads
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+
+# In-App Updates
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

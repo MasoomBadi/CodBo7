@@ -184,18 +184,6 @@ fun WeaponCamoScreen(
                     pageCount = { modes.size }
                 )
 
-                // Sync pager -> viewModel (when user swipes)
-                LaunchedEffect(pagerState) {
-                    snapshotFlow { pagerState.settledPage }
-                        .distinctUntilChanged()
-                        .collect { page ->
-                            val mode = modes.getOrNull(page)
-                            if (mode != null && mode != state.selectedMode) {
-                                viewModel.selectMode(mode)
-                            }
-                        }
-                }
-
                 // Sync viewModel -> pager (when user clicks tab)
                 LaunchedEffect(state.selectedMode) {
                     val targetPage = modes.indexOf(state.selectedMode)
@@ -235,7 +223,8 @@ fun WeaponCamoScreen(
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.weight(1f),
-                        beyondViewportPageCount = 1 // Pre-render adjacent pages for smoother swiping
+                        userScrollEnabled = false, // Disable swiping - tabs can only be changed by clicking
+                        beyondViewportPageCount = 1 // Pre-render adjacent pages for smoother transitions
                     ) { page ->
                         CamoContent(
                             camoCategories = state.camoCategories,
