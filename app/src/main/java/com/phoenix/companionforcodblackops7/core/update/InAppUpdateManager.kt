@@ -55,7 +55,7 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
     /**
      * Initialize the update manager and check for updates
      */
-    fun initialize(activity: Activity) {
+    fun initialize(activity: Activity): Unit {
         currentActivity = activity
         appUpdateManager = AppUpdateManagerFactory.create(activity)
 
@@ -70,9 +70,9 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
      * @param onUpdateAvailable Callback with update info and priority
      */
     fun checkForUpdate(
-        onUpdateAvailable: (updateInfo: AppUpdateInfo, updatePriority: Int) -> Unit = { _, _ -> },
+        onUpdateAvailable: (AppUpdateInfo, Int) -> Unit = { _: AppUpdateInfo, _: Int -> },
         onNoUpdateAvailable: () -> Unit = {}
-    ) {
+    ): Unit {
         appUpdateManager?.appUpdateInfo?.addOnSuccessListener { appUpdateInfo ->
             when (appUpdateInfo.updateAvailability()) {
                 UpdateAvailability.UPDATE_AVAILABLE -> {
@@ -100,7 +100,7 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
     /**
      * Start flexible update (user can continue using app while downloading)
      */
-    fun startFlexibleUpdate(appUpdateInfo: AppUpdateInfo, activity: Activity) {
+    fun startFlexibleUpdate(appUpdateInfo: AppUpdateInfo, activity: Activity): Unit {
         if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
             Timber.d("InAppUpdate: Starting flexible update")
             try {
@@ -122,7 +122,7 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
      * Start immediate update (blocks app usage until update is completed)
      * Use this for critical/high-priority updates
      */
-    fun startImmediateUpdate(appUpdateInfo: AppUpdateInfo, activity: Activity) {
+    fun startImmediateUpdate(appUpdateInfo: AppUpdateInfo, activity: Activity): Unit {
         if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
             Timber.d("InAppUpdate: Starting immediate update")
             try {
@@ -143,7 +143,7 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
     /**
      * Complete a flexible update (call this after download is complete)
      */
-    fun completeFlexibleUpdate() {
+    fun completeFlexibleUpdate(): Unit {
         appUpdateManager?.completeUpdate()?.addOnSuccessListener {
             Timber.d("InAppUpdate: Flexible update completed successfully")
         }?.addOnFailureListener { exception ->
@@ -155,7 +155,7 @@ class InAppUpdateManager @Inject constructor() : DefaultLifecycleObserver {
      * Resume update if it was interrupted
      * Call this in onResume()
      */
-    fun resumeUpdateIfNeeded(activity: Activity) {
+    fun resumeUpdateIfNeeded(activity: Activity): Unit {
         appUpdateManager?.appUpdateInfo?.addOnSuccessListener { appUpdateInfo ->
             if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
                 Timber.d("InAppUpdate: Resuming update")
