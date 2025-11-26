@@ -1,6 +1,5 @@
 package com.phoenix.companionforcodblackops7.feature.sync.presentation
 
-import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -23,13 +22,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.phoenix.companionforcodblackops7.core.update.InAppUpdateManager
 import com.phoenix.companionforcodblackops7.core.util.NetworkMonitor
 import com.phoenix.companionforcodblackops7.core.util.rememberNetworkState
-import timber.log.Timber
 
 @Composable
 fun SyncScreen(
     onSyncComplete: () -> Unit,
     networkMonitor: NetworkMonitor,
-    activity: Activity? = null,
     inAppUpdateManager: InAppUpdateManager? = null,
     viewModel: SyncViewModel = hiltViewModel()
 ) {
@@ -49,19 +46,8 @@ fun SyncScreen(
             kotlinx.coroutines.delay(1000)
 
             // Check for app updates before navigating
-            if (activity != null && inAppUpdateManager != null) {
-                inAppUpdateManager.checkForUpdate(
-                    onUpdateAvailable = { appUpdateInfo, updatePriority ->
-                        // Force immediate update for ANY available update
-                        // Updates are only released for important changes (data, features, bug fixes)
-                        Timber.d("Update available (priority: $updatePriority) - forcing immediate update")
-                        inAppUpdateManager.startImmediateUpdate(appUpdateInfo, activity)
-                    },
-                    onNoUpdateAvailable = {
-                        Timber.d("App is up to date")
-                    }
-                )
-            }
+            // If update is available, it will force immediate update
+            inAppUpdateManager?.checkForForcedUpdate()
 
             onSyncComplete()
         }
