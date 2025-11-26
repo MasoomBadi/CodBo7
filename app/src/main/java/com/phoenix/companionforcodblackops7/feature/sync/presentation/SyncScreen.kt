@@ -52,17 +52,10 @@ fun SyncScreen(
             if (activity != null && inAppUpdateManager != null) {
                 inAppUpdateManager.checkForUpdate(
                     onUpdateAvailable = { appUpdateInfo, updatePriority ->
-                        when {
-                            updatePriority >= InAppUpdateManager.PRIORITY_HIGH -> {
-                                // High priority - force immediate update
-                                Timber.d("Forcing immediate update (priority: $updatePriority)")
-                                inAppUpdateManager.startImmediateUpdate(appUpdateInfo, activity)
-                            }
-                            else -> {
-                                // Lower priority - will show dialog on dashboard
-                                Timber.d("Update available (priority: $updatePriority), will prompt later")
-                            }
-                        }
+                        // Force immediate update for ANY available update
+                        // Updates are only released for important changes (data, features, bug fixes)
+                        Timber.d("Update available (priority: $updatePriority) - forcing immediate update")
+                        inAppUpdateManager.startImmediateUpdate(appUpdateInfo, activity)
                     },
                     onNoUpdateAvailable = {
                         Timber.d("App is up to date")
