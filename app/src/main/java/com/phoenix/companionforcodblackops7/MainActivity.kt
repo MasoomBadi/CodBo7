@@ -33,8 +33,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -124,7 +122,6 @@ import com.phoenix.companionforcodblackops7.feature.zombiehub.presentation.Zombi
 import com.phoenix.companionforcodblackops7.core.ads.BannerAd
 import com.phoenix.companionforcodblackops7.core.ads.InterstitialAdManager
 import com.phoenix.companionforcodblackops7.core.update.InAppUpdateManager
-import com.google.android.play.core.install.model.AppUpdateType
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.system.exitProcess
@@ -232,8 +229,6 @@ fun AppNavigation(
     inAppUpdateManager: InAppUpdateManager
 ) {
     val navController = rememberNavController()
-    var showUpdateDialog by remember { mutableStateOf(false) }
-    var isUpdateMandatory by remember { mutableStateOf(false) }
 
     // Helper function to navigate back with potential interstitial ad
     fun navigateBackWithAd() {
@@ -304,6 +299,8 @@ fun AppNavigation(
         composable("sync") {
             SyncScreen(
                 networkMonitor = networkMonitor,
+                activity = activity,
+                inAppUpdateManager = inAppUpdateManager,
                 onSyncComplete = {
                     navController.navigate("home") {
                         popUpTo("sync") { inclusive = true }
@@ -323,34 +320,6 @@ fun AppNavigation(
         }
 
         composable("dashboard") {
-            // Check for updates when dashboard loads
-            LaunchedEffect(Unit) {
-                inAppUpdateManager.checkForUpdate(
-                    onUpdateAvailable = { appUpdateInfo, updatePriority ->
-                        when {
-                            updatePriority >= InAppUpdateManager.PRIORITY_HIGH -> {
-                                // High priority update - force immediate update
-                                Timber.d("Forcing immediate update (priority: $updatePriority)")
-                                inAppUpdateManager.startImmediateUpdate(appUpdateInfo, activity)
-                            }
-                            updatePriority >= InAppUpdateManager.PRIORITY_MEDIUM -> {
-                                // Medium priority - show dialog with strong recommendation
-                                isUpdateMandatory = false
-                                showUpdateDialog = true
-                            }
-                            else -> {
-                                // Low priority - show optional update dialog
-                                isUpdateMandatory = false
-                                showUpdateDialog = true
-                            }
-                        }
-                    },
-                    onNoUpdateAvailable = {
-                        Timber.d("App is up to date")
-                    }
-                )
-            }
-
             DashboardScreen(
                 onNavigateToOperators = {
                     navController.navigate("operators")
@@ -915,88 +884,6 @@ fun AppNavigation(
             )
         }
     }
-
-    // Show update dialog when available
-    if (showUpdateDialog) {
-        UpdateAvailableDialog(
-            isMandatory = isUpdateMandatory,
-            onUpdate = {
-                showUpdateDialog = false
-                inAppUpdateManager.checkForUpdate(
-                    onUpdateAvailable = { appUpdateInfo, _ ->
-                        inAppUpdateManager.startFlexibleUpdate(appUpdateInfo, activity)
-                    }
-                )
-            },
-            onDismiss = {
-                if (!isUpdateMandatory) {
-                    showUpdateDialog = false
-                }
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun UpdateAvailableDialog(
-    isMandatory: Boolean,
-    onUpdate: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = { if (!isMandatory) onDismiss() },
-        icon = {
-            androidx.compose.material3.Icon(
-                imageVector = androidx.compose.material.icons.Icons.Filled.SystemUpdate,
-                contentDescription = "Update Available",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        title = {
-            Text(
-                text = if (isMandatory) "UPDATE REQUIRED" else "UPDATE AVAILABLE",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = if (isMandatory) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-            )
-        },
-        text = {
-            Text(
-                text = if (isMandatory) {
-                    "A critical update is required to continue using the app. Please update now to enjoy new features and improvements."
-                } else {
-                    "A new version is available! Update now to get the latest features, improvements, and bug fixes."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        confirmButton = {
-            androidx.compose.material3.FilledTonalButton(
-                onClick = onUpdate,
-                colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(
-                    text = "UPDATE NOW",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        },
-        dismissButton = if (!isMandatory) {
-            {
-                androidx.compose.material3.TextButton(onClick = onDismiss) {
-                    Text("LATER", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        } else null,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 6.dp
-    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
